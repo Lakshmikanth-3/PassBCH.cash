@@ -26,7 +26,7 @@ Protocol: [docs/PROTOCOL.md](docs/PROTOCOL.md)
 ## Proof (filled in as each item exists)
 | Item | Value |
 |---|---|
-| Live demo | _TBD_ |
+| Live demo (chipnet build) | https://passrate-cash.vercel.app |
 | RunTicket contract address / redeem script | _TBD_ |
 | First MANIFEST txid | _TBD_ |
 | First Ticket → START → RESULT txids | _TBD_ |
