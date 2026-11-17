@@ -1,10 +1,10 @@
 # Phase 1: feasibility results (17 Nov 2026)
 
-Verdicts reflect what was run here (offline VM, public Fulcrum, local clone). Nothing has been broadcast yet.
+Verdicts reflect what was run here (local VM, public Fulcrum, local clone, and chipnet for T1). Nothing has been broadcast on mainnet.
 
 | Test | Verdict | Evidence | Still open |
 |---|---|---|---|
-| T1 RunTicket | **PASS (chipnet)** | Compiles to a 173 B redeem script (`packages/feasibility/contracts/RunTicket.cash`). 10 tests in the local VM: valid START passes; wrong txid, un-reversed txid, wrong taskRoot, scheduled mode, START not at output 0, wrong sig, and no-OP_RETURN all fail on the intended `require`; refund fails at age 5 and with the operator key, passes at age 6 with the payer key. | **Chipnet broadcast of start + refund** needs funded chipnet coins (faucet). `OP_REVERSEBYTES` is accepted by the local VM; confirm the node accepts it. |
+| T1 RunTicket | **PASS (chipnet)** | Compiles to a 173 B redeem script (`packages/feasibility/contracts/RunTicket.cash`). 10 tests in the local VM: valid START passes; wrong txid, un-reversed txid, wrong taskRoot, scheduled mode, START not at output 0, wrong sig, and no-OP_RETURN all fail on the intended `require`; refund fails at age 5 and with the operator key, passes at age 6 with the payer key. | None. START, early-refund rejection and refund all done on chipnet (txids below); the node accepts `OP_REVERSEBYTES`. |
 | T2 sizes/fees | **Pass (built, not broadcast)** | MANIFEST 306 B, TICKET 315 B, START 455 B, RESULT 341 B, REFUND 327 B; all < 600 sats at 1 sat/B; OP_RETURN scripts ≤ 119 B (limit 223). [t2-sizes.txt](t2-sizes.txt) | Mainnet relay of the four types. |
 | T3 tasks and licences | **Pass** | `exercism/python` @ `479f11b4` is MIT; 141 of 142 practice exercises pass their own tests with the reference solution in < 30 s (excluded: `parallel-letter-frequency`, 31.2 s). [json](t3-task-selection.json) | Ran on Python 3.14 locally, not a clean `python:3.12` container (Docker daemon is not running here). Re-run with Docker. Aider's `polyglot-benchmark` repo has no LICENSE file; we use Exercism directly and do not depend on it. |
 | T4 agent speed/cost | **Not run** | | Needs a model API key, a spend cap and Docker. |
