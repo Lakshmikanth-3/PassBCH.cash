@@ -114,3 +114,48 @@ describe('shared code', () => {
     assert.ok(artifactMatchesSource());
   });
 });
+
+describe('watcher resilience', () => {
+  test('withTimeout turns a hang into an error', async () => {
+    const { withTimeout } = await import('../src/pipeline.js');
+    await assert.rejects(withTimeout(new Promise(() => {}), 50, 'hang'), /hang timed out/);
+    assert.equal(await withTimeout(Promise.resolve(7), 50), 7);
+  });
+  test('watch swaps to a fresh provider when the server fails', async () => {
+    const { watch } = await import('../src/pipeline.js');
+    const bad = { performRequest: async () => { throw new Error('disconnected'); } };
+    const good = { hostname: 'b', performRequest: async () => [], getRawTransaction: async () => '' };
+    const ctx = { provider: bad, operator: { address: 'x' }, log: () => {} };
+    await watch(ctx, { once: true, makeProvider: () => good });
+    assert.equal(ctx.provider, good);
+  });
+});
+
+describe('broadcast resilience', () => {
+  const HEX = '0100000000000000000000';
+  test('netCall retries on a fresh provider after a failure', async () => {
+    const { netCall } = await import('../src/pipeline.js');
+    let made = 0;
+    const ctx = { provider: { n: 0 }, makeProvider: () => ({ n: ++made }), log: () => {} };
+    const r = await netCall(ctx, async (p) => { if (p.n === 0) throw new Error('down'); return p.n; }, 'x');
+    assert.equal(r, 1);
+  });
+  test('broadcast succeeds when the send errors but the tx already reached the network', async () => {
+    const { broadcast } = await import('../src/pipeline.js');
+    const p = { sendRawTransaction: async () => { throw new Error('socket closed'); }, getRawTransaction: async () => HEX };
+    const txid = await broadcast({ provider: p, log: () => {} }, HEX, 'T');
+    assert.equal(txid, hashTransaction(hexToBin(HEX)));
+  });
+  test('broadcast fails when the tx truly did not make it', async () => {
+    const { broadcast } = await import('../src/pipeline.js');
+    const p = { sendRawTransaction: async () => { throw new Error('rejected'); }, getRawTransaction: async () => { throw new Error('missing'); } };
+    await assert.rejects(broadcast({ provider: p, log: () => {} }, HEX, 'T'), /rejected/);
+  });
+});
+
+describe('network prefix', () => {
+  test('validated ticket covenant address uses the chipnet prefix', () => {
+    const t = makeTicket(), r = v(t);
+    assert.match(r.ticket.covenant, /^bchtest:p/);
+  });
+});
