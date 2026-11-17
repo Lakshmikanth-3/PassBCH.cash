@@ -9,16 +9,20 @@ import { CONFIG, T1_CHAIN } from '../src/config.js';
 import DATA from '../src/runs.json';
 import { rowsFrom } from '../src/App.jsx';
 
-describe('BLAZE banner (compliance)', () => {
-  test('has repo link, EMBER2026 token address and non-affiliation note', () => {
+describe('BLAZE banner (eligibility)', () => {
+  test('links repo and demo, states no pre-hackathon code with first-commit link', () => {
     render(<Banner config={CONFIG} />);
-    expect(screen.getByRole('link', { name: /github/i })).toHaveAttribute('href', CONFIG.repoUrl);
-    expect(screen.getByTitle(/EMBER2026/)).toBeInTheDocument();
-    expect(screen.getByText(/not affiliated/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Repo' })).toHaveAttribute('href', CONFIG.repoUrl);
+    expect(screen.getByRole('link', { name: 'Demo' })).toHaveAttribute('href', CONFIG.demoUrl);
+    expect(screen.getByText(/Built from scratch starting 17 Nov 2026/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'first commit' })).toHaveAttribute('href', `${CONFIG.repoUrl}/commit/${CONFIG.firstCommit}`);
   });
-  test('EMBER address is token-aware (z-prefix)', () => {
+  test('EMBER2026 address is CashTokens format (z-prefix), never q', () => {
     expect(CONFIG.emberAddress).toMatch(/^bitcoincash:z[02-9ac-hj-np-z]{41}$/);
+    render(<Banner config={CONFIG} />);
+    expect(screen.getByTitle(/EMBER2026/)).toBeInTheDocument();
   });
+  test('first commit is a full sha', () => expect(CONFIG.firstCommit).toMatch(/^[0-9a-f]{40}$/));
   test('shows network pill while not on mainnet', () => {
     render(<Banner config={CONFIG} />);
     expect(screen.getByText('chipnet')).toBeInTheDocument();
@@ -26,6 +30,10 @@ describe('BLAZE banner (compliance)', () => {
   test('deck link appears once configured', () => {
     render(<Banner config={{ ...CONFIG, deckUrl: 'https://example.com/deck' }} />);
     expect(screen.getByRole('link', { name: 'Deck' })).toHaveAttribute('href', 'https://example.com/deck');
+  });
+  test('footer keeps the non-affiliation line', () => {
+    render(<App />);
+    expect(screen.getByText(/not affiliated with any AI vendor or Exercism/i)).toBeInTheDocument();
   });
 });
 

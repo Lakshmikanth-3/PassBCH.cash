@@ -2,7 +2,9 @@
 export const CONFIG = {
   network: 'chipnet', // switched to 'mainnet' only at final submission
   repoUrl: 'https://github.com/Lakshmikanth-3/PassRate.cash',
-  deckUrl: null, // Widget Factory deck: added in Phase 4
+  demoUrl: 'https://passrate-cash.vercel.app',
+  firstCommit: '29388349185c1e553e30cd6fca99d296a25c6bd7', // 17 Nov 2026, first line of code
+  deckUrl: null, // copy of the official Widget Factory template: link pending
   emberAddress: 'bitcoincash:zrcvv9gjvgeeh6gesa2t3q0z40n3uzxwhua3m6rsyf',
   ticketSats: 20000,
   scheduleEvery: 2,
