@@ -43,6 +43,26 @@
     "solution": "b03b1345c90f53f7673e1941c8131b805427995b377cdeb0ecb69296dc29f871",
     "testOut": "ea1e061c27e6d298c1d2880db333e777f6b97cea348da885a5aca09ce6f354a2"
    }
+  },
+  {
+   "ticket": "3d2fc6010331a425c3fb0f12b6bc83a9c639ed1e10525fa50872ac6bd911a17f",
+   "start": "74a0384c37e15d7a35dc360288e293a49b3ab8ac00094cd8110613746cab7155",
+   "result": "b6dc2b38aba5a203db39723f21ab1e35fb8a0d82b87a5faab50a9f9b061445ac",
+   "slug": "perfect-numbers",
+   "taskIdx": 78,
+   "model": "openai/gpt-oss-120b",
+   "pass": true,
+   "passed": 14,
+   "total": 14,
+   "durationS": 3.08,
+   "startLatencyS": null,
+   "attempts": 1,
+   "startedAt": "2026-11-17T10:51:32.150Z",
+   "hashes": {
+    "transcript": "e09c38152b1f9dab9a1dbb16674246cd2c65c2dbdd881f868c202813a7f04c29",
+    "solution": "dcfc01a1847632e74f1f918998bb4b3d3d201e72f1cca670ecfaf2a01f239582",
+    "testOut": "5de6801217fb559ffdfab6ae4f4b5f6ff3f26bdb5e0a0fdcc568ab652244a71f"
+   }
   }
  ]
 }
