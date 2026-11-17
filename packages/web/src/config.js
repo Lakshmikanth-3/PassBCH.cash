@@ -7,6 +7,12 @@ export const CONFIG = {
   deckUrl: null, // copy of the official Widget Factory template: link pending
   emberAddress: 'bitcoincash:zrcvv9gjvgeeh6gesa2t3q0z40n3uzxwhua3m6rsyf',
   ticketSats: 20000,
+  // Operator public key and inbox (public data; the covenant is built from operatorPk).
+  operator: { pkHex: '031edc6ca15b97a905db2bf61f5d1341869a58754633e1f82c166b4e909d6767ac', inbox: 'bchtest:qzmuv37ealgxg3cm3t9vqawusm6q4t5wysv50yfxkn' },
+  rows: [
+    { agentIdx: 0, model: 'gpt-oss-20b', label: 'Small model' },
+    { agentIdx: 1, model: 'gpt-oss-120b', label: 'Large model' },
+  ],
   scheduleEvery: 2,
   explorerTx: {
     chipnet: (txid) => `https://chipnet.imaginary.cash/tx/${txid}`,
