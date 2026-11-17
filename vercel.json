@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "cd packages/shared && npm ci && cd ../web && npm ci",
+  "buildCommand": "cd packages/web && npm run build",
+  "outputDirectory": "packages/web/dist",
+  "framework": null,
+  "headers": [
+    { "source": "/(.*)", "headers": [
+      { "key": "X-Content-Type-Options", "value": "nosniff" },
+      { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+    ]}
+  ]
+}
