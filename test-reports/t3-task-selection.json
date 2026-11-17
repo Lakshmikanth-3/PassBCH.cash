@@ -1,0 +1,1286 @@
+{
+ "repo": "exercism/python",
+ "commit": "479f11b44b02337b0413e805b948491c2179615a",
+ "runtime": "Python 3.14.0",
+ "included": [
+  {
+   "slug": "accumulate",
+   "refSeconds": 2.74,
+   "solution": "accumulate.py",
+   "test": "accumulate_test.py",
+   "instructionsSha256": "68d95e092806504b225bf5382a2c53bd6b6817b04146fb7ce8280fd3014259ab",
+   "stubSha256": "bc2a718d8309b8220e41847c9b3a47e94992c19f11629cbb451366012e760b41",
+   "testsSha256": "002714c10882da63b5941860ff634a92a6f6b637d2b79423f6e2b764c3c7e4b8"
+  },
+  {
+   "slug": "acronym",
+   "refSeconds": 0.93,
+   "solution": "acronym.py",
+   "test": "acronym_test.py",
+   "instructionsSha256": "091820a591c52da503fd3a8c5c86c15ba2516fcebedd035fafe9659a41d2679b",
+   "stubSha256": "85b53d4bac0ed9df97618a3b6a0613603b35a2f34f0519e04d3bda111d46063a",
+   "testsSha256": "2a08a7807da414eeb2e7a0dac4eb143753860e9f5e262444ef7a969c2004431d"
+  },
+  {
+   "slug": "affine-cipher",
+   "refSeconds": 0.86,
+   "solution": "affine_cipher.py",
+   "test": "affine_cipher_test.py",
+   "instructionsSha256": "c1e19f7a4bea925ee03b67074d6e615b4c731d81f899317893d8ee75f3694582",
+   "stubSha256": "bb9ebdbf0967eb3306182d905cfe348e5277eac867ce848a1dc067e7a8c23fde",
+   "testsSha256": "b2c014d9fa3e6617acbc4b9a6a610d06941cdbe621bbe72ece01009059bdd4f8"
+  },
+  {
+   "slug": "all-your-base",
+   "refSeconds": 0.86,
+   "solution": "all_your_base.py",
+   "test": "all_your_base_test.py",
+   "instructionsSha256": "9614f87b301fcc4153ad3743692a2d94dae38d5da9777339ba88de8567898dc4",
+   "stubSha256": "1bbe20b55df86de28929c3c2be249ceab9458ae9e11d40374b8ba265e975f339",
+   "testsSha256": "9e68a2fdb9abb7c67b2531814e211b4a7db1391a2ad7797761335eaaf3df2d07"
+  },
+  {
+   "slug": "allergies",
+   "refSeconds": 1.02,
+   "solution": "allergies.py",
+   "test": "allergies_test.py",
+   "instructionsSha256": "0558c1110db03892a71ad237b75953b6b73be445a49c3b0e37d491cb3b76c2ed",
+   "stubSha256": "07907097091079023c43d6ae3f774806013c9b8fe097b7ffd0a036ca829ef5e0",
+   "testsSha256": "dc4f615451f8133e5ee0c324ca76a1e1fc0a7d431675df3bb2420eb62560ca4b"
+  },
+  {
+   "slug": "alphametics",
+   "refSeconds": 1.12,
+   "solution": "alphametics.py",
+   "test": "alphametics_test.py",
+   "instructionsSha256": "80c912b487cb5c0c2a9db537e7eef047b72fcb35eab062c30547192855ef6655",
+   "stubSha256": "e2b84f6110d2b28b0fe0cb330d81808c76b15e7ddda62add7fbd9060554c8ee7",
+   "testsSha256": "6cfb3440160e234f0e38ebf1245789e1324c2f027324613f609c3214bd6161e7"
+  },
+  {
+   "slug": "anagram",
+   "refSeconds": 1.16,
+   "solution": "anagram.py",
+   "test": "anagram_test.py",
+   "instructionsSha256": "f68f3deb92c675b4dd68bf69a0c5f8fb5e4ceb0cf8eb39469f7c7b51fb557542",
+   "stubSha256": "9510f35c9eb295059b53cba0b9f9751f59f98f38d95e5b0f9946470feebf7556",
+   "testsSha256": "576454a9d2db4895ffebb8c586cac3557c3a5ff4efc37e8e4061df5dccf90294"
+  },
+  {
+   "slug": "armstrong-numbers",
+   "refSeconds": 1.32,
+   "solution": "armstrong_numbers.py",
+   "test": "armstrong_numbers_test.py",
+   "instructionsSha256": "9d930f258c5b5a62b63c9c5bff23371c4b3237dd03e79ebc35be3c2f49aa6cc8",
+   "stubSha256": "e96ce481c884c4fc12b735302493b8a8592a97ff89c8b0564cb8b1df70e258e0",
+   "testsSha256": "a426ddbbeecc22d6068d3d509230ee52601a574dcc7727817e1df4b37e7d1cb7"
+  },
+  {
+   "slug": "atbash-cipher",
+   "refSeconds": 1.03,
+   "solution": "atbash_cipher.py",
+   "test": "atbash_cipher_test.py",
+   "instructionsSha256": "dc855ee6574538883cfe878ba89d497a02d7207a9d4e3bfdda19bda18af9d44b",
+   "stubSha256": "0791b7d2951106aa0a0b22e24dbe4efa2ce108da3e8cff005aacad425f31b8af",
+   "testsSha256": "ad2e54f9090b06d8750fbe46eb5e669ac6673aa53fd61e38c6474f15b235b5ad"
+  },
+  {
+   "slug": "bank-account",
+   "refSeconds": 1.03,
+   "solution": "bank_account.py",
+   "test": "bank_account_test.py",
+   "instructionsSha256": "5da080c97d0a645e6d889167f4fcf23247a50866a4623f563630d7f715ddb29c",
+   "stubSha256": "f8a7e72cc621a83177ca664a0b66306bf284f31574bde88fb7107303219c47cd",
+   "testsSha256": "57d02069153d7a4e88e672403d7886a6692af785f50f90c6ca6125dc2d9b5971"
+  },
+  {
+   "slug": "beer-song",
+   "refSeconds": 0.9,
+   "solution": "beer_song.py",
+   "test": "beer_song_test.py",
+   "instructionsSha256": "a920f4c56366ee5a55350778c8eb420a8836aec60252ddeb1db46c838972c603",
+   "stubSha256": "7dd70938611e8d9513284527b2998ef30eabab3cc23d0777a2b6bbd9c4200a2a",
+   "testsSha256": "1b299a29dcaf75c37854fe3dd7c31b2b38a4e210eb27348be1696481d1e6e880"
+  },
+  {
+   "slug": "binary",
+   "refSeconds": 1.0,
+   "solution": "binary.py",
+   "test": "binary_test.py",
+   "instructionsSha256": "0ceffd177ade70e003de1db87822968952039f311bbd5febb0323ecb53f9a67a",
+   "stubSha256": "ecc6bef551421510aaffa0ac1272989ff62775a4c1923fc4206abc10d671515b",
+   "testsSha256": "cafd7a7fe00d5a9665f481564d9c2a628e29861f03f0ff97cbc28b1606041089"
+  },
+  {
+   "slug": "binary-search",
+   "refSeconds": 0.98,
+   "solution": "binary_search.py",
+   "test": "binary_search_test.py",
+   "instructionsSha256": "39aae2215dea5d49fbcf60b5fbf5373f5387984135244d8af0433b56de75a1fd",
+   "stubSha256": "3ef8e46c2ce429da98042d39f04cb3de30cd80cc497e703b81965e3f12524030",
+   "testsSha256": "ba1e84c675062e9ed7c907a6fa1f6a561c8fcc16c81016f51054070f13aef5e0"
+  },
+  {
+   "slug": "binary-search-tree",
+   "refSeconds": 0.95,
+   "solution": "binary_search_tree.py",
+   "test": "binary_search_tree_test.py",
+   "instructionsSha256": "2261d5b30656288806b0a3de17ad5552d060efbb9d038d883272026f4ee39410",
+   "stubSha256": "888a37706b5aaafee795fa8c2f6ac566a16f90eb4ebba53cc4959473643129c3",
+   "testsSha256": "eafcb54df89fc5c848ff77a22fda3ce0984f851fa5c44f261e95915439702f3e"
+  },
+  {
+   "slug": "bob",
+   "refSeconds": 0.99,
+   "solution": "bob.py",
+   "test": "bob_test.py",
+   "instructionsSha256": "9a5fca0a246669dba0ccfd85aed91216b742271fdd0227ba712162101286e83d",
+   "stubSha256": "b51b14164a8507ca17a33dac34fa855f4e81e73f552aded43fe4835a73ced37e",
+   "testsSha256": "f79cc31e7149d8cc51ec291b7684b79a448a4c935950c861c0db3002ea62e484"
+  },
+  {
+   "slug": "book-store",
+   "refSeconds": 0.99,
+   "solution": "book_store.py",
+   "test": "book_store_test.py",
+   "instructionsSha256": "da6c12fa73d23c1324385070a1d7fba008f2ddd0cf26a16616e6ee1cc392eedd",
+   "stubSha256": "d381e349e634954389de8193fae50135e3ec80dbe8682fb52e0237a73c575dcf",
+   "testsSha256": "b98c53afb7d8ca76c70914a60f999eb14e1feea71621936cf650a94e056e33e0"
+  },
+  {
+   "slug": "bottle-song",
+   "refSeconds": 0.93,
+   "solution": "bottle_song.py",
+   "test": "bottle_song_test.py",
+   "instructionsSha256": "cd2bc1f6cbae2ed70c4ff8a5ab0e221f5c0b04137b8ae8e6de6868d36bf77f29",
+   "stubSha256": "7dd70938611e8d9513284527b2998ef30eabab3cc23d0777a2b6bbd9c4200a2a",
+   "testsSha256": "a6fdddb47960a7ba68124273a4590b00347165503299182511221f7647d820f4"
+  },
+  {
+   "slug": "bowling",
+   "refSeconds": 0.96,
+   "solution": "bowling.py",
+   "test": "bowling_test.py",
+   "instructionsSha256": "da87c1224cdea9ce96ddcfa8f55f4ef885a4f69820d4c7b6007d396d1b0b5365",
+   "stubSha256": "31b164b11630509c28e931eacf0e3afe0aad74447236c399bf1209513938944d",
+   "testsSha256": "2caebee15018a7fb02f248c8fd31898b355188832e64ada825f17693292f9837"
+  },
+  {
+   "slug": "camicia",
+   "refSeconds": 1.03,
+   "solution": "camicia.py",
+   "test": "camicia_test.py",
+   "instructionsSha256": "946d786f87275ba0fcc353c17923e3a500ddc8b448fee4baa2f877f22f94887b",
+   "stubSha256": "eefd7ab1acb52b90134a7324111c46811b0ed68812c1db32a1d47cae2d667915",
+   "testsSha256": "a1e7943be545dcae955257ebb717f6e8b823278cb4731b5b15df25a8ad643cfb"
+  },
+  {
+   "slug": "change",
+   "refSeconds": 0.96,
+   "solution": "change.py",
+   "test": "change_test.py",
+   "instructionsSha256": "c96977804f004ce322aef32289b9d21ed3d4e04ce9c5d8a058902ea3ea72b7b1",
+   "stubSha256": "3076ec75018dc0ab5f1374f9e7d49609c40ab58de0cbcae6d211068112d99c34",
+   "testsSha256": "135c60dcc062f8789594851c6350f68dffdfcce47887d02c15b11a31be7ffac1"
+  },
+  {
+   "slug": "circular-buffer",
+   "refSeconds": 1.17,
+   "solution": "circular_buffer.py",
+   "test": "circular_buffer_test.py",
+   "instructionsSha256": "f734351cc2d0019753e56fe85096ac475d500f6b1ebadd461fd8b84e1fbcc83b",
+   "stubSha256": "a67f8d3d10f55fd67d6d0754ed210073d8cf48b5511f904ebc5442421f34ae43",
+   "testsSha256": "c439a276e987fdd7fddcbad62383915cba40b72cd2781775c944c96d8f1e7b0c"
+  },
+  {
+   "slug": "clock",
+   "refSeconds": 1.27,
+   "solution": "clock.py",
+   "test": "clock_test.py",
+   "instructionsSha256": "4433b97e7efe0a7ad243da3d8447ae3eb88da3b92da3dd3f7f93b01f8527fa63",
+   "stubSha256": "15c8035676daecd6b0d4d840ef781b5f76c785f3e56f0901dfb973d329abc2b9",
+   "testsSha256": "a4ec1f1fe75494a30865ff16db454b8ef0c7a27f7ffaa0bec07c394a71c352f0"
+  },
+  {
+   "slug": "collatz-conjecture",
+   "refSeconds": 1.38,
+   "solution": "collatz_conjecture.py",
+   "test": "collatz_conjecture_test.py",
+   "instructionsSha256": "35c7efc89d0c438731cae7b6fc82e5c12a0416c50e89e86c936cef2abab930f5",
+   "stubSha256": "96629e4ada629bcc9b9474b00fb95c3bebd28a1eea504bc0bf369f9cfe060acb",
+   "testsSha256": "47f8b10a03bd7b4b7ddd34d3f52148d55e1b974db82f490e7d86e2d6a0636497"
+  },
+  {
+   "slug": "complex-numbers",
+   "refSeconds": 0.93,
+   "solution": "complex_numbers.py",
+   "test": "complex_numbers_test.py",
+   "instructionsSha256": "e7e5ce9b4fad138210468b7a89cbc34eaaf3be1c67f138d8b2f7ff95e94ef805",
+   "stubSha256": "42a34073381c587a10fe8392ea391009dc137021eecaddf5c4153daa4ca03e7c",
+   "testsSha256": "cecc77d47407813dec7b826f8b831c60e8f7437d5ae3bd2dcb4aebd43185548c"
+  },
+  {
+   "slug": "connect",
+   "refSeconds": 0.9,
+   "solution": "connect.py",
+   "test": "connect_test.py",
+   "instructionsSha256": "829e94baace0a651410cbe440eec7a4c7001990e5cbfbbb626384d6799ceecaa",
+   "stubSha256": "96f9c1d9570a5abd2030d625993732d4fe78485205c8c7062f29bba6a429b472",
+   "testsSha256": "85641898dbf4788441bf1408cb9c52c7b0be29f50da55429401788fbf992c2bf"
+  },
+  {
+   "slug": "crypto-square",
+   "refSeconds": 0.92,
+   "solution": "crypto_square.py",
+   "test": "crypto_square_test.py",
+   "instructionsSha256": "d8c9f3de5ac4e7dd69b6154cb65c9da758e56f8c5ffa92966b9636f173c8442a",
+   "stubSha256": "bf7f06b13933164d71581ef717db6e12cdea082d7757bab97277957ca118ae7a",
+   "testsSha256": "ac701f136e0fc52d88700b30e42576c76da4643f723ea4b871e933b3db5e3cab"
+  },
+  {
+   "slug": "custom-set",
+   "refSeconds": 0.92,
+   "solution": "custom_set.py",
+   "test": "custom_set_test.py",
+   "instructionsSha256": "1a6d86490aa13c4f35f5400215d8b70b9ada99f84cefefb9725552cbcd64003d",
+   "stubSha256": "9d35c9374faa5b458b65ea9fd5b6b1f410c6879bd624e5cf973b6ecc347cd5a0",
+   "testsSha256": "3e96240875a4b04cc4faed1391f5fab12e2a194945078e9ae1980222ae4964de"
+  },
+  {
+   "slug": "darts",
+   "refSeconds": 0.91,
+   "solution": "darts.py",
+   "test": "darts_test.py",
+   "instructionsSha256": "84f09eae95eb20847885b0cdb585f6fe4674a462eeb5afcbf77004adef7ed161",
+   "stubSha256": "8d3c27656db6fbe0a98dcb5314e478fda91e6c440898a9c98e89e4dddd53f7f4",
+   "testsSha256": "688519889ce51f5146167681ed72b78b320b2a677fa3d89e4a54189386f8071a"
+  },
+  {
+   "slug": "diamond",
+   "refSeconds": 0.87,
+   "solution": "diamond.py",
+   "test": "diamond_test.py",
+   "instructionsSha256": "0f7ca258307a3364911711864a64cabafdf5b0dc9ad8abfeea3c7983c8cb1a89",
+   "stubSha256": "aa77171b42cf60700b0da5a1cead7e899f20fe0e05c10a891dccede1da72881f",
+   "testsSha256": "207430480c831c521b46d7b2cc17ae787639e72b51a26ab9fac22a39f27a8656"
+  },
+  {
+   "slug": "difference-of-squares",
+   "refSeconds": 0.88,
+   "solution": "difference_of_squares.py",
+   "test": "difference_of_squares_test.py",
+   "instructionsSha256": "18528f59bbfd007fb463ad13a7daf4452a637903bbd87e570554d8f74e643d7d",
+   "stubSha256": "876e800cf547de00f48e397e79a3cc8a1ec2d3c7845db71847b3fdb36a86e90e",
+   "testsSha256": "7d1ca2b27c81395a6db59f7475cf888493c47b6ba81583c8d0081291f7b97206"
+  },
+  {
+   "slug": "diffie-hellman",
+   "refSeconds": 0.85,
+   "solution": "diffie_hellman.py",
+   "test": "diffie_hellman_test.py",
+   "instructionsSha256": "c0fedbdffa3d59e0d526aac027a2bc6c531c1ff443acc1a58e8da14abc2d43de",
+   "stubSha256": "37b5b06973db01958a2d804857f50534bae1ea79b835c2e843bc99a15d0bddc6",
+   "testsSha256": "391a0eba1500c1b27c29362d2edd9e6b75f191e142daaee6c207d1242fdbaba8"
+  },
+  {
+   "slug": "dnd-character",
+   "refSeconds": 1.28,
+   "solution": "dnd_character.py",
+   "test": "dnd_character_test.py",
+   "instructionsSha256": "4896e12fe6318df6f1137c3d07b0920ce22db10789396cd15c9269d20a83e302",
+   "stubSha256": "a469f8a995231e901233d96f306198b185433e7b9e1f77e7a7b0b21c65203a6f",
+   "testsSha256": "8c0f4174bbce5eb3058483811b941945e9e7238c33b60b88a782a7d599728025"
+  },
+  {
+   "slug": "dominoes",
+   "refSeconds": 1.0,
+   "solution": "dominoes.py",
+   "test": "dominoes_test.py",
+   "instructionsSha256": "72a182ec1082fa38352cb311f6ba16601b4e98d3018376434a880ef329446ea4",
+   "stubSha256": "33fe8023176608c4a3ae6472bc745737b39d5f1b090dae481e769ad3ff5576ae",
+   "testsSha256": "0a2b0cc3f2b8214d88eb2befe0ff84a50f927f04c6bb048af87915247cdd3d42"
+  },
+  {
+   "slug": "dot-dsl",
+   "refSeconds": 1.04,
+   "solution": "dot_dsl.py",
+   "test": "dot_dsl_test.py",
+   "instructionsSha256": "5aa7e30457509a3de292187f591137bec7d99f592b66869c1092c64239bce30b",
+   "stubSha256": "38fea44e4add09195c2d8955a54afba3280dec11109907c32f142971ed5bf95a",
+   "testsSha256": "5ef296ba418ef985346decebbfbe847d620ae9578917d75d8a2f5cb63cda7297"
+  },
+  {
+   "slug": "eliuds-eggs",
+   "refSeconds": 0.85,
+   "solution": "eliuds_eggs.py",
+   "test": "eliuds_eggs_test.py",
+   "instructionsSha256": "1aba0deba3936d8f21b5e61c9b204c1c97523ef86dd1cb8949962656d357a9fb",
+   "stubSha256": "9caaf59ed48ec21b36c98b375640e8af2336f2408f6563270bd9fdd902f5bde3",
+   "testsSha256": "70277173367a8120d9118272b9c22febab8fce1c04a0034a8fe0fa4f45bc87b5"
+  },
+  {
+   "slug": "error-handling",
+   "refSeconds": 1.06,
+   "solution": "error_handling.py",
+   "test": "error_handling_test.py",
+   "instructionsSha256": "b037d571c318e71c976882c8f011c19f9f76406a4df0aa07e29666a27aac6771",
+   "stubSha256": "bbaa410a885a7b4a56face2c4ac99d9c763709d3a4f1015fca6fa36deb1c01a8",
+   "testsSha256": "fce0f5ed0bee803d8d18fdd09fa4128dcfe42b4b1f2a967af7304a09fcba70c1"
+  },
+  {
+   "slug": "etl",
+   "refSeconds": 0.9,
+   "solution": "etl.py",
+   "test": "etl_test.py",
+   "instructionsSha256": "39df0e2978424d8d3d43ff713df88065170e13f4a45ead1abc0ec88009500765",
+   "stubSha256": "09dc6bae2eed6010cdb76bb814e6b4d5ab0243b8df04edf43f042c066643e49b",
+   "testsSha256": "837f07cf1f35a170f5c5f90dbef331f5a77b8dcdd9e2b8d96794bd16a674919b"
+  },
+  {
+   "slug": "flatten-array",
+   "refSeconds": 0.89,
+   "solution": "flatten_array.py",
+   "test": "flatten_array_test.py",
+   "instructionsSha256": "aca594fec6712aa4ebba816f54f7fad2b3f153112cb03a80c732a9a1e9631eae",
+   "stubSha256": "058f704c0506788b41f811733dfbd27e6a295110e8c6ac225bde7bdaba0d8c3b",
+   "testsSha256": "0d32754a0d45df93f7a57a09357c4f480d570b42ff88a99d089d6e9ecbc97693"
+  },
+  {
+   "slug": "flower-field",
+   "refSeconds": 0.88,
+   "solution": "flower_field.py",
+   "test": "flower_field_test.py",
+   "instructionsSha256": "65fbec486a02ddcf371c5217cac4d671fac38fd09c49f62504468506e54d4a92",
+   "stubSha256": "4eb062cf195f4478ce6394485eb59fdf14ce2c6a678ab134596d0187b0414e11",
+   "testsSha256": "45b2a3f13d5280a7d787a00e3be914854d4430fa7560fb5050997272fb54603c"
+  },
+  {
+   "slug": "food-chain",
+   "refSeconds": 0.92,
+   "solution": "food_chain.py",
+   "test": "food_chain_test.py",
+   "instructionsSha256": "6e1045a5c07b573825f856b6b26df4b0349dd502cc0a7057c7f0e72b4581fbed",
+   "stubSha256": "ac801e30e11fae0952f34615c2ac37be7edcfe51eb6bf9c74db845095be8a9e0",
+   "testsSha256": "21a4bd9c530985c8cd96447dc97b8940e5a498e3c8d5951d9890c9a513d08ecd"
+  },
+  {
+   "slug": "forth",
+   "refSeconds": 1.01,
+   "solution": "forth.py",
+   "test": "forth_test.py",
+   "instructionsSha256": "f8efa4c94a9018479fb38ec89a53bb0305065fe5343611ac085b7e930be68801",
+   "stubSha256": "eba8d91e17a68cbc5437e4576aa325f2780cfd6221353e2505a6452bbd261028",
+   "testsSha256": "53abdd68b938b2ab21b433d00cbf1f4138e25f7343f7499cf6b529d66dc35fd2"
+  },
+  {
+   "slug": "game-of-life",
+   "refSeconds": 0.94,
+   "solution": "game_of_life.py",
+   "test": "game_of_life_test.py",
+   "instructionsSha256": "b8eaeccb8e47fb245cd60efd3decda532204de73701d050b9bfd3192dde0ddce",
+   "stubSha256": "c02802a384740467347df05a3bc5f35c3c70af815ed947937eafb2c6faa398b2",
+   "testsSha256": "366be71d6114b0f2082652d4366526c4ffff238609691403639a79b374fb0846"
+  },
+  {
+   "slug": "gigasecond",
+   "refSeconds": 0.89,
+   "solution": "gigasecond.py",
+   "test": "gigasecond_test.py",
+   "instructionsSha256": "29f8b08b089614e8981a72c5e4055968a38f763af876770a380f30dcd8a30837",
+   "stubSha256": "f87d51e5119171c023b6b479f8631ca79761e8269bbbc4fd8c22b73afea946c4",
+   "testsSha256": "a8d841ac83c04a4e63621851afdacb4420e0556fd2d700d1cbdb764b23137127"
+  },
+  {
+   "slug": "go-counting",
+   "refSeconds": 0.88,
+   "solution": "go_counting.py",
+   "test": "go_counting_test.py",
+   "instructionsSha256": "22ce1b41f520bffa79ee36bb8eda83b4c13ba10d3bb57968ebc3afb0e9548237",
+   "stubSha256": "7306bc3c454577c16d4bb0f87adbedc79fef394699fd725dc79c38c38ff1ec80",
+   "testsSha256": "e0aa13816ac5d745c07e7f6074a7183340376aeba50b19d0f1954a3ed62f6fe5"
+  },
+  {
+   "slug": "grade-school",
+   "refSeconds": 0.86,
+   "solution": "grade_school.py",
+   "test": "grade_school_test.py",
+   "instructionsSha256": "d714ff706cd1ed5b8c96cd9a370e90d46bca77808145ed40f6027a2a5af985f1",
+   "stubSha256": "b09016abc951b1e501afc2e88ded057cab7eb3274aacbee4dc06078ac2d2df12",
+   "testsSha256": "1be77316bead9e21853a6f70d91576d078830054bb2c6772d4353e9e394474aa"
+  },
+  {
+   "slug": "grains",
+   "refSeconds": 0.89,
+   "solution": "grains.py",
+   "test": "grains_test.py",
+   "instructionsSha256": "907899ce8c94ace024a75a0fe7f7c13ca5f45084018df20a4f05f80341138b8f",
+   "stubSha256": "58e1cda67c244316c7b7b7695b786f2c3242feaca4c6f5f22a2c81514cddf0d6",
+   "testsSha256": "33e30f115e3a3617b0860be2c91361d47feb82229fbb148fd5b5642afc19c4d8"
+  },
+  {
+   "slug": "grep",
+   "refSeconds": 0.95,
+   "solution": "grep.py",
+   "test": "grep_test.py",
+   "instructionsSha256": "23fbebb19d1d3651efff0d0a161bc40e8f4251642e046209ae38413d598f9233",
+   "stubSha256": "f3927d3356f8e7acafb365387c2689c949246e4e5ef4859824bcc19bcad37169",
+   "testsSha256": "9ff28efb378321edf792a266f8b1a142f3751b45064fd14742d44a6bdf91832d"
+  },
+  {
+   "slug": "hamming",
+   "refSeconds": 0.92,
+   "solution": "hamming.py",
+   "test": "hamming_test.py",
+   "instructionsSha256": "157c5a5ed20d8963a90747096ccbbc49630f7dcf68ec8726cca5ffe976cf3ab2",
+   "stubSha256": "8ea3540b9a3358daff81392f1ec71f320d29ebbd6c3618a4a70414e7f3cc8232",
+   "testsSha256": "9fedd1ce5a9ade422134f1bc78cdd803d5b6c5e656ccc6a373b0aa5280650e10"
+  },
+  {
+   "slug": "hangman",
+   "refSeconds": 0.91,
+   "solution": "hangman.py",
+   "test": "hangman_test.py",
+   "instructionsSha256": "05a2b69165d1bd9410b661085f7e0ea95ef38d38d9c216b850c45c78f300d6ed",
+   "stubSha256": "63a77747ed4d2280d08aa85d68da66b37ab745750c9f50e9af8b22acf7c3ab1a",
+   "testsSha256": "dbe4109433123edf58c96624ac52200936f9c808eb1f6d5ff3415a19f37794d4"
+  },
+  {
+   "slug": "hello-world",
+   "refSeconds": 0.87,
+   "solution": "hello_world.py",
+   "test": "hello_world_test.py",
+   "instructionsSha256": "7cfa75468163ed40ee239175327d126b00c9ee5575c333cdf1c78106918d4661",
+   "stubSha256": "de6825a50313b82bd21015d5e3d14c1426e0eb801d02f61eac6a0e8d143b2107",
+   "testsSha256": "d7bb64b95128bd00245e364c4152960334f62cad6f1dd26426ca409311aaf3cf"
+  },
+  {
+   "slug": "hexadecimal",
+   "refSeconds": 0.87,
+   "solution": "hexadecimal.py",
+   "test": "hexadecimal_test.py",
+   "instructionsSha256": "9984b5d193a9101f94e982f0e4e16e642e7e3aa8b4fbe5702d0324d1e6a145f1",
+   "stubSha256": "dffb9d17db04b081f3e63f7a3031fe1a784d2cb3b43921386c96598fae6a8fa0",
+   "testsSha256": "ff3a251a932a8079bd89763bd45c24a6f6c77efde8e4601d1afcd30bc2f15354"
+  },
+  {
+   "slug": "high-scores",
+   "refSeconds": 0.9,
+   "solution": "high_scores.py",
+   "test": "high_scores_test.py",
+   "instructionsSha256": "7321b349b0ef6d6f3347d5920426efdeaae5ea9e5b4544c1091997194a59f6e7",
+   "stubSha256": "82d7005452b463c140b613251fd476cc2d7614e02e16a7de6cfd6307b1eb87f6",
+   "testsSha256": "7df110f30fbc000cc5af2010263b4a064410a98228395e576cdb3772ce342aeb"
+  },
+  {
+   "slug": "house",
+   "refSeconds": 0.9,
+   "solution": "house.py",
+   "test": "house_test.py",
+   "instructionsSha256": "60ed7d041aeb6c81de98d2e751d455b0d0aa087f3b4dedb86f1f402590f75990",
+   "stubSha256": "ac801e30e11fae0952f34615c2ac37be7edcfe51eb6bf9c74db845095be8a9e0",
+   "testsSha256": "6c3349d8559df64d1c3d5a4c2731bc10d02787d382c7fc023b662a8b85ccc60f"
+  },
+  {
+   "slug": "isbn-verifier",
+   "refSeconds": 0.9,
+   "solution": "isbn_verifier.py",
+   "test": "isbn_verifier_test.py",
+   "instructionsSha256": "957e4690040b5fd3060e240af888b19bdcf0dfc4f937758a76e47cf44d21bfc6",
+   "stubSha256": "153bf419b5a7165c9562b1b857b60faaceed4f907ad279a4eb3b6dd5a8b7885b",
+   "testsSha256": "c6e96a6b4df7cac1dc9088ef3c2251a7464d5694fd6e1eb3d29b47fd23af9d6c"
+  },
+  {
+   "slug": "isogram",
+   "refSeconds": 0.85,
+   "solution": "isogram.py",
+   "test": "isogram_test.py",
+   "instructionsSha256": "12128d91b539c3c0c5bb9068377bfe0ad6a25e836f1269de444cacad1c3cbb6b",
+   "stubSha256": "a8ad99b1c507262ae9c79c1c20323adfe250a8c1dc89c424052d211dac2c40ad",
+   "testsSha256": "72ed1dc2e6ccac469cdea80c482006f18216a017a0de29d0fe80eb8f00cc91bb"
+  },
+  {
+   "slug": "killer-sudoku-helper",
+   "refSeconds": 3.07,
+   "solution": "killer_sudoku_helper.py",
+   "test": "killer_sudoku_helper_test.py",
+   "instructionsSha256": "ab6a547b956ec03cbb10b00abb8e9a8107835fb087e08ae1888d74018821f85e",
+   "stubSha256": "01c4d03833c0175ff088368329662b21a1d0fa0e6ba1526e8b8f6909071d01a5",
+   "testsSha256": "b47a904fdd4ace320e79ed19b4d6dc6af5f6ae2d7e53a8b081bbc4c781a82d4e"
+  },
+  {
+   "slug": "kindergarten-garden",
+   "refSeconds": 0.85,
+   "solution": "kindergarten_garden.py",
+   "test": "kindergarten_garden_test.py",
+   "instructionsSha256": "383c744ce8c2c345995223067ee75a966f7144c64e3a79a5b894ef342cea7dce",
+   "stubSha256": "218035f646b8d6e003519763b2ba1c1c41d04b8295f097384a0cb56d55d8f703",
+   "testsSha256": "8b13248ba02ce2a3ae9a54007ed5342e4ae331cb0bd8d800f01b25d0382d728e"
+  },
+  {
+   "slug": "knapsack",
+   "refSeconds": 0.88,
+   "solution": "knapsack.py",
+   "test": "knapsack_test.py",
+   "instructionsSha256": "a85419155c39dadc88c0ec37d7d66cf291fe0cc68c7ea0d72367e4f5b9123053",
+   "stubSha256": "3312f5ebcf8ef9b72ce2f9b44da57d9637845f656cf322e31c0afd3a20317a25",
+   "testsSha256": "a0d6e2f83011c79f5d063f07a5d492ba1295b89400a8258089d5b409ec412ec8"
+  },
+  {
+   "slug": "largest-series-product",
+   "refSeconds": 0.92,
+   "solution": "largest_series_product.py",
+   "test": "largest_series_product_test.py",
+   "instructionsSha256": "275d90cee498aa2b7f3c485200585d27a9516f4334f1fdd7a9b108d2c571783b",
+   "stubSha256": "2808f0f3d8d8a4dcf43534e4fea39ba54c97ae048dc934f2356dcb197bb6359e",
+   "testsSha256": "694ca29b07dd5e0ce8db92b7a739428004aaa27da5e0e9df96b514ca6473b69c"
+  },
+  {
+   "slug": "leap",
+   "refSeconds": 0.89,
+   "solution": "leap.py",
+   "test": "leap_test.py",
+   "instructionsSha256": "06c4b2e1836cfb563ef3cab8223fdf6634c00c85c742a3c7c930986b21bcad27",
+   "stubSha256": "8fac247c7555ba272db4806982c773b781e034a2bc7c9434aa93124ff5ea8b38",
+   "testsSha256": "0af25e0fc6d88c4417bcb9796894393c2d92573abf54d75e40d044196a995605"
+  },
+  {
+   "slug": "ledger",
+   "refSeconds": 0.99,
+   "solution": "ledger.py",
+   "test": "ledger_test.py",
+   "instructionsSha256": "875156c5bce133ff34c9879179e01bc1bbe1c1777bc184b55e7fb49f6a7cc139",
+   "stubSha256": "dccac6acc68508ad4b52838380d40e21c08e88cbfe365b071c5c9bd0e0ac731c",
+   "testsSha256": "3a984f3e04dc616887ab3d62a4ee7f4e937a3f89244b62e25b103259b23bf0f5"
+  },
+  {
+   "slug": "line-up",
+   "refSeconds": 0.87,
+   "solution": "line_up.py",
+   "test": "line_up_test.py",
+   "instructionsSha256": "51d5b94e8b17566569eb8f7463abc482765e3a066be78c3baa8086bae6ac69a9",
+   "stubSha256": "f5019aa57dd14e8986e4ca68d6075ee2642231e726fd1156183dacd9bba585c2",
+   "testsSha256": "8649c2fc68f8099e22c65adffcf662be25e0c23b5cd0395cd7b4faac29b7087e"
+  },
+  {
+   "slug": "linked-list",
+   "refSeconds": 0.9,
+   "solution": "linked_list.py",
+   "test": "linked_list_test.py",
+   "instructionsSha256": "9fe0f02e4a89c47e2dffb304ffda1e46de2d3d5419cd211fa4ee85aa2482e65c",
+   "stubSha256": "2388194a581f80d3d745d380856ef642ea1eb087822d3dfcf5393af54a7228e4",
+   "testsSha256": "0b6827fea133faa97a720eccf52f82e4cabf12c46dd0322cc0909711d8987a7a"
+  },
+  {
+   "slug": "list-ops",
+   "refSeconds": 0.98,
+   "solution": "list_ops.py",
+   "test": "list_ops_test.py",
+   "instructionsSha256": "6d0bbb8624e6cde19e54d9de5c443bb6c165a28f2503200f26e4f15c8ad2a67a",
+   "stubSha256": "601f879d0d0b930e0e0f410ff8c84cbc95a0c7bbd5cf895c0442cde0b1ac5a43",
+   "testsSha256": "6ec752e7e8753aec61e4ae7109bcd338ee043114243e9ecc886e90bb5f0779ec"
+  },
+  {
+   "slug": "luhn",
+   "refSeconds": 1.03,
+   "solution": "luhn.py",
+   "test": "luhn_test.py",
+   "instructionsSha256": "3f3551e3270613828b08185e93f01b34eed6b9d1b472db7c165f83b98460a2be",
+   "stubSha256": "4d8f880609cb26b47d503bd39aec178eccf9820347b186acf3cf2e0b0ec84d4a",
+   "testsSha256": "ec17af85bd6a704d8221d8396af332d661235797c8b8e85f8fe6afda8e3df924"
+  },
+  {
+   "slug": "markdown",
+   "refSeconds": 1.02,
+   "solution": "markdown.py",
+   "test": "markdown_test.py",
+   "instructionsSha256": "7b283623fe2fa12a850d8856550c946ddb8e1fad3d88ae2370aced6ecddef281",
+   "stubSha256": "e8ea4b57e059cf13335368e4345764c2e18eed625c3fe816796e44be5f92277c",
+   "testsSha256": "bcea38a38a146e420fd17b1756e5a59fa33a0d08acfae8dd12f53b22f3cdf2a5"
+  },
+  {
+   "slug": "matching-brackets",
+   "refSeconds": 1.31,
+   "solution": "matching_brackets.py",
+   "test": "matching_brackets_test.py",
+   "instructionsSha256": "08e2315b5950f9663e2a7781811b8a89c6a9d4cc27ec7c540e21f37a5b090331",
+   "stubSha256": "90d4286d39f655b4919d7cff72196e31c4aa9b50bce8e1ed9a191f1b322b2bec",
+   "testsSha256": "f8f9cb3a1fdfbe69dc511323af179bd9a36904670f101b79e63371ec18f17d62"
+  },
+  {
+   "slug": "matrix",
+   "refSeconds": 1.12,
+   "solution": "matrix.py",
+   "test": "matrix_test.py",
+   "instructionsSha256": "fce2cdace169613baeccff7f3a454f813b9117c614fc55f8e0c922efb5b45a51",
+   "stubSha256": "d720686ff5e74d537893c00c627bdb3c88c9425790d9ab7c746b649a1976a364",
+   "testsSha256": "f1d9bc48226b1b2900ef40437eead25501c30f076dd20da2328337d4c42f2df9"
+  },
+  {
+   "slug": "meetup",
+   "refSeconds": 1.24,
+   "solution": "meetup.py",
+   "test": "meetup_test.py",
+   "instructionsSha256": "ecfed067650246aea8495fe3ff4ff9c66ad90612cacb9388421dce5284740243",
+   "stubSha256": "25729a27a50c660ddf83ef63e76bf238ae742fb8b6ba192864ff61886d85636e",
+   "testsSha256": "e4d3ec4de141e9410829c7029a6cdc3b4c8e2311d82f8529ebcf498834030be4"
+  },
+  {
+   "slug": "minesweeper",
+   "refSeconds": 1.07,
+   "solution": "minesweeper.py",
+   "test": "minesweeper_test.py",
+   "instructionsSha256": "24c5002cc60f9f82cde3dc974e3fed4110b00f2814020d22dfd652a86f5a7ab8",
+   "stubSha256": "1cda9771067038147eb08a9f261476ac8e27f7ad93037d5bf5422315d22d5209",
+   "testsSha256": "58c47724c34935d74967691ae21028134a8dfe2c06944fdd1e2552f4e6a8fef8"
+  },
+  {
+   "slug": "nth-prime",
+   "refSeconds": 1.46,
+   "solution": "nth_prime.py",
+   "test": "nth_prime_test.py",
+   "instructionsSha256": "c3c5c0b32cfc53c924a77f4a5c06df1942a61f0be88404095eb626b78fd0b2de",
+   "stubSha256": "16288105b816516c4e09d3257f70bd04312a6f1206bc094c525952b5962ea346",
+   "testsSha256": "1b1f454a701a589fc95b06352094bbd78eb779e52761c5c78943efc31120bc1e"
+  },
+  {
+   "slug": "nucleotide-count",
+   "refSeconds": 1.17,
+   "solution": "nucleotide_count.py",
+   "test": "nucleotide_count_test.py",
+   "instructionsSha256": "3ca7c9c0f3c02e3a7e554d2fd25a623b79061a54442501d5f581fc0a11166c3a",
+   "stubSha256": "0456a62a29aa34268f446ec12e99a24885241b95642fd8edfbf162ed9b02fd8c",
+   "testsSha256": "a3c6b9e927fcc6d464b9193d909e154702b59aa70c33728ed3d037c9ff7605a4"
+  },
+  {
+   "slug": "ocr-numbers",
+   "refSeconds": 1.27,
+   "solution": "ocr_numbers.py",
+   "test": "ocr_numbers_test.py",
+   "instructionsSha256": "c523314ac827ebb08ec45c04908fd725f79d43d3a468db8c280358d4d7022517",
+   "stubSha256": "69d7479ac1abfac1c1ad9a5aef5db7a04f37957066b01d9e99fc3e3f03afea25",
+   "testsSha256": "a1c12da6ff0d7364402edd24bfd35ab3ce861ad8206c07d0756099af4f2ea402"
+  },
+  {
+   "slug": "octal",
+   "refSeconds": 1.17,
+   "solution": "octal.py",
+   "test": "octal_test.py",
+   "instructionsSha256": "c3500a8c472f1ef28e1bafb3b5202290bc6d684fbb70d7885c7113abb8488796",
+   "stubSha256": "b487ed49174a92b3fb3146012d3c3dd4140c23473942ab86d542db84fae46332",
+   "testsSha256": "35c4b68495c55d1205643bdbf9c44a4d8fa1b05f44f057b49c7c5420d76d867b"
+  },
+  {
+   "slug": "paasio",
+   "refSeconds": 2.3,
+   "solution": "paasio.py",
+   "test": "paasio_test.py",
+   "instructionsSha256": "1de86af2440ea70240519b4b9c06a8d4dfc6b6b493dfac353cd8ccedbcfab98c",
+   "stubSha256": "636858ba3501578a71bf00570600332ee05455d9cf1ecf99967b38ea3393e9fa",
+   "testsSha256": "7b1d5c48b9e3a0bb5a0f15b932961d1ac45eb171369cd602a3597cf5a5096c59"
+  },
+  {
+   "slug": "palindrome-products",
+   "refSeconds": 1.31,
+   "solution": "palindrome_products.py",
+   "test": "palindrome_products_test.py",
+   "instructionsSha256": "e74fdcd0edf34150c4bb548ebd90c28de6612fdeded8fe4acbdd73d2e95a7acf",
+   "stubSha256": "aab2633404594976948bc9c1f492e40da260e545252d4761b565f109f75a91ee",
+   "testsSha256": "71c32bcce0165b3972981ae0d57340f5493f4ac7e75d3810df75215eef675555"
+  },
+  {
+   "slug": "pangram",
+   "refSeconds": 1.01,
+   "solution": "pangram.py",
+   "test": "pangram_test.py",
+   "instructionsSha256": "39e9f923eebbf0840feb854f3c3339b6d663bd9b57a13b9626533f73c139efe9",
+   "stubSha256": "ae3c4cddab85c8062645671f831fedb3b0d9b554b2099f4138864555c816dfa8",
+   "testsSha256": "e21f021671441662dd916aaf04f8994aaf852199167932fd72349473d9d8d877"
+  },
+  {
+   "slug": "pascals-triangle",
+   "refSeconds": 1.11,
+   "solution": "pascals_triangle.py",
+   "test": "pascals_triangle_test.py",
+   "instructionsSha256": "0aeef94f4c7033b9854c77b578f348bbfa1212bd2682ac924cea66dc9b935dda",
+   "stubSha256": "df0648586262ffd557c2e18b54806913498c260217458ac0b408f4ac888ad471",
+   "testsSha256": "cbdf3ff138c16278f69567469debc394e61811addf75eda4d71a0da787294c3e"
+  },
+  {
+   "slug": "perfect-numbers",
+   "refSeconds": 1.3,
+   "solution": "perfect_numbers.py",
+   "test": "perfect_numbers_test.py",
+   "instructionsSha256": "60bc5483207f0e54d90075bfe0b5258817693df13cf792fba20c7b98c1ab866e",
+   "stubSha256": "4117d175a9d5140782886991d5aada5b0f81ac34d1cd7c99d5704f701134d96b",
+   "testsSha256": "734a003689c3d24a5082471bd288080f955e3038316bac9a014d50c50b52bdcf"
+  },
+  {
+   "slug": "phone-number",
+   "refSeconds": 0.91,
+   "solution": "phone_number.py",
+   "test": "phone_number_test.py",
+   "instructionsSha256": "2b6e6b4461e2007b4c1909f5d6546db7e85afd836952b780dc8e36f4c37030c6",
+   "stubSha256": "31a0e088b1657460784eb251945d396b0b692e99c53d19cc61079eaf989aeb13",
+   "testsSha256": "13c345db738e8a1202072fc2f6519c3c15ec4e5198e6ba982a0ae36dd0c705bd"
+  },
+  {
+   "slug": "pig-latin",
+   "refSeconds": 1.36,
+   "solution": "pig_latin.py",
+   "test": "pig_latin_test.py",
+   "instructionsSha256": "7ad8444569ef2992bceceb33778c72a9e79a4f3b23fda9ef07d7428e88ff838e",
+   "stubSha256": "a81eca89aa4e1404aded886e010cbc08d2be7a82df7f311ba1d97198e304d03c",
+   "testsSha256": "f4a0e695a6f37580faf792db1578b84d31cc68796cc85c175a65115fe3395a20"
+  },
+  {
+   "slug": "point-mutations",
+   "refSeconds": 1.73,
+   "solution": "point_mutations.py",
+   "test": "point_mutations_test.py",
+   "instructionsSha256": "9db23c5493029a5f3967d1090f103f43b1c09b45590ab44e3d054d2a1abf9c81",
+   "stubSha256": "207f0cc7a16e0a294efb60d3f7ee5ae9de06aba4a9e8015b1783434e9e21de9e",
+   "testsSha256": "09cdfa29869eef11fead51a68c5e56d58c515357d297f60d6e156f13c0f40644"
+  },
+  {
+   "slug": "poker",
+   "refSeconds": 1.85,
+   "solution": "poker.py",
+   "test": "poker_test.py",
+   "instructionsSha256": "6cba72745415048b89edd330bf52dcfda1d473e2ce28d5958125e642fa1e7a83",
+   "stubSha256": "1be6c64736ec1b7a610386e3e4e9dad6fe2d2da09ff0e7e712fdea542f63685e",
+   "testsSha256": "5e17fd576ee3adcbc31ec37a3cc0297ac145e1d28afc6a03a37e573a6f889375"
+  },
+  {
+   "slug": "pov",
+   "refSeconds": 1.71,
+   "solution": "pov.py",
+   "test": "pov_test.py",
+   "instructionsSha256": "ec078a5e1dfc994b64951f0f9cf19dbd8ced93e7d570238dffecd9288b83cc69",
+   "stubSha256": "d6407cd44008970eb0883788ea2216a42d487bcbfd01e967ba055d38d831d891",
+   "testsSha256": "d77909c0b4813c9b6bd471f50536aa337ba5dd52cf38d00b1d2aca36d1fe65b5"
+  },
+  {
+   "slug": "prime-factors",
+   "refSeconds": 1.75,
+   "solution": "prime_factors.py",
+   "test": "prime_factors_test.py",
+   "instructionsSha256": "72b55c9a80ba71dd1469dfbd778e2906036da7532da1b7314ffea8f8c33c38ed",
+   "stubSha256": "24d92bf5b1b93602119df1598f81fc51364af53ae664fc748c98be4a21861f9c",
+   "testsSha256": "e072e531355ba1fba6ae1ac1405adfa5f11c8a5586fcff1c0bd24b1183ddf129"
+  },
+  {
+   "slug": "protein-translation",
+   "refSeconds": 1.28,
+   "solution": "protein_translation.py",
+   "test": "protein_translation_test.py",
+   "instructionsSha256": "2b95ae279fa4df7bc34f8e0fcc391b429eb16a1765cf88d187d3337876458ba0",
+   "stubSha256": "f317a09e61557267e37f06e80c7f1aca0118b42367d5301604626afc824884d5",
+   "testsSha256": "85159c961992622075a3568fd31eb66d2b3af289f60dcac2d90323e9f100a95d"
+  },
+  {
+   "slug": "proverb",
+   "refSeconds": 1.15,
+   "solution": "proverb.py",
+   "test": "proverb_test.py",
+   "instructionsSha256": "e12754576377d33767e62529b3d2b1c1397a9f5a8e604a5e3f8fb426d888fef2",
+   "stubSha256": "7964b4f89cb10ef816ed187390a1ca80859c6286169697d87d51065cd7d6951c",
+   "testsSha256": "c24f8e358c37753c5db87da69249875de4088e4a6fe838aed1265e73c9bff1b7"
+  },
+  {
+   "slug": "pythagorean-triplet",
+   "refSeconds": 1.04,
+   "solution": "pythagorean_triplet.py",
+   "test": "pythagorean_triplet_test.py",
+   "instructionsSha256": "c6971dbe33424b53382b9f266338c2da002c8179b3ac422501e621bdf2bb63bb",
+   "stubSha256": "dd4cb05d913d3a8243228e80c18dfff3c94f141bad2de566773aa13a7dac5580",
+   "testsSha256": "871c9a6b346421e6105b70f5d56ce0cb223be40e42cb837525677658eabdf585"
+  },
+  {
+   "slug": "queen-attack",
+   "refSeconds": 1.17,
+   "solution": "queen_attack.py",
+   "test": "queen_attack_test.py",
+   "instructionsSha256": "58793762e3e1890e43a536047e791e25f0df01430ac9b8857b50c06f9dedc3fe",
+   "stubSha256": "6f0f4d09430e45c4ad96e325f4e0dcb965832a69b457fa2febfcc3af534940f7",
+   "testsSha256": "19f7917c32bba18aedb2885f2be217668ae0a6ef77a5cac31a03e0e4b4a75aa9"
+  },
+  {
+   "slug": "rail-fence-cipher",
+   "refSeconds": 1.04,
+   "solution": "rail_fence_cipher.py",
+   "test": "rail_fence_cipher_test.py",
+   "instructionsSha256": "a2615909bd72aacaf25d29c4b57f1a738c03a936defe6540ee967a06c46eeaae",
+   "stubSha256": "67912507c186121a04c6f360f0125bb290c647853ef5353ebe2813262d8b1258",
+   "testsSha256": "756e346697a4e6b0ece7efb28dd86a9617e27fe1891a37048e686c89ce9d3525"
+  },
+  {
+   "slug": "raindrops",
+   "refSeconds": 1.27,
+   "solution": "raindrops.py",
+   "test": "raindrops_test.py",
+   "instructionsSha256": "5870e47c8b210f5beca9d846a41d8c002c21df283ee214345e97c4701ea50da1",
+   "stubSha256": "ad9a10733d012b7888d17fe4ac5933d0f3fb1211386cb125f6840d94258277fa",
+   "testsSha256": "7871b3d182870e2ce515dff177e2bd76bcef1bcead1f5d948b3db0fd28410d82"
+  },
+  {
+   "slug": "rational-numbers",
+   "refSeconds": 1.22,
+   "solution": "rational_numbers.py",
+   "test": "rational_numbers_test.py",
+   "instructionsSha256": "fc8db1a7e86b9785fd311443a80cb4c3d38405926200b4ff8233eaef485ad965",
+   "stubSha256": "e21427e2d5dacd86040a7f48b30927be64446fc6762207fe3253885e6059ce8c",
+   "testsSha256": "49d9c78bd708749e6aa870348bb4d0aeb927c233260fe5d3a144f503dd83896c"
+  },
+  {
+   "slug": "react",
+   "refSeconds": 1.18,
+   "solution": "react.py",
+   "test": "react_test.py",
+   "instructionsSha256": "a01bd37a122b3b2208102d82fbd9c40dfb86efbfb5ad7249b138ba56bfc64b84",
+   "stubSha256": "9e33468c3489b182e018b93492c0037dc09da156752c6dfb79c379bd2d4ab8b9",
+   "testsSha256": "aa9a9152793944d7cf5a2dc092eeefae3afd3fc84292228ef959e5dbcbae3fee"
+  },
+  {
+   "slug": "rectangles",
+   "refSeconds": 0.84,
+   "solution": "rectangles.py",
+   "test": "rectangles_test.py",
+   "instructionsSha256": "e0f20e6840a2e11efee410057a1aa7dc6781ce162e5aee9a6ab34a1ce74cc458",
+   "stubSha256": "12853cabd2d8ccc3697c0e1dc4a66c36acce12478171f5421f33cb7f427317da",
+   "testsSha256": "fb91a0f79d86f5f31d1a7c8164d32fd962e88338f1e911447602b3239e566c01"
+  },
+  {
+   "slug": "relative-distance",
+   "refSeconds": 0.99,
+   "solution": "relative_distance.py",
+   "test": "relative_distance_test.py",
+   "instructionsSha256": "2b0bdd848efe81100c09d74012e974364eb47e54e7d24e8927a9cb3ce0e1a51b",
+   "stubSha256": "74b9cac2173cf22ce0c7401c12514f18dbe04e789ffcb90682b6e12ea63b2725",
+   "testsSha256": "ca2b75eefc903957aaa7c94c0c61e2f46dc4fe2a5c63a9bb8d6c4b7014784897"
+  },
+  {
+   "slug": "resistor-color",
+   "refSeconds": 0.96,
+   "solution": "resistor_color.py",
+   "test": "resistor_color_test.py",
+   "instructionsSha256": "1e5e3c7cc3ccf1c30531c7176ed98552bf1e7091c7b9f6b5d9747c44b4f7bfa6",
+   "stubSha256": "f8d790c1b7e53bd4239147014a0d84ce35aee9b4beb0ef3734da09ad827aceaf",
+   "testsSha256": "b8c3b7124582ffc0e5e58f2e1304948b90e75c3d158c8372498c72e3bcf42b94"
+  },
+  {
+   "slug": "resistor-color-duo",
+   "refSeconds": 0.95,
+   "solution": "resistor_color_duo.py",
+   "test": "resistor_color_duo_test.py",
+   "instructionsSha256": "c9f5c876c5ce26c3b572cfdbb73562d0c9f30e9be5f74586d2f4ac8376ac0d44",
+   "stubSha256": "319a95d9992a8ba9a44b61531f11a0a81ccdc1f7b44f194fec05aef1cea9e145",
+   "testsSha256": "773f6019c031c66616a481a322baeacbfb40567ac0fef424c6d62014b7d39622"
+  },
+  {
+   "slug": "resistor-color-expert",
+   "refSeconds": 0.9,
+   "solution": "resistor_color_expert.py",
+   "test": "resistor_color_expert_test.py",
+   "instructionsSha256": "73be3886f3a8fcd9d7e9807e8bb5eb4ad80467bcf193f5c05946310965d5a0a0",
+   "stubSha256": "8307afb73c5efb1a210736fe6b2c3f332c408aa2570e6fc64df109e9841aee7c",
+   "testsSha256": "a0e55f3f560877f29831676f1390e459cc2e06773e44ef6e33f792e495bb503e"
+  },
+  {
+   "slug": "resistor-color-trio",
+   "refSeconds": 1.03,
+   "solution": "resistor_color_trio.py",
+   "test": "resistor_color_trio_test.py",
+   "instructionsSha256": "225c3156b78cb32dfd6f1fa29231a2b3b1a126b21f5e05bc9098e7ddcb6762fd",
+   "stubSha256": "10127c74ce6543ecaa42300243041d9398c941221cef8093b6a80f4b0a02ded7",
+   "testsSha256": "73f34db0f01ef8eab14f09804183a238f947d79b8a211ee5c7dafb1796310178"
+  },
+  {
+   "slug": "rest-api",
+   "refSeconds": 0.98,
+   "solution": "rest_api.py",
+   "test": "rest_api_test.py",
+   "instructionsSha256": "ea3172255bd2d43422797d453bc4a0b56741e964ca595f12d5cc28cb9d42320a",
+   "stubSha256": "5c8add8e22402ee4c44e7b7a00395100b2ca81384451008be96a677f33e56132",
+   "testsSha256": "c9fcea3c017a87243c75dc90ea18b4f6bc59ea085eadf2a4c92b393b7e719ecd"
+  },
+  {
+   "slug": "reverse-string",
+   "refSeconds": 0.97,
+   "solution": "reverse_string.py",
+   "test": "reverse_string_test.py",
+   "instructionsSha256": "9549a1decf487274a122f25483b7d21072fb6034ee7cae3417ef8172873cab45",
+   "stubSha256": "e32b3087ae8b6975138e8884cb0db5b861fed18eafdede8655f9558e3f95cc3f",
+   "testsSha256": "c79bb96cba2aa9d22cd960d34088087aeadfd1e2f04218168b6a6f75760af29d"
+  },
+  {
+   "slug": "rna-transcription",
+   "refSeconds": 0.98,
+   "solution": "rna_transcription.py",
+   "test": "rna_transcription_test.py",
+   "instructionsSha256": "5d2b31a8c695ed39e92cbf8bb94b3c3a10a62bfd7dcfc530b7357e27ad6493bd",
+   "stubSha256": "6d8d41053d4d2e7c2bf59cf3c93a083a1ac54e3880e327349dee2bd732dda582",
+   "testsSha256": "2633dfcb36571294708a731831d22c7b3c0e08b8e645eeecc1a2b98fd9e57bbc"
+  },
+  {
+   "slug": "robot-name",
+   "refSeconds": 0.92,
+   "solution": "robot_name.py",
+   "test": "robot_name_test.py",
+   "instructionsSha256": "a310cf0669605acc905142812d08675308cc1857f1a7533d6da3575bcb323b47",
+   "stubSha256": "7adb965f8fdc86295a7057a96ba0789b969fd5859e3e5fe1365a257c31356b81",
+   "testsSha256": "64e6f71740ad3b2f0eb3df04b5ed01d2550f9181d4af76d071728d6ba19fbc5b"
+  },
+  {
+   "slug": "robot-simulator",
+   "refSeconds": 1.02,
+   "solution": "robot_simulator.py",
+   "test": "robot_simulator_test.py",
+   "instructionsSha256": "35194f6d400d8db71e510d3475c507e42294a10b6f26563283841534cc4cad2c",
+   "stubSha256": "0b43c027e9fd9964450e1f8e9b23ddc7ea2a45bacbf8b5a6f70b6894cc7e1968",
+   "testsSha256": "e1b95126b8ae4f3dec033a3f44d6b5aa165561cfade0f017286cdfb82bccd6a0"
+  },
+  {
+   "slug": "roman-numerals",
+   "refSeconds": 0.96,
+   "solution": "roman_numerals.py",
+   "test": "roman_numerals_test.py",
+   "instructionsSha256": "aff75c5aa0efe61c323897237f21448d62cadc1d4dcabc2cd358c6dc086fe3ed",
+   "stubSha256": "bd2e60296634fe0c994194fb41a3e24526eafcc1f86019f86fe8ee1eaff39f12",
+   "testsSha256": "a08c8644fa8fb12ecc3eecf41fa83e25396ea8b376dec297e8bbb31317457f63"
+  },
+  {
+   "slug": "rotational-cipher",
+   "refSeconds": 1.12,
+   "solution": "rotational_cipher.py",
+   "test": "rotational_cipher_test.py",
+   "instructionsSha256": "f70cc6bf93485f6f778d4a90257e6a669f85a0ab20be5566d70af23a81b2329b",
+   "stubSha256": "52e91fd07518bd64fe5e71cf420c6c235abc55355d1b7f88928a584e728e0d02",
+   "testsSha256": "22554b3b2f0d68c447185f486ee7e5c9248dcf8838b83e1ccb75d3a637316f38"
+  },
+  {
+   "slug": "run-length-encoding",
+   "refSeconds": 0.91,
+   "solution": "run_length_encoding.py",
+   "test": "run_length_encoding_test.py",
+   "instructionsSha256": "080f7da8cd467423c62f54d2e083378a081a0629c368e73736b0ebaf971ede9b",
+   "stubSha256": "6e9e37b464cae797a2be84ee8eec37fca4352ab1861f481972a51145eb712584",
+   "testsSha256": "83f0884392b9a12bf80ce5e209e84f92488ee85bad642e0cf6b0e1da117c7749"
+  },
+  {
+   "slug": "saddle-points",
+   "refSeconds": 0.94,
+   "solution": "saddle_points.py",
+   "test": "saddle_points_test.py",
+   "instructionsSha256": "844d27bec79e179438f8b5f0b646f9892325838ff55e041838fa0644dec4f83b",
+   "stubSha256": "145f077c89a59d9c7ae8ad8cfe2f367a0e1d86d5f604dda4a6a62640d6d6390d",
+   "testsSha256": "460a83873d09e299939ed0847a2e2ec58f758f88c5a9ca4354fe5b84e54393be"
+  },
+  {
+   "slug": "satellite",
+   "refSeconds": 0.89,
+   "solution": "satellite.py",
+   "test": "satellite_test.py",
+   "instructionsSha256": "9896f85b476096158876b8fe09d433097c516ccf572cf4a256c46dcd6421438d",
+   "stubSha256": "8df066cfa6f06b57eddbee6f95103630d68cd19e6df0d6cf057fb4771db4d3cb",
+   "testsSha256": "a2b1a3f042b72d100e9562987131625ba50625d0902684cb3e4b795f5857bf89"
+  },
+  {
+   "slug": "say",
+   "refSeconds": 1.37,
+   "solution": "say.py",
+   "test": "say_test.py",
+   "instructionsSha256": "90fcc22b6f36da4ea3e4da004128a0d31eb2f283398b61577341b89e0c7ea27a",
+   "stubSha256": "b943bce66318a89ed802b1a6d834970d25b53db0813f3a24ca5dbd425288d00a",
+   "testsSha256": "e38876aeddacbfce65c48844a056b24589036381d0eb54ea7bad604b69858070"
+  },
+  {
+   "slug": "scale-generator",
+   "refSeconds": 0.97,
+   "solution": "scale_generator.py",
+   "test": "scale_generator_test.py",
+   "instructionsSha256": "a7b987d02470634798239eddb1e31003e1025e3d64c5bcfe83b3584c0f273733",
+   "stubSha256": "4d65b44b0f81aac9c276238cac1fb6787454fd7127f18f392358f4598a46969e",
+   "testsSha256": "a9110bdd27f5faf2e644ee95120c6793d6575a68bd51d1be1b1f1e1ce254b500"
+  },
+  {
+   "slug": "scrabble-score",
+   "refSeconds": 1.01,
+   "solution": "scrabble_score.py",
+   "test": "scrabble_score_test.py",
+   "instructionsSha256": "bc3a1f1c86c2579598eb10ee643c0f73fcf0498719f88082573e07f9bb40767b",
+   "stubSha256": "522d9e0ece8a8e54af40118e9efa237080c6372ac6f2d47a677b8515d0425d4f",
+   "testsSha256": "8421f94addc987b80d4a0587a23e6739feb80671f013709d6059ce2caf1a7336"
+  },
+  {
+   "slug": "secret-handshake",
+   "refSeconds": 0.86,
+   "solution": "secret_handshake.py",
+   "test": "secret_handshake_test.py",
+   "instructionsSha256": "2075734a8d2fe3ba77d116d6e8f139bc335c829db4fbc20501aa343928d92f9d",
+   "stubSha256": "2c846840e12dbd384fc7fedb2273f38681cd6abcc96f3c01e57141c2a1dc0a27",
+   "testsSha256": "fc5f60b0ef549b218d06beb92edeb89993f07242e3b667a93bcda8e34a4290e8"
+  },
+  {
+   "slug": "series",
+   "refSeconds": 0.91,
+   "solution": "series.py",
+   "test": "series_test.py",
+   "instructionsSha256": "e063d7c2c5bfb7da11de40551ee1e3f61218439e3ff02b11978a85b342cb4e43",
+   "stubSha256": "73babef85481577934ec539e76df2eafbb262c6aac364c367180a4decec55808",
+   "testsSha256": "f9a2179783d5f73115b8de65ddb703ea72d382017a4fd07ecd8bc3f6d9dc117a"
+  },
+  {
+   "slug": "sgf-parsing",
+   "refSeconds": 1.09,
+   "solution": "sgf_parsing.py",
+   "test": "sgf_parsing_test.py",
+   "instructionsSha256": "d7a4addc99c3d20fced0b98c5b08fde4e208d930f05276f2edd8fba13bce8a95",
+   "stubSha256": "52d8f9f60d2dfc7a5dc5f5abce6132b5606e108d2ab9a9852739e679c773b842",
+   "testsSha256": "5fce1f247f94616b2b44c0d740e4603fb88495e3902603a082eed103eeb2e372"
+  },
+  {
+   "slug": "sieve",
+   "refSeconds": 1.0,
+   "solution": "sieve.py",
+   "test": "sieve_test.py",
+   "instructionsSha256": "2339328dd3a31874b91657cea6f69641ba0046d338debd97c9ce0ec2cc28dbde",
+   "stubSha256": "441e6cf8c061a743ce02c6f41d03fcb684bcd6b98d83d46bda72ec40499caf2c",
+   "testsSha256": "70d151c0dc5e44ca8f82c877ea779adcd08b6ba286afc8ed7758861b540067ff"
+  },
+  {
+   "slug": "simple-cipher",
+   "refSeconds": 1.05,
+   "solution": "simple_cipher.py",
+   "test": "simple_cipher_test.py",
+   "instructionsSha256": "d678918e24a72669371eeeefcbd159bfb55a264a947ec3bee7904dd6bc87eb1d",
+   "stubSha256": "df5833e1d02643a434f61f20ab3751f28ba2b5ee5471f3418bc47e00e0e6a857",
+   "testsSha256": "17de91d5628501a510296bc6250e83f3003557792f353ce572569861c0206d49"
+  },
+  {
+   "slug": "simple-linked-list",
+   "refSeconds": 1.05,
+   "solution": "simple_linked_list.py",
+   "test": "simple_linked_list_test.py",
+   "instructionsSha256": "48e2928b9f824144354cddac6533baa9d19904cb9f6e8ba21af814be858d8644",
+   "stubSha256": "4756cf4e77110833a43410a9c00cf24d967f4057086072d162242604a12dc750",
+   "testsSha256": "0d600de4ac2fc4edc6416ccdbed5e26b3c55e8188b327f1d2e889b01fd10ebf9"
+  },
+  {
+   "slug": "space-age",
+   "refSeconds": 1.43,
+   "solution": "space_age.py",
+   "test": "space_age_test.py",
+   "instructionsSha256": "735105369bed52ef6e3ceeec705a6782e7d01becd45f259bfa90a0b9b7e46e4f",
+   "stubSha256": "bd16fdcde78a1f7103248433a7d51edb712ef5148ee61e40513082b8593123d5",
+   "testsSha256": "6010ecc0e7d72bf2bff83a407fba02fd21844d979084cb37b8d7324b7aa07be3"
+  },
+  {
+   "slug": "spiral-matrix",
+   "refSeconds": 1.57,
+   "solution": "spiral_matrix.py",
+   "test": "spiral_matrix_test.py",
+   "instructionsSha256": "59a4f26d7594de47297af964708ec79ed15d9f9638956bd79822564076808c7f",
+   "stubSha256": "108953767e5edc416fbd7aaeed34e4dc623fd6fc7db5d7318b104c825253cc26",
+   "testsSha256": "44da94d18baad122119e6ecc1982da4b4661fc7212f3ccb0d7b85ac2613a067c"
+  },
+  {
+   "slug": "square-root",
+   "refSeconds": 1.07,
+   "solution": "square_root.py",
+   "test": "square_root_test.py",
+   "instructionsSha256": "4ca8c70e22a7197755448d0790bc07ff1f896f678186adccd3c1c1cd6b27c4f0",
+   "stubSha256": "f5e648e95944c68dff4cff6a07b042ed5b297412962841dacf9fb086b4eb372b",
+   "testsSha256": "5ef17fa0b0159fb77ede300953c75a5332247ac6e46172fbd4ecc6159292bf6f"
+  },
+  {
+   "slug": "state-of-tic-tac-toe",
+   "refSeconds": 1.02,
+   "solution": "state_of_tic_tac_toe.py",
+   "test": "state_of_tic_tac_toe_test.py",
+   "instructionsSha256": "de36a75b86d50198d3ffa36c0d07b1670de185592f2b596f36fc82f8b7a6c8d6",
+   "stubSha256": "075c8c695609eba32005bd8b1fc85014c0c5d9b0a732c756d540d8c3b97ffcc0",
+   "testsSha256": "0373bab962f1f40bd2432cc0d929e39e2fd48933e80b5d3d329db625245c79f8"
+  },
+  {
+   "slug": "strain",
+   "refSeconds": 1.11,
+   "solution": "strain.py",
+   "test": "strain_test.py",
+   "instructionsSha256": "0263996b37c11f01661cadda082c9c6f18a0456c482c9955cac363281a074b59",
+   "stubSha256": "055cd8476567483dd1dc5cabf9d51b466a38734e1259282ee8f6dac3aefbb9fe",
+   "testsSha256": "23839e93a3437b4edc452fecba37503235c95b7111501db0b890f9f9bf980b0b"
+  },
+  {
+   "slug": "sublist",
+   "refSeconds": 1.22,
+   "solution": "sublist.py",
+   "test": "sublist_test.py",
+   "instructionsSha256": "789d989ba539b0766d29af8ccca1f50421d6623255fd10c4c92cee200afa78f6",
+   "stubSha256": "26ec0806e48be47284321afe59bcdb877b4602743d8aa380a90884635519bad0",
+   "testsSha256": "37677fa4126eca7d2918deeb3acad7f22af78a630123bc4c36d553a7be94e1f1"
+  },
+  {
+   "slug": "sum-of-multiples",
+   "refSeconds": 1.2,
+   "solution": "sum_of_multiples.py",
+   "test": "sum_of_multiples_test.py",
+   "instructionsSha256": "64a85c30cba2c85fe1405557349637ce2f22665346d1e67969f1a5d3a6526c16",
+   "stubSha256": "400ce3019b5788a121bd8b677ae902555b155ecf5743ad58b2bbea7473ff5ae4",
+   "testsSha256": "8264288434ded000cacd3e095a79e68a8afb71dd0ce6486ef8bd639807f0ca04"
+  },
+  {
+   "slug": "swift-scheduling",
+   "refSeconds": 1.25,
+   "solution": "swift_scheduling.py",
+   "test": "swift_scheduling_test.py",
+   "instructionsSha256": "d40c031f6bbed4f4500d9f43b46921a73e2d57a73c5a89df4765a6935c65a9cc",
+   "stubSha256": "1cbdec394ba58224507e0d1218b8bfd093a11e508e995f88047797e301a24af7",
+   "testsSha256": "aade3a375ac9adec5c1e81e92a2bf3df623df4401bbab4ef0e422d05f4f9fc68"
+  },
+  {
+   "slug": "tournament",
+   "refSeconds": 1.22,
+   "solution": "tournament.py",
+   "test": "tournament_test.py",
+   "instructionsSha256": "aabc08a6f73d6ae7c27add9875d52b4174651a5f2f189a33087f8c88a770b6fb",
+   "stubSha256": "511245913aa802467b5d185ee10cef11d09fe5a290d6296876a29a266479c9a6",
+   "testsSha256": "09606e4c15252eb8ea788e71284ebefeee6caedd1b2b6dbc752e0f11aaaec61c"
+  },
+  {
+   "slug": "transpose",
+   "refSeconds": 1.34,
+   "solution": "transpose.py",
+   "test": "transpose_test.py",
+   "instructionsSha256": "013855ecc1b083c98707db94e542f2cfd980cb1c46516d7999d9e12c7c783a5e",
+   "stubSha256": "e465bb0c3c8ee123909483cea206e4290057e845b9e42a2ef67076b0ee42f9e9",
+   "testsSha256": "7dee4bd448cde6f3ba024420e055e7f4e0c7d7395c6a94de87d31efb3d2c9309"
+  },
+  {
+   "slug": "tree-building",
+   "refSeconds": 1.23,
+   "solution": "tree_building.py",
+   "test": "tree_building_test.py",
+   "instructionsSha256": "2b3ae4811b5800781ae2f329dc46764ec4b9fca16a884efa188e5da464e18744",
+   "stubSha256": "1cf46db08932d04ba6daaa70b89eac3eabcf378fb0f193e9730f529d140015c8",
+   "testsSha256": "593dc0a2d880e16589eace616c6bdd6f1ed49c183f0d92efa285df6ed68abd6a"
+  },
+  {
+   "slug": "triangle",
+   "refSeconds": 1.24,
+   "solution": "triangle.py",
+   "test": "triangle_test.py",
+   "instructionsSha256": "408cb7ea7f32077694f588cc4bb657923b240708ae12a69fe1c9ed2ca2d7a7c7",
+   "stubSha256": "afbe8aa50d1edd6c1c7e214706fc018152a197c45fc2e0eef06143ea894ad42e",
+   "testsSha256": "f3f3872da9eecb69ebb984945b89b5a3bd8e48ee726ab77e1bec8aff229ebf43"
+  },
+  {
+   "slug": "trinary",
+   "refSeconds": 1.03,
+   "solution": "trinary.py",
+   "test": "trinary_test.py",
+   "instructionsSha256": "74e464eb524d8347437aafc41af5c34ab187dee31b9986a31ff5283865494078",
+   "stubSha256": "13fff734cc8882e0da885d02617618083007b0ae2b9a87e79bdad9016795d8b1",
+   "testsSha256": "3834ba64f1fad556591f1f461c0597703b8a0ec2a5b1a9641b44d4c001fce49f"
+  },
+  {
+   "slug": "twelve-days",
+   "refSeconds": 1.03,
+   "solution": "twelve_days.py",
+   "test": "twelve_days_test.py",
+   "instructionsSha256": "b669e35f6e0f1ce8e92468fcf8fcd794bce50969113c9e611fec2d3cd14a8667",
+   "stubSha256": "ac801e30e11fae0952f34615c2ac37be7edcfe51eb6bf9c74db845095be8a9e0",
+   "testsSha256": "7a802acae57eaef9951833ae5fd37e496abdf759915843229069be6870509143"
+  },
+  {
+   "slug": "two-bucket",
+   "refSeconds": 0.96,
+   "solution": "two_bucket.py",
+   "test": "two_bucket_test.py",
+   "instructionsSha256": "04ea32ba4e2b34ec33cb87d8df7d364fdf9e847aa96af54ee1046fd0a4bdae48",
+   "stubSha256": "e85a9380ae7c286db14f4e5c10e41bac4b2c75dc3d9f75d41006aa236ba70d4d",
+   "testsSha256": "7edd6662f46b216f97964efcf7fbd3f8a81d3ed43ac11111537808c3cfa9d48b"
+  },
+  {
+   "slug": "two-fer",
+   "refSeconds": 1.0,
+   "solution": "two_fer.py",
+   "test": "two_fer_test.py",
+   "instructionsSha256": "948f0ed9a0be4df680a9b81ed65e381974edbd44b2e509bc171eb46ee8863f18",
+   "stubSha256": "6edbfd71ba48375982651726c2ada7f8ef3fc69995977d028048fd081a28f2df",
+   "testsSha256": "d651f381a49287498776d32717761dda077da8f7240a855869fabe01171329da"
+  },
+  {
+   "slug": "variable-length-quantity",
+   "refSeconds": 1.25,
+   "solution": "variable_length_quantity.py",
+   "test": "variable_length_quantity_test.py",
+   "instructionsSha256": "82b4da0fcd01eeda44263046fd682e98dc13e6f6bab3c1f7606f2a9ecadea1e2",
+   "stubSha256": "ebfecdc9fcf62d2e44634bc0c1055b064931180db57339df95dbf1c4cee0b8f3",
+   "testsSha256": "747c88444c4f627c85c47ab9c6d96cbf38ad6caeeb241bbc822101874b137579"
+  },
+  {
+   "slug": "word-count",
+   "refSeconds": 0.96,
+   "solution": "word_count.py",
+   "test": "word_count_test.py",
+   "instructionsSha256": "559315c2408619644bcf902226566c7426c914bc3c5cba6cbed7e28fe788befd",
+   "stubSha256": "dfb0d53a24db5a5192c22af777db71c49bf0f3a70ea8a39916044c80550e2172",
+   "testsSha256": "27329ea6f090e1ddd5071512c039f556c4fcd2d551f2c8c88e8c39fdc39fb47e"
+  },
+  {
+   "slug": "word-search",
+   "refSeconds": 0.88,
+   "solution": "word_search.py",
+   "test": "word_search_test.py",
+   "instructionsSha256": "868c23124f93dc6fa3f87b26360ed5664b51a7c12df0bcc9ffad6b95762a792a",
+   "stubSha256": "5808d05db36926e437a256523bb9b80d8e796ad565666ad0a91cd7fab86657b1",
+   "testsSha256": "ffe67676bdaf8a5d16bb62c457554a5cd4a8ab3b050ef5f949253a61ab68206c"
+  },
+  {
+   "slug": "wordy",
+   "refSeconds": 1.11,
+   "solution": "wordy.py",
+   "test": "wordy_test.py",
+   "instructionsSha256": "4d2d2216b2fed2074bafeb4a2532090cbcae25b1e01443e362a168e156ba8059",
+   "stubSha256": "07328a7acb06ff9edb1b2448507003e110e474a4207bf5cd88905d8a896487a9",
+   "testsSha256": "00a7f96f254fa487fdc58a35d3a6bc1e3018ece9fbadda991e9fab3a6a7509b1"
+  },
+  {
+   "slug": "yacht",
+   "refSeconds": 1.22,
+   "solution": "yacht.py",
+   "test": "yacht_test.py",
+   "instructionsSha256": "0372c637365a96fb26860d2c7f9c63f0ccd1d4edd89a656e93ca9fe66f0e0bba",
+   "stubSha256": "3807e3f62f9376042c3bf6e257a673a04611536d1bd784e71467ff9073b2b0fb",
+   "testsSha256": "056dccb951d850d3681cb7a32bd22631d1de77623d238d903eb229b5ebe7e670"
+  },
+  {
+   "slug": "zebra-puzzle",
+   "refSeconds": 1.02,
+   "solution": "zebra_puzzle.py",
+   "test": "zebra_puzzle_test.py",
+   "instructionsSha256": "61eaf950660f1d495024c95a22457d7d79097d46510fef2b83fbb6d8ea42cfa7",
+   "stubSha256": "e60e8a3f61f05bcbceded1687c79965d1ef06cc5388fbcc7e5c9ed57145a4019",
+   "testsSha256": "08acbdd6e6f725c8f4cfe18027c1da2589d146c97ae5b8b0cb3c542b4a6c0b5e"
+  },
+  {
+   "slug": "zipper",
+   "refSeconds": 1.12,
+   "solution": "zipper.py",
+   "test": "zipper_test.py",
+   "instructionsSha256": "085842fcfdbb2acb47809323958ca3cc8cdd0321f27a828f762d4c13ada042bb",
+   "stubSha256": "19cb98d6e5d5e3980482069766ed2f3d319acf4d6d85a4180cbe872b274ccc38",
+   "testsSha256": "86e6cdbcb7922420684bcb13e03b960e8c4b2a74da356688e5e23668feb6b4b4"
+  }
+ ],
+ "excluded": [
+  {
+   "slug": "parallel-letter-frequency",
+   "reason": "reference took 31.2s (>=30s)"
+  }
+ ],
+ "counts": {
+  "included": 141,
+  "excluded": 1
+ }
+}
