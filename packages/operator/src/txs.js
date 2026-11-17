@@ -4,7 +4,7 @@ import { compileFile } from 'cashc';
 import { TransactionBuilder } from '@passrate/shared/tickettx';
 import { decodeTransaction, hexToBin, binToHex, cashAddressToLockingBytecode } from '@bitauth/libauth';
 import { encodePayload, toOpReturn, fromOpReturn, drawTicketTask, isTipFresh } from '@passrate/shared';
-import { PATHS, TICKET_SATS, NOTIFY_SATS, FEE, ROSTER, RUN_DEADLINE_S, ATTEMPT_POLICY, TIP_MAX_AGE } from './config.js';
+import { NETWORK, PATHS, TICKET_SATS, NOTIFY_SATS, FEE, ROSTER, RUN_DEADLINE_S, ATTEMPT_POLICY, TIP_MAX_AGE } from './config.js';
 
 import { runTicketContract, buildTicket as sharedBuildTicket, RUN_TICKET_ARTIFACT } from '@passrate/shared/tickettx';
 export { runTicketContract };
@@ -38,7 +38,7 @@ export function validateTicket(rawHex, { operatorPkHex, taskRoot, seenAtHeight, 
   if (rec.type !== 'T') return { ok: false, reason: `record type ${rec.type}` };
   const row = ROSTER.find((r) => r.agentIdx === rec.agentIdx);
   if (!row) return { ok: false, reason: `unknown agentIdx ${rec.agentIdx}` };
-  const c = runTicketContract(operatorPkHex, rec.payerPk, taskRoot);
+  const c = runTicketContract(operatorPkHex, rec.payerPk, taskRoot, { network: NETWORK }); // network sets the address prefix
   const out = tx.outputs[1];
   if (!out || binToHex(out.lockingBytecode) !== lockOf(c.address)) return { ok: false, reason: 'output 1 is not this ticket\'s covenant' };
   if (out.valueSatoshis < TICKET_SATS) return { ok: false, reason: `ticket value ${out.valueSatoshis} < ${TICKET_SATS}` };
