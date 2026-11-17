@@ -1,4 +1,14 @@
+# dependencies
 node_modules/
+# secrets: never commit
 .env
-*.wif
+.env.*
+*.env
 keys/
+*.wif
+*.pem
+# build / tooling
+dist/
+.vercel/
+__pycache__/
+*.pyc
