@@ -49,3 +49,5 @@ th { color: var(--muted); font-weight: 500; font-size: 12px; }
   .hide-sm { display: none; }
   .hero { padding-top: 40px; }
 }
+.verdict { font-size: 18px; font-weight: 600; margin: 0 0 16px; }
+.verdict.pass { color: var(--accent); } .verdict.fail { color: var(--fail); }
