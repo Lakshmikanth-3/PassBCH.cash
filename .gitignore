@@ -12,3 +12,5 @@ dist/
 .vercel/
 __pycache__/
 *.pyc
+
+.vercel
