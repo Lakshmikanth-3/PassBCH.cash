@@ -14,3 +14,7 @@ __pycache__/
 *.pyc
 
 .vercel
+
+# local caches
+.cache/
+runs/
