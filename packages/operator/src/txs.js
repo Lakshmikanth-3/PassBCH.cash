@@ -1,16 +1,17 @@
 // Transaction builders and ticket validation. Pure where possible so they run against MockNetworkProvider.
 import fs from 'node:fs';
 import { compileFile } from 'cashc';
-import { Contract, TransactionBuilder } from 'cashscript';
+import { TransactionBuilder } from '@passrate/shared/tickettx';
 import { decodeTransaction, hexToBin, binToHex, cashAddressToLockingBytecode } from '@bitauth/libauth';
 import { encodePayload, toOpReturn, fromOpReturn, drawTicketTask, isTipFresh } from '@passrate/shared';
 import { PATHS, TICKET_SATS, NOTIFY_SATS, FEE, ROSTER, RUN_DEADLINE_S, ATTEMPT_POLICY, TIP_MAX_AGE } from './config.js';
 
-let artifact;
-export const getArtifact = () => (artifact ??= compileFile(PATHS.contract));
+import { runTicketContract, buildTicket as sharedBuildTicket, RUN_TICKET_ARTIFACT } from '@passrate/shared/tickettx';
+export { runTicketContract };
 
-export function runTicketContract(operatorPkHex, payerPkHex, taskRoot, provider) {
-  return new Contract(getArtifact(), [operatorPkHex, payerPkHex, taskRoot], { provider, addressType: 'p2sh32' });
+/** The committed artifact must match a fresh compile of RunTicket.cash (guards against drift). */
+export function artifactMatchesSource() {
+  return compileFile(PATHS.contract).bytecode === RUN_TICKET_ARTIFACT.bytecode;
 }
 
 const lockOf = (address) => {
@@ -19,17 +20,9 @@ const lockOf = (address) => {
   return binToHex(r.bytecode);
 };
 
-/** Payer side: ticket tx = [0] OP_RETURN T, [1] covenant 20,000 sats, [2] 546-sat notify to operator inbox, [3] change. */
-export function buildTicket({ provider, utxo, payer, operatorPkHex, operatorInbox, taskRoot, tipHeight, tipHash, agentIdx }) {
-  const c = runTicketContract(operatorPkHex, payer.pkHex, taskRoot, provider);
-  const rec = toOpReturn(encodePayload('T', { tipHeight, tipHash, agentIdx, payerPk: payer.pkHex }));
-  const change = utxo.satoshis - TICKET_SATS - NOTIFY_SATS - FEE.ticket;
-  if (change < 546n) throw new Error('insufficient funds for ticket');
-  return new TransactionBuilder({ provider }).addInput(utxo, payer.sig.unlockP2PKH())
-    .addOutput({ to: rec, amount: 0n })
-    .addOutput({ to: c.address, amount: TICKET_SATS })
-    .addOutput({ to: operatorInbox, amount: NOTIFY_SATS })
-    .addOutput({ to: payer.address, amount: change });
+/** Payer side (same code as the browser): returns a TransactionBuilder for one funding utxo. */
+export function buildTicket({ utxo, ...rest }) {
+  return sharedBuildTicket({ utxos: [utxo], ...rest }).builder;
 }
 
 /**

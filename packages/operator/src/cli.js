@@ -6,7 +6,7 @@
 //   e2e [agent]     ticket -> watcher pickup -> START -> AI run -> RESULT, timed
 import fs from 'node:fs';
 import path from 'node:path';
-import { ElectrumNetworkProvider } from 'cashscript';
+import { ElectrumNetworkProvider, TransactionBuilder } from '@passrate/shared/tickettx';
 import { merkleRoot } from '@passrate/shared';
 import { NETWORK, PATHS, loadState, saveState } from './config.js';
 import { loadKeys } from './keys.js';
@@ -44,7 +44,7 @@ async function cmdTicket(agentIdx = 1) {
   // The test payer is funded from the operator wallet on first use.
   let fundUtxo = await biggest(payer.address);
   if (!fundUtxo || fundUtxo.satoshis < 30000n) {
-    const { TransactionBuilder } = await import('cashscript');
+
     const src = await biggest(operator.address);
     const tx = await new TransactionBuilder({ provider }).addInput(src, operator.sig.unlockP2PKH())
       .addOutput({ to: payer.address, amount: 100000n }).addOutput({ to: operator.address, amount: src.satoshis - 100000n - 400n }).send();

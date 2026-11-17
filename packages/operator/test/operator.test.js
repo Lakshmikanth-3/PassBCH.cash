@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { MockNetworkProvider, randomUtxo } from 'cashscript';
+import { MockNetworkProvider, randomUtxo } from '@passrate/shared/tickettx';
 import { binToHex, hashTransaction, hexToBin, decodeTransaction } from '@bitauth/libauth';
 import { drawTicketTask, fromOpReturn, merkleRoot, merkleProof, verifyMerkleProof, hexToBytes } from '@passrate/shared';
 import { keyPair } from '../src/keys.js';
@@ -107,3 +107,10 @@ describe('manifest', () => {
   });
 });
 
+
+describe('shared code', () => {
+  test('committed artifact matches a fresh compile of RunTicket.cash', async () => {
+    const { artifactMatchesSource } = await import('../src/txs.js');
+    assert.ok(artifactMatchesSource());
+  });
+});

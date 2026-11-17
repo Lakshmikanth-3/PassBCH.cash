@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { secp256k1, hexToBin, binToHex, hash160, encodeCashAddress, CashAddressType } from '@bitauth/libauth';
-import { SignatureTemplate } from 'cashscript';
+import { SignatureTemplate } from '@passrate/shared/tickettx';
 import { PATHS } from './config.js';
 
 export function keyPair(skHex) {
