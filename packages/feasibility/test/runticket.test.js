@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { compileFile } from 'cashc';
@@ -6,7 +7,7 @@ import { secp256k1, hexToBin, binToHex, encodeLockingBytecodeP2sh32, lockingByte
 import { encodePayload, payloadSize } from '@passrate/shared';
 import { toOpReturn as encodeOpReturn } from '@passrate/shared';
 
-const art = compileFile(new URL('../contracts/RunTicket.cash', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'));
+const art = compileFile(fileURLToPath(new URL('../contracts/RunTicket.cash', import.meta.url)));
 const mk = () => { const sk = new Uint8Array(32).map(() => Math.floor(Math.random() * 255) + 1); return { sk, pk: secp256k1.derivePublicKeyCompressed(sk) }; };
 const op = mk(), payer = mk();
 const taskRoot = 'ab'.repeat(32);
