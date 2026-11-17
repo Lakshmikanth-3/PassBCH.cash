@@ -16,7 +16,7 @@ Protocol: [docs/PROTOCOL.md](docs/PROTOCOL.md)
 | Phase | Scope | Status | Tests |
 |---|---|---|---|
 | 0 | Protocol spec + shared codec, draw, Merkle tree, stats | ✅ Done | 50/50 ([log](test-reports/LOG.md)) |
-| 1 | Feasibility tests T1–T8 | ⏳ | |
+| 1 | Feasibility tests T1–T8 | 🟡 T1–T3, T7 partly done; T4, T5, T8 open | 10/10 contract tests ([report](test-reports/PHASE1.md)) |
 | 2 | First mainnet Ticket → START → RESULT | ⏳ | |
 | 3 | Core product | ⏳ | |
 | 4 | Polish and business | ⏳ | |
