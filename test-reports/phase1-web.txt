@@ -1,0 +1,20 @@
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.8 [39m[90mc:/HACK/BCH/packages/web[39m
+
+ [32m✓[39m test/web.test.jsx[2m > [22mBLAZE banner (compliance)[2m > [22mhas repo link, EMBER2026 token address and non-affiliation note
+ [32m✓[39m test/web.test.jsx[2m > [22mBLAZE banner (compliance)[2m > [22mEMBER address is token-aware (z-prefix)
+ [32m✓[39m test/web.test.jsx[2m > [22mBLAZE banner (compliance)[2m > [22mshows network pill while not on mainnet
+ [32m✓[39m test/web.test.jsx[2m > [22mBLAZE banner (compliance)[2m > [22mdeck link appears once configured
+ [32m✓[39m test/web.test.jsx[2m > [22mRunChain[2m > [22mlinks real T1 ticket and START txids to explorer
+ [32m✓[39m test/web.test.jsx[2m > [22mRunChain[2m > [22mRESULT shows as not yet sealed, never as a fake txid
+ [32m✓[39m test/web.test.jsx[2m > [22mRunChain[2m > [22mall txids are 64 hex
+ [32m✓[39m test/web.test.jsx[2m > [22mLeaderboard[2m > [22mempty state when no runs
+ [32m✓[39m test/web.test.jsx[2m > [22mLeaderboard[2m > [22mcomputes pass rate, CI and counts missing as FAIL
+ [32m✓[39m test/web.test.jsx[2m > [22mApp[2m > [22mrenders hero, chain, leaderboard and honesty sections
+ [32m✓[39m test/web.test.jsx[2m > [22mApp[2m > [22mpay button is disabled until wallet connect exists (no dead click)
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m11 passed[39m[22m[90m (11)[39m
+[2m   Start at [22m 14:27:49
+[2m   Duration [22m 4.36s[2m (transform 285ms, setup 847ms, collect 878ms, tests 264ms, environment 1.76s, prepare 142ms)[22m
+
