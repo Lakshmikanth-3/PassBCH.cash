@@ -6,6 +6,8 @@ import Banner from '../src/components/Banner.jsx';
 import Leaderboard from '../src/components/Leaderboard.jsx';
 import RunChain from '../src/components/RunChain.jsx';
 import { CONFIG, T1_CHAIN } from '../src/config.js';
+import DATA from '../src/runs.json';
+import { rowsFrom } from '../src/App.jsx';
 
 describe('BLAZE banner (compliance)', () => {
   test('has repo link, EMBER2026 token address and non-affiliation note', () => {
@@ -29,19 +31,25 @@ describe('BLAZE banner (compliance)', () => {
 
 describe('RunChain', () => {
   const ex = CONFIG.explorerTx.chipnet;
-  test('links real T1 ticket and START txids to explorer', () => {
-    render(<RunChain chain={T1_CHAIN} explorer={ex} />);
+  const run = DATA.runs.at(-1);
+  test('links the real sealed Ticket, START and RESULT txids', () => {
+    render(<RunChain run={run} network="chipnet" explorer={ex} refund={T1_CHAIN.refund} />);
     const links = screen.getAllByRole('link').map((a) => a.getAttribute('href'));
-    expect(links).toContain(ex(T1_CHAIN.ticket));
-    expect(links).toContain(ex(T1_CHAIN.start));
-    expect(links).toContain(ex(T1_CHAIN.refund));
+    for (const t of [run.ticket, run.start, run.result, T1_CHAIN.refund]) expect(links).toContain(ex(t));
   });
-  test('RESULT shows as not yet sealed, never as a fake txid', () => {
-    render(<RunChain chain={T1_CHAIN} explorer={ex} />);
+  test('shows the verdict as a scorecard', () => {
+    render(<RunChain run={run} network="chipnet" explorer={ex} />);
+    expect(screen.getByText(run.pass ? /PASS/ : /FAIL/)).toBeInTheDocument();
+    expect(screen.getByText(run.slug)).toBeInTheDocument();
+  });
+  test('unsealed run says it counts as FAIL, never a fake txid', () => {
+    render(<RunChain run={{ ...run, result: null }} network="chipnet" explorer={ex} />);
     expect(screen.getByText(/not yet sealed/i)).toBeInTheDocument();
+    expect(screen.getByText(/counts as FAIL/i)).toBeInTheDocument();
   });
-  test('all txids are 64 hex', () => {
-    for (const k of ['ticket', 'start', 'refundTicket', 'refund']) expect(T1_CHAIN[k]).toMatch(/^[0-9a-f]{64}$/);
+  test('exported runs are real-looking chipnet txids and linked', () => {
+    expect(DATA.network).toBe('chipnet');
+    for (const r of DATA.runs) for (const k of ['ticket', 'start', 'result']) expect(r[k]).toMatch(/^[0-9a-f]{64}$/);
   });
 });
 
@@ -62,7 +70,20 @@ describe('Leaderboard', () => {
   });
 });
 
+describe('rowsFrom', () => {
+  test('one row per model with pass/fail statuses', () => {
+    const rows = rowsFrom([{ model: 'openai/a', pass: true, startLatencyS: 3 }, { model: 'openai/a', pass: false }, { model: 'openai/b', pass: true }]);
+    expect(rows).toHaveLength(2);
+    expect(rows[0].statuses).toEqual(['PASS', 'FAIL']);
+    expect(rows[0].model).toBe('a');
+  });
+});
+
 describe('App', () => {
+  test('renders the MANIFEST link and empty state when there are no runs', () => {
+    render(<App data={{ ...DATA, runs: [] }} />);
+    expect(screen.getAllByText(/no sealed runs yet/i).length).toBeGreaterThan(0);
+  });
   test('renders hero, chain, leaderboard and honesty sections', () => {
     render(<App />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/chain picks the exam/i);
