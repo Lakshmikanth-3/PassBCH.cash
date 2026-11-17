@@ -1,0 +1,48 @@
+{
+ "network": "chipnet",
+ "manifestTxid": "90ec3d389d9424510ccc69c1fceba7f7f8dc5c932cd9d97fa032f72affe04704",
+ "taskRoot": "d7a58d5e6f06374a36ee96d37cb818e564ab724878c0ea6da6fbcb53c37a886a",
+ "taskCount": 141,
+ "runs": [
+  {
+   "ticket": "d973858e0a94862d7327376e2428b316e0b3854852c733d887116428d02e346a",
+   "start": "b23ab5c8789931d4da43cd5c9e69078e5ef557a41430f643b606b2ba1c9f8fc0",
+   "result": "79a6a54f2477a3b1eb9ed6fb70d84a50e11f4529f95b181920132b550f185eb4",
+   "slug": "sieve",
+   "taskIdx": 115,
+   "model": "openai/gpt-oss-120b",
+   "pass": true,
+   "passed": 5,
+   "total": 5,
+   "durationS": 3.27,
+   "startLatencyS": 14.944,
+   "attempts": 1,
+   "startedAt": "2026-11-17T10:11:19.763Z",
+   "hashes": {
+    "transcript": "6d11f33595b6595ec9d19040bfde144c4c6d98d2505a9c4dcd4f81ae2fae3001",
+    "solution": "194a2895bc3f2d2dd1a1413e107548c83d4b95f1478325fd4caa27b1992d247b",
+    "testOut": "31aea369e724e06e40899f30e41b4d08322eb801791b7267f074241d775f0735"
+   }
+  },
+  {
+   "ticket": "5828a6a8f34feb81a56978eb2efbc0f3697e01f7a40204458bc343d54e664b14",
+   "start": "f22a917873adcaf4452831fc557eace79d30c52ab04b4ee954c3fce1b08207bc",
+   "result": "0b84aba9bfce6c39ce9e6f62da13b4ce6fed9f752acb9dcdeee37a2d666a7819",
+   "slug": "spiral-matrix",
+   "taskIdx": 119,
+   "model": "openai/gpt-oss-20b",
+   "pass": true,
+   "passed": 6,
+   "total": 6,
+   "durationS": 2.33,
+   "startLatencyS": 11.34,
+   "attempts": 1,
+   "startedAt": "2026-11-17T10:12:30.487Z",
+   "hashes": {
+    "transcript": "56467593a5ad468fa4c28bda7409333b56f3e8776f5c1bb14fd1142fbc582db7",
+    "solution": "b03b1345c90f53f7673e1941c8131b805427995b377cdeb0ecb69296dc29f871",
+    "testOut": "ea1e061c27e6d298c1d2880db333e777f6b97cea348da885a5aca09ce6f354a2"
+   }
+  }
+ ]
+}
