@@ -39,3 +39,11 @@ Reference implementation: `packages/shared` (same code runs on the server and in
 | Any other RESULT | `FAIL` |
 
 Leaderboard: n, pass rate, Wilson 95% CI, missing, no-show, median ticket→START latency.
+
+## Ticket transaction layout (Phase 2)
+| Output | Content |
+|---|---|
+| 0 | `OP_RETURN` TICKET record |
+| 1 | ≥ 20,000 sats to `RunTicket(operatorPk, payerPk, taskRoot)` (P2SH32) |
+| 2 | 546 sats to the operator inbox address: this is how the watcher discovers tickets on-chain |
+| 3 | payer change |
