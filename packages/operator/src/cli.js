@@ -6,7 +6,8 @@
 //   e2e [agent]     ticket -> watcher pickup -> START -> AI run -> RESULT, timed
 import fs from 'node:fs';
 import path from 'node:path';
-import { ElectrumNetworkProvider, TransactionBuilder } from '@passrate/shared/tickettx';
+import { TransactionBuilder } from '@passrate/shared/tickettx';
+import { makeProvider } from './net.js';
 import { merkleRoot } from '@passrate/shared';
 import { NETWORK, PATHS, loadState, saveState } from './config.js';
 import { loadKeys } from './keys.js';
@@ -14,7 +15,7 @@ import { buildTasks, manifestPayload, harnessDigest, rosterHash, containerDigest
 import { buildTicket, buildManifest } from './txs.js';
 import { processTicket, watch, getTip } from './pipeline.js';
 
-const provider = new ElectrumNetworkProvider(NETWORK);
+const provider = makeProvider();
 const { operator, payer } = loadKeys();
 const [cmd = 'help', arg] = process.argv.slice(2);
 const log = (m) => console.log(`[${new Date().toISOString().slice(11, 19)}] ${m}`);
@@ -58,7 +59,7 @@ async function cmdTicket(agentIdx = 1) {
   return tx.txid;
 }
 
-const ctx = () => ({ provider, operator, manifest: loadManifest(), log });
+const ctx = () => ({ provider, makeProvider, operator, manifest: loadManifest(), log });
 
 async function cmdE2E(agentIdx) {
   const t0 = Date.now();
@@ -72,7 +73,7 @@ try {
   if (cmd === 'manifest') await cmdManifest();
   else if (cmd === 'ticket') await cmdTicket(arg);
   else if (cmd === 'process') console.log(JSON.stringify(await processTicket(arg, ctx()), null, 1));
-  else if (cmd === 'watch') await watch(ctx());
+  else if (cmd === 'watch') { log(`watching ${operator.address} via ${provider.hostname}`); await watch(ctx(), { makeProvider }); }
   else if (cmd === 'e2e') await cmdE2E(arg);
   else console.log('commands: manifest | ticket [agentIdx] | process <txid> | watch | e2e [agentIdx]');
 } finally {
