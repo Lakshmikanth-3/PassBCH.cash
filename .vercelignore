@@ -1,0 +1,12 @@
+.ENV
+.env
+.env.*
+*.env
+keys/
+*.wif
+*.pem
+node_modules/
+test-reports/
+docs/hackathon/
+packages/feasibility/
+PRD.md
