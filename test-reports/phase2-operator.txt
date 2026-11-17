@@ -1,0 +1,31 @@
+▶ ticket
+  ✔ layout: OP_RETURN T, covenant 20,000, notify 546, change (44.6952ms)
+  ✔ watcher prefix matches a real ticket (1.9257ms)
+  ✔ valid ticket is accepted and the draw matches shared code (4.4276ms)
+  ✔ rejects a covenant built for another operator (2.3386ms)
+  ✔ rejects an unknown agent row (1.8839ms)
+  ✔ rejects a stale or future tip (6.4021ms)
+  ✔ rejects a non-ticket transaction (1.9465ms)
+  ✔ rejects garbage (0.3202ms)
+✔ ticket (65.9189ms)
+▶ START / RESULT chain
+  ✔ START satisfies the covenant (VM-evaluated) (41.166ms)
+  ✔ START names the ticket and commits the drawn task (2.5193ms)
+  ✔ a non-operator key cannot START (17.0009ms)
+  ✔ RESULT spends START output 1 and records the outcome (4.9309ms)
+✔ START / RESULT chain (65.8835ms)
+▶ manifest
+  ✔ 141 tasks from the Docker-verified T3 set (0.1062ms)
+  ✔ root is reproducible (107.7746ms)
+  ✔ container digest is committed in every leaf (201.0117ms)
+  ✔ every task has a valid inclusion proof (2.3849ms)
+  ✔ MANIFEST payload commits count and root (4.434ms)
+✔ manifest (315.9967ms)
+ℹ tests 17
+ℹ suites 3
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2428.0678

@@ -1,0 +1,23 @@
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.8 [39m[90mC:/HACK/BCH/packages/web[39m
+
+ [32m✓[39m test/web.test.jsx[2m > [22mBLAZE banner (compliance)[2m > [22mhas repo link, EMBER2026 token address and non-affiliation note
+ [32m✓[39m test/web.test.jsx[2m > [22mBLAZE banner (compliance)[2m > [22mEMBER address is token-aware (z-prefix)
+ [32m✓[39m test/web.test.jsx[2m > [22mBLAZE banner (compliance)[2m > [22mshows network pill while not on mainnet
+ [32m✓[39m test/web.test.jsx[2m > [22mBLAZE banner (compliance)[2m > [22mdeck link appears once configured
+ [32m✓[39m test/web.test.jsx[2m > [22mRunChain[2m > [22mlinks the real sealed Ticket, START and RESULT txids
+ [32m✓[39m test/web.test.jsx[2m > [22mRunChain[2m > [22mshows the verdict as a scorecard
+ [32m✓[39m test/web.test.jsx[2m > [22mRunChain[2m > [22munsealed run says it counts as FAIL, never a fake txid
+ [32m✓[39m test/web.test.jsx[2m > [22mRunChain[2m > [22mexported runs are real-looking chipnet txids and linked
+ [32m✓[39m test/web.test.jsx[2m > [22mLeaderboard[2m > [22mempty state when no runs
+ [32m✓[39m test/web.test.jsx[2m > [22mLeaderboard[2m > [22mcomputes pass rate, CI and counts missing as FAIL
+ [32m✓[39m test/web.test.jsx[2m > [22mrowsFrom[2m > [22mone row per model with pass/fail statuses
+ [32m✓[39m test/web.test.jsx[2m > [22mApp[2m > [22mrenders the MANIFEST link and empty state when there are no runs
+ [32m✓[39m test/web.test.jsx[2m > [22mApp[2m > [22mrenders hero, chain, leaderboard and honesty sections
+ [32m✓[39m test/web.test.jsx[2m > [22mApp[2m > [22mpay button is disabled until wallet connect exists (no dead click)
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m14 passed[39m[22m[90m (14)[39m
+[2m   Start at [22m 15:43:57
+[2m   Duration [22m 2.31s[2m (transform 111ms, setup 265ms, collect 310ms, tests 172ms, environment 1.06s, prepare 111ms)[22m
+

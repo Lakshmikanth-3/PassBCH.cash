@@ -1,0 +1,7 @@
+PASS START spends ticket:1
+PASS START names the ticket
+PASS RESULT spends START:1
+PASS RESULT names START
+PASS START commits the published MANIFEST root
+PASS task index recomputed from txid+tipHash = 115 (sieve)
+PASS RESULT: PASS 5/5
