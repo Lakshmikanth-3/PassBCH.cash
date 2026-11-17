@@ -1,0 +1,79 @@
+{
+ "contractName": "RunTicket",
+ "constructorInputs": [
+  {
+   "name": "operatorPk",
+   "type": "pubkey"
+  },
+  {
+   "name": "payerPk",
+   "type": "pubkey"
+  },
+  {
+   "name": "taskRoot",
+   "type": "bytes32"
+  }
+ ],
+ "abi": [
+  {
+   "name": "start",
+   "inputs": [
+    {
+     "name": "operatorSig",
+     "type": "sig"
+    }
+   ]
+  },
+  {
+   "name": "refund",
+   "inputs": [
+    {
+     "name": "payerSig",
+     "type": "sig"
+    }
+   ]
+  }
+ ],
+ "bytecode": "OP_3 OP_PICK OP_0 OP_NUMEQUAL OP_IF OP_4 OP_ROLL OP_SWAP OP_CHECKSIGVERIFY OP_0 OP_OUTPUTBYTECODE OP_DUP OP_SIZE OP_NIP 77 OP_NUMEQUALVERIFY OP_DUP OP_9 OP_SPLIT OP_DROP 6a4c74505232015300 OP_EQUALVERIFY OP_INPUTINDEX OP_OUTPOINTTXHASH OP_OVER 29 OP_SPLIT OP_DROP OP_9 OP_SPLIT OP_NIP OP_SWAP OP_REVERSEBYTES OP_EQUALVERIFY 4d OP_SPLIT OP_DROP 2d OP_SPLIT OP_NIP OP_ROT OP_EQUAL OP_NIP OP_NIP OP_ELSE OP_3 OP_ROLL OP_1 OP_NUMEQUALVERIFY OP_6 OP_CHECKSEQUENCEVERIFY OP_DROP OP_3 OP_ROLL OP_ROT OP_CHECKSIG OP_NIP OP_NIP OP_ENDIF",
+ "source": "pragma cashscript ^0.11.0;\n\n// PassRate.cash RunTicket. One instance per ticket (payerPk is in the TICKET record).\n// start(): operator may only spend it with output 0 = OP_RETURN START naming this ticket and the committed task root.\n// refund(): payer reclaims after ~1 hour.\ncontract RunTicket(pubkey operatorPk, pubkey payerPk, bytes32 taskRoot) {\n    function start(sig operatorSig) {\n        require(checkSig(operatorSig, operatorPk));\n        bytes script = tx.outputs[0].lockingBytecode;\n        // 6a 4c 74 | \"PR2\" 01 'S' | mode(1) | ref(32) | refHeight(4) | taskRoot(32) ...\n        require(script.length == 119);\n        require(script.slice(0, 9) == 0x6a4c74505232015300);   // OP_RETURN PUSHDATA1 116 \"PR2\" v1 'S' mode=0 (ticket)\n        // ref is in explorer (display) order; outpoint hash is in internal order.\n        bytes32 ticketTxid = tx.inputs[this.activeInputIndex].outpointTransactionHash;\n        require(script.slice(9, 41) == ticketTxid.reverse());\n        require(script.slice(45, 77) == taskRoot);\n    }\n\n    function refund(sig payerSig) {\n        require(this.age >= 6);\n        require(checkSig(payerSig, payerPk));\n    }\n}\n",
+ "debug": {
+  "bytecode": "5379009c63547a7cad00cd76827701779d76597f75096a4c7450523201530088c0c87801297f75597f777cbc88014d7f75012d7f777b87777767537a519d56b275537a7bac777768",
+  "sourceMap": "7:4:17:5;;;;;8:25:8:36;;:38::48;:8::51:1;9:34:9:35:0;:23::52:1;11:16:11:22:0;:::29:1;;:33::36:0;:8::38:1;12:16:12:22:0;:32::33;:16::34:1;;:38::58:0;:8::60:1;14:39:14::0;:29::85:1;15:16:15:22:0;:32::34;:16::35:1;;:29::30:0;:16::35:1;;:39::49:0;:::59:1;:8::61;16:33:16:35:0;:16::36:1;;:29::31:0;:16::36:1;;:40::48:0;:8::50:1;7:4:17:5;;;19::22::0;;;;20:28:20:29;:8::31:1;;21:25:21:33:0;;:35::42;:8::45:1;19:4:22:5;;6:0:23:1",
+  "logs": [],
+  "requires": [
+   {
+    "ip": 11,
+    "line": 8
+   },
+   {
+    "ip": 18,
+    "line": 11
+   },
+   {
+    "ip": 24,
+    "line": 12
+   },
+   {
+    "ip": 36,
+    "line": 15
+   },
+   {
+    "ip": 45,
+    "line": 16
+   },
+   {
+    "ip": 53,
+    "line": 20
+   },
+   {
+    "ip": 59,
+    "line": 21
+   }
+  ]
+ },
+ "compiler": {
+  "name": "cashc",
+  "version": "0.11.5"
+ },
+ "updatedAt": "2026-11-17T10:18:23.585Z"
+}
