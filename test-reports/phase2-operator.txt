@@ -1,31 +1,46 @@
 ▶ ticket
-  ✔ layout: OP_RETURN T, covenant 20,000, notify 546, change (44.6952ms)
-  ✔ watcher prefix matches a real ticket (1.9257ms)
-  ✔ valid ticket is accepted and the draw matches shared code (4.4276ms)
-  ✔ rejects a covenant built for another operator (2.3386ms)
-  ✔ rejects an unknown agent row (1.8839ms)
-  ✔ rejects a stale or future tip (6.4021ms)
-  ✔ rejects a non-ticket transaction (1.9465ms)
-  ✔ rejects garbage (0.3202ms)
-✔ ticket (65.9189ms)
+  ✔ layout: OP_RETURN T, covenant 20,000, notify 546, change (8.7175ms)
+  ✔ watcher prefix matches a real ticket (1.7903ms)
+  ✔ valid ticket is accepted and the draw matches shared code (4.3725ms)
+  ✔ rejects a covenant built for another operator (3.0754ms)
+  ✔ rejects an unknown agent row (2.5097ms)
+  ✔ rejects a stale or future tip (4.9057ms)
+  ✔ rejects a non-ticket transaction (1.1537ms)
+  ✔ rejects garbage (0.2489ms)
+✔ ticket (27.8909ms)
 ▶ START / RESULT chain
-  ✔ START satisfies the covenant (VM-evaluated) (41.166ms)
-  ✔ START names the ticket and commits the drawn task (2.5193ms)
-  ✔ a non-operator key cannot START (17.0009ms)
-  ✔ RESULT spends START output 1 and records the outcome (4.9309ms)
-✔ START / RESULT chain (65.8835ms)
+  ✔ START satisfies the covenant (VM-evaluated) (41.5975ms)
+  ✔ START names the ticket and commits the drawn task (2.4439ms)
+  ✔ a non-operator key cannot START (17.2651ms)
+  ✔ RESULT spends START output 1 and records the outcome (3.2477ms)
+✔ START / RESULT chain (64.8219ms)
 ▶ manifest
-  ✔ 141 tasks from the Docker-verified T3 set (0.1062ms)
-  ✔ root is reproducible (107.7746ms)
-  ✔ container digest is committed in every leaf (201.0117ms)
-  ✔ every task has a valid inclusion proof (2.3849ms)
-  ✔ MANIFEST payload commits count and root (4.434ms)
-✔ manifest (315.9967ms)
-ℹ tests 17
-ℹ suites 3
-ℹ pass 17
+  ✔ 141 tasks from the Docker-verified T3 set (0.1064ms)
+  ✔ root is reproducible (99.1576ms)
+  ✔ container digest is committed in every leaf (106.305ms)
+  ✔ every task has a valid inclusion proof (2.6878ms)
+  ✔ MANIFEST payload commits count and root (4.7156ms)
+✔ manifest (213.245ms)
+▶ shared code
+  ✔ committed artifact matches a fresh compile of RunTicket.cash (32.8208ms)
+✔ shared code (32.9064ms)
+▶ watcher resilience
+  ✔ withTimeout turns a hang into an error (65.5321ms)
+  ✔ watch swaps to a fresh provider when the server fails (2.8202ms)
+✔ watcher resilience (68.7835ms)
+▶ broadcast resilience
+  ✔ netCall retries on a fresh provider after a failure (1504.5381ms)
+  ✔ broadcast succeeds when the send errors but the tx already reached the network (1.6829ms)
+  ✔ broadcast fails when the tx truly did not make it (6048.5598ms)
+✔ broadcast resilience (7555.5919ms)
+▶ network prefix
+  ✔ validated ticket covenant address uses the chipnet prefix (6.2026ms)
+✔ network prefix (6.4977ms)
+ℹ tests 24
+ℹ suites 7
+ℹ pass 24
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 2428.0678
+ℹ duration_ms 9436.0978

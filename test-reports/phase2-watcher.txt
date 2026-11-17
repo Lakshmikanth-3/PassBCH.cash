@@ -4,3 +4,14 @@
 [10:12:30] START f22a917873adcaf4452831fc557eace79d30c52ab04b4ee954c3fce1b08207bc (11.3 s after ticket seen)
 [10:12:33]   spiral-matrix attempt 1: exit=0 6/6
 [10:12:38] RESULT 0b84aba9bfce6c39ce9e6f62da13b4ce6fed9f752acb9dcdeee37a2d666a7819: PASS 6/6 in 2.33s
+file:///c:/HACK/BCH/packages/operator/node_modules/@electrum-cash/network/dist/index.mjs:652
+		if (this.connection.status !== 1) throw new Error(`Unable to send request to a disconnected server '${this.hostIdentifier}'.`);
+		                                        ^
+
+Error: Unable to send request to a disconnected server 'chipnet.bch.ninja'.
+    at ElectrumClient.request (file:///c:/HACK/BCH/packages/operator/node_modules/@electrum-cash/network/dist/index.mjs:652:43)
+    at ElectrumNetworkProvider.performRequest (file:///c:/HACK/BCH/packages/operator/node_modules/cashscript/dist/network/ElectrumNetworkProvider.js:79:42)
+    at watch (file:///c:/HACK/BCH/packages/operator/src/pipeline.js:82:33)
+    at async file:///c:/HACK/BCH/packages/operator/src/cli.js:75:29
+
+Node.js v22.21.0

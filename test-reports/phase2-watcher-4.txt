@@ -1,0 +1,6 @@
+[10:51:01] watching bchtest:qzmuv37ealgxg3cm3t9vqawusm6q4t5wysv50yfxkn via chipnet.bch.ninja
+[10:51:24] ticket 3d2fc6010331a425c3fb0f12b6bc83a9c639ed1e10525fa50872ac6bd911a17f -> task #78 perfect-numbers, row openai/gpt-oss-120b
+[10:51:29] watch: Unable to send request to a disconnected server 'chipnet.bch.ninja'.; switched to chipnet.imaginary.cash
+[10:51:32] resuming: START 74a0384c37e15d7a35dc360288e293a49b3ab8ac00094cd8110613746cab7155 already on chain
+[10:51:35]   perfect-numbers attempt 1: exit=0 14/14
+[10:51:37] RESULT b6dc2b38aba5a203db39723f21ab1e35fb8a0d82b87a5faab50a9f9b061445ac: PASS 14/14 in 3.08s
