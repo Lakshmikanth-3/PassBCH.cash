@@ -15,5 +15,14 @@
   "dependencies": {
     "@noble/hashes": "^1.5.0"
   },
-  "type": "module"
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js",
+    "./tickettx": "./src/tickettx.js",
+    "./artifacts/RunTicket.json": "./artifacts/RunTicket.json"
+  },
+  "peerDependencies": {
+    "cashscript": "0.11.5",
+    "@bitauth/libauth": "3.0.0"
+  }
 }

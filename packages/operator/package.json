@@ -8,9 +8,9 @@
     "cli": "node src/cli.js"
   },
   "dependencies": {
-    "@bitauth/libauth": "^3.0.0",
-    "@passrate/shared": "file:../shared",
+    "@bitauth/libauth": "3.0.0",
+    "@passrate/shared": "*",
     "cashc": "^0.11.5",
-    "cashscript": "^0.11.5"
+    "cashscript": "0.11.5"
   }
 }
