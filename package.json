@@ -1,9 +1,9 @@
 {
   "name": "passrate-cash",
   "private": true,
-  "workspaces": ["packages/shared", "packages/operator", "packages/web", "packages/feasibility"],
+  "workspaces": ["packages/shared", "packages/operator", "packages/web", "packages/feasibility", "packages/panel"],
   "scripts": {
-    "test": "npm test -w @passrate/shared && npm test -w @passrate/operator && npm test -w @passrate/web && npm test -w @passrate/feasibility",
+    "test": "npm test -w @passrate/shared && npm test -w @passrate/operator && npm test -w @passrate/web && npm test -w @passrate/feasibility && npm test -w @passrate/panel",
     "build": "npm run build -w @passrate/web"
   }
 }
