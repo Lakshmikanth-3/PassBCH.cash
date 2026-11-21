@@ -30,5 +30,5 @@ export function fiat(sats, rates, ccy) {
   if (!rates?.[ccy]) return '';
   const v = (Number(sats) / 1e8) * rates[ccy];
   const digits = ccy === 'JPY' || ccy === 'IDR' || ccy === 'NGN' ? 0 : v < 1 ? 3 : 2;
-  return `≈ ${CURRENCIES[ccy] ?? ''}${v.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
+  return `≈ ${CURRENCIES[ccy] ?? ''}${v.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits })}${window.__pbTestnet ? ' at mainnet value' : ''}`;
 }

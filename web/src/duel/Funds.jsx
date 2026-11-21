@@ -31,7 +31,7 @@ function CryptoQuote({ dir, network }) {
       <label className="small muted">{dir === 'in' ? 'You send' : 'You receive in'}</label>
       <div className="row gap"><select value={coin} onChange={(e) => setCoin(e.target.value)}>{COINS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
         <input inputMode="decimal" value={amt} onChange={(e) => setAmt(e.target.value.replace(/[^0-9.]/g, ''))} aria-label="Amount" /><span className="unit">{dir === 'in' ? sym : 'BCH'}</span></div>
-      {q && <div className="quote"><span className="muted small">{dir === 'in' ? 'Lands in your vault' : 'You get'}</span><b>{dir === 'in' ? bchOf(out) : `${out.toFixed(4)} ${sym}`}</b><span className="muted small">rate 1 {q.from} = {q.rate} {q.to} · min {q.min} {q.from} · via SideShift.ai</span></div>}
+      {q && <div className="quote"><span className="muted small">{dir === 'in' ? 'Lands in your vault' : 'You get'}</span><b>{dir === 'in' ? bchOf(out) : `${out.toFixed(4)} ${sym}`}</b><span className="muted small">rate 1 {q.from} = {q.rate} {q.to} · min {q.min} {q.from} · SideShift's rate (includes their fee, so it differs from the market price)</span></div>}
       {err && <p className="err">{err}</p>}
       <button className="primary big" disabled={network !== 'mainnet'}>{dir === 'in' ? `Get ${sym} deposit address` : `Withdraw to ${sym}`}</button>
       {network !== 'mainnet' && <p className="muted small">Swaps with other coins run through SideShift.ai on <b>mainnet</b>. During testing (chipnet) use the BCH tab — the quote above is live.</p>}

@@ -15,11 +15,12 @@ export function UpDown({ rules, player, explorer, onChange }) {
   const [pending, setPending] = useState(null); // 'up' | 'down' awaiting confirm
   const [mine, setMine] = useState([]); const [err, setErr] = useState(null); const [busy, setBusy] = useState(false);
   const skew = useRef(0); const last = useRef(null);
+  const [pts, setPts] = useState([]);
 
   useEffect(() => {
     let stop = false;
     const poll = async () => {
-      try { const p = await api('price'); if (stop) return; show({ kind: 'price', price: p.price }); skew.current = p.now - Math.floor(Date.now() / 1000); if (last.current) setDir(Math.sign(p.price - last.current) || 0); last.current = p.price; setPx(p); } catch { /* keep */ }
+      try { const p = await api('price'); if (stop) return; show({ kind: 'price', price: p.price }); skew.current = p.now - Math.floor(Date.now() / 1000); if (last.current) setDir(Math.sign(p.price - last.current) || 0); last.current = p.price; setPx(p); setPts((a) => [...a.slice(-59), p.price]); } catch { /* keep */ }
       try { const b = await api('bets'); if (!stop) setMine((old) => { if (b.mine.some((x, i) => x.outcome && !old[i]?.outcome)) onChange?.(); return b.mine; }); } catch { /* ignore */ }
     };
     poll(); const a = setInterval(poll, 2000);
@@ -41,10 +42,12 @@ export function UpDown({ rules, player, explorer, onChange }) {
       <div className="mainbox stagecol">
         <Stage3D game="updown" height="clamp(280px, 42vw, 460px)">
           <div className="pricehud">
-            <span className="muted small">BCH / USD · live</span>
+            <span className="muted small">BCH / USD · live · source: Coinbase last trade</span>
             <span className={`bigprice ${dir > 0 ? 'up' : dir < 0 ? 'down' : ''}`}>{fmt(px?.price)} {dir > 0 ? '▲' : dir < 0 ? '▼' : ''}</span>
             {live ? <span className="small">{now < Number(live.round_start) + ROUND ? <>your bet: <b>{live.side === 'up' ? '▲ UP' : '▼ DOWN'}</b> from {fmt(live.open_price)} · <b className="mono">{clock(Number(live.round_start) + ROUND - now)}</b> left · {px && ((live.side === 'up') === (px.price > Number(live.open_price)) ? <b className="green">winning</b> : px.price === Number(live.open_price) ? <b>level</b> : <b className="red">losing</b>)}</> : 'settling…'}</span>
-              : <span className="small">tap UP or DOWN · result in exactly <b>1 minute</b></span>}
+              : <span className="small">tap UP or DOWN · result in exactly <b>1 minute</b> · same price = stake back</span>}
+            <Spark pts={pts} entry={live ? Number(live.open_price) : null} />
+            {live && <Ring left={Number(live.round_start) + ROUND - now} total={ROUND} />}
           </div>
         </Stage3D>
       </div>
@@ -89,6 +92,26 @@ export function UpDown({ rules, player, explorer, onChange }) {
       </div>
     </div>
   );
+}
+
+/** Tiny 2D price line (last ~2 minutes); dashed line = your entry price. */
+function Spark({ pts, entry }) {
+  if (pts.length < 2) return null;
+  const all = entry ? [...pts, entry] : pts; const lo = Math.min(...all), hi = Math.max(...all), span = Math.max(0.01, hi - lo);
+  const W = 220, H = 40, y = (v) => H - ((v - lo) / span) * (H - 4) - 2;
+  const d = pts.map((v, i) => `${i ? 'L' : 'M'}${((i / (pts.length - 1)) * W).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const up = pts.at(-1) >= pts[0];
+  return (<svg className="spark" width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-label="Recent BCH price">
+    {entry && <line x1="0" x2={W} y1={y(entry)} y2={y(entry)} stroke="#ffc23d" strokeDasharray="4 3" strokeWidth="1" />}
+    <path d={d} fill="none" stroke={up ? '#b6ff3b' : '#ff4d6d'} strokeWidth="2" /></svg>);
+}
+/** Countdown ring for the running minute. */
+function Ring({ left, total }) {
+  const r = 18, c = 2 * Math.PI * r, f = Math.max(0, Math.min(1, left / total));
+  return (<svg className="ring" width="48" height="48" viewBox="0 0 48 48" aria-label={`${Math.max(0, left)} seconds left`}>
+    <circle cx="24" cy="24" r={r} stroke="#2a2e66" strokeWidth="4" fill="none" />
+    <circle cx="24" cy="24" r={r} stroke="#00e5ff" strokeWidth="4" fill="none" strokeDasharray={c} strokeDashoffset={c * (1 - f)} transform="rotate(-90 24 24)" strokeLinecap="round" />
+    <text x="24" y="28" textAnchor="middle" fill="#eef0ff" fontSize="12" fontWeight="700">{Math.max(0, left)}</text></svg>);
 }
 
 /** Public feed of Up/Down bets. */

@@ -38,7 +38,7 @@ export const GAMES = [
   { id: 'soon', Icon: Hourglass, title: 'Upcoming BCH games', line: 'Tournaments, lucky draws, team battles and more — coming soon.', tag: 'Coming soon', color: 'magenta', soon: true },
 ];
 
-function TopBar({ me, go, logout }) {
+function TopBar({ me, go, logout, loading }) {
   const { rates, ccy } = useFx();
   return (
     <header className="topbar">
@@ -51,7 +51,7 @@ function TopBar({ me, go, logout }) {
             <button className="chipbtn balchip" onClick={() => go('wallet')} title="Bonus + withdrawable"><WalletIcon size={16} /> {sats(me.bonus + me.cash)} <span className="fiatsm">{fiat(me.bonus + me.cash, rates, ccy)}</span></button>
             <button className="chipbtn" onClick={logout} title={`Log out ${me.name}`} aria-label="Log out"><Logout size={16} /></button>
           </nav>
-        ) : <div className="row gap"><button className="chipbtn hide-sm" onClick={() => go('winners')}><Trophy size={16} /> Winners</button><button className="chipbtn" onClick={() => go('login')}>Log in</button><button className="primary" onClick={() => go('login')}>Play now</button></div>}
+        ) : loading ? <span className="skeleton" aria-label="Loading account" /> : <div className="row gap"><button className="chipbtn hide-sm" onClick={() => go('winners')}><Trophy size={16} /> Winners</button><button className="chipbtn" onClick={() => go('login')}>Log in</button><button className="primary" onClick={() => go('login')}>Play now</button></div>}
       </div>
     </header>
   );
@@ -63,7 +63,7 @@ function Landing({ go, me }) {
       <section className="wrap hero">
         <p className="kicker">Bitcoin Cash game show</p>
         <h1>Play while your <span className="hl">AI thinks</span>.</h1>
-        <p className="tag">Claude is cogitating? Jump into a one-minute round: rock-paper-scissors at a live TV table, call BCH up or down, or write a prompt and watch your AI agent fight another one. Real BCH, every result on chain.</p>
+        <p className="tag">Claude is cogitating? Jump into a one-minute round: rock-paper-scissors at a live TV table, call BCH up or down, or write a prompt and watch your AI agent fight another one. {cfg?.network === 'mainnet' ? 'Real BCH' : <span className="testpill">Test BCH on chipnet during the hackathon</span>}, every result on chain.</p>
         <div className="row gap center-row">
           <button className="primary big" onClick={() => go(me ? 'games' : 'login')}>{me ? 'Go to games →' : 'Play free — get 0.00025 BCH →'}</button>
           <a className="secondary big" href="#how">How it works</a>
@@ -110,13 +110,14 @@ export default function App() {
   const [me, setMe] = useState(null);
   const [{ route, duel, fight }, setNav] = useState(readRoute);
   const [err, setErr] = useState(null);
+  const [hydrated, setHydrated] = useState(() => !session.get()?.token);
   const ref = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('ref');
 
   const refresh = useCallback(async () => {
     if (!session.get()?.token) return setMe(null);
     try { setMe((await api('me')).player); } catch (e) { if (/unknown player|not signed/.test(e.message)) session.clear(); setMe(null); }
   }, []);
-  useEffect(() => { api('config').then(setCfg).catch((e) => setErr(e.message)); refresh(); }, [refresh]);
+  useEffect(() => { api('config').then((c) => { window.__pbTestnet = c.network !== 'mainnet'; setCfg(c); }).catch((e) => setErr(e.message)); refresh().finally(() => setHydrated(true)); }, [refresh]);
   useEffect(() => { const t = setInterval(refresh, 6000); return () => clearInterval(t); }, [refresh]);
   useEffect(() => { const f = () => setNav(readRoute()); window.addEventListener('hashchange', f); window.addEventListener('popstate', f); return () => { window.removeEventListener('hashchange', f); window.removeEventListener('popstate', f); }; }, []);
 
@@ -128,14 +129,14 @@ export default function App() {
   };
   const logout = () => { session.clear(); setMe(null); go(''); };
   // Signed-out players go to login for anything but the landing page (a shared duel link still opens).
-  const needLogin = !me && cfg && ['wallet', 'add', 'withdraw', 'games'].includes(route);
+  const needLogin = hydrated && !me && cfg && ['wallet', 'add', 'withdraw', 'games'].includes(route);
   const screen = needLogin ? 'login' : route === 'login' && me ? 'games' : route;
   useEffect(() => { document.title = TITLES[screen] ?? TITLES['']; }, [screen]);
 
   return (
     <>
-      <Banner config={{ ...CONFIG, network: cfg?.network ?? CONFIG.network }} />
-      <TopBar me={me} go={go} logout={logout} />
+      {screen === '' && <Banner config={{ ...CONFIG, network: cfg?.network ?? CONFIG.network }} />}
+      <TopBar me={me} go={go} logout={logout} loading={!hydrated} />
       {err && <div className="wrap"><div className="card err">Can't reach the game server: {err}</div></div>}
       {screen === '' && <Landing go={go} me={me} />}
       {screen === 'login' && cfg && (

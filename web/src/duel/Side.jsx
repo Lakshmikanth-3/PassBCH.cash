@@ -61,7 +61,7 @@ export function Leaderboard({ explorer, onOpen }) {
       {open.length > 0 && (
         <div className="card">
           <h2>Open challenges</h2>
-          {open.slice(0, 6).map((o) => <button key={o.id} className="openrow" onClick={() => onOpen(o.id)}><span>{o.name}</span><b>{sats(o.stake)}</b></button>)}
+          {open.slice(0, 6).map((o) => <button key={o.id} className="openrow" onClick={() => onOpen(o.id)}><span>{o.name} challenges anyone</span><span><b>{sats(o.stake)}</b><span className="accept">Accept</span></span></button>)}
         </div>
       )}
       <div className="card">

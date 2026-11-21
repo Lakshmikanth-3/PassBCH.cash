@@ -34,6 +34,8 @@ export function NewFight({ rules, player, onCreated }) {
         <button className="secondary big" disabled={!!busy || prompt.trim().length < 5 || stake > total} onClick={() => start(false)}><Swords size={20} /> Challenge a friend</button>
       </div>
       <LowBalance player={player} rules={rules} />
+      {prompt.trim().length < 5 && <p className="hint">Write a strategy prompt first (at least 5 characters).</p>}
+      <p className="rulesline">Winner takes the pot · 5% fee only when you withdraw · free bonus must be played 2× before withdrawing · <a href="/rules">Rules</a></p>
       {err && <p className="err">{err}</p>}
     </div>
   );
@@ -103,7 +105,7 @@ export function FightLobby({ onOpen }) {
     <div className="card">
       <h2>Open fights</h2>
       {open.length === 0 ? <p className="muted small">No open fights. Create one and share the link.</p>
-        : open.slice(0, 8).map((o) => <button key={o.id} className="openrow" onClick={() => onOpen(o.id)}><span>{o.name}</span><b>{sats(o.stake)}</b></button>)}
+        : open.slice(0, 8).map((o) => <button key={o.id} className="openrow" onClick={() => onOpen(o.id)}><span>{o.name} wants a fight</span><span><b>{sats(o.stake)}</b><span className="accept">Accept</span></span></button>)}
     </div>
   );
 }
