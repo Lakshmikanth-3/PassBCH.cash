@@ -2,14 +2,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import Stage3D from './Stage3D.jsx';
 import { show } from './show.js';
 import { api } from '../duel/api.js';
-import { Rock, Chart, Agents } from '../icons.jsx';
+import { Rock, Chart, Agents, Coin, Keyboard } from '../icons.jsx';
 
-const STAGES = [['rps', 'Rock · Paper · Scissors', Rock], ['updown', 'Up or Down', Chart], ['pf', 'Prompt Fight', Agents]];
+const STAGES = [['rps', 'Rock · Paper · Scissors', Rock], ['updown', 'Up or Down', Chart], ['pf', 'Prompt Fight', Agents], ['coin', 'Coin Flip', Coin], ['typing', 'Typing Race', Keyboard]];
 
 /** Landing showcase: the three 3D studios behind tabs. Rotates on its own until you pick one. */
 export default function Showcase({ onPlay }) {
   const [i, setI] = useState(0); const [pinned, setPinned] = useState(false); const [hover, setHover] = useState(false); const replayed = useRef(false);
-  useEffect(() => { if (pinned || hover) return undefined; const t = setInterval(() => setI((x) => (x + 1) % 3), 20000); return () => clearInterval(t); }, [pinned, hover]);
+  useEffect(() => { if (pinned || hover) return undefined; const t = setInterval(() => setI((x) => (x + 1) % STAGES.length), 20000); return () => clearInterval(t); }, [pinned, hover]);
   const game = STAGES[i][0];
   useEffect(() => {
     if (game !== 'pf') return undefined;
@@ -21,7 +21,7 @@ export default function Showcase({ onPlay }) {
   }, [game, i]);
   return (
     <div className="showcase" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
-      <div className="seg three">{STAGES.map(([k, l, I], n) => <button key={k} className={n === i ? 'on' : ''} onClick={() => { setI(n); setPinned(true); }}><I size={16} /> {l}</button>)}</div>
+      <div className="seg five">{STAGES.map(([k, l, I], n) => <button key={k} className={n === i ? 'on' : ''} onClick={() => { setI(n); setPinned(true); }}><I size={16} /> {l}</button>)}</div>
       <Stage3D key={game} game={game} height="clamp(300px, 48vw, 520px)">
         {game === 'pf' && <span className="replaytag">Replay of the latest real fight</span>}
       </Stage3D>

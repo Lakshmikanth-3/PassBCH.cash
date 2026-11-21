@@ -2,6 +2,8 @@
 //   rps    — colourful TV studio: you, your opponent and the host around a table; real jointed hands
 //   pf     — Prompt Fight arena: two AI agents, a giant live counter, every move is a punch
 //   updown — studio with a live 3D candle chart and a big arrow
+//   coin   — gold coin on a pedestal; a real flip result makes it fly and land on the real side
+//   typing — you and the House Bot at keyboards; the real times replay as a race
 // Nothing plays on its own: the stage idles (breathing, slow camera) and only performs REAL results
 // sent as window 'passbch:show' events. A director cuts between named TV shots during a performance.
 import * as THREE from 'three';
@@ -462,13 +464,135 @@ function updownScene() {
   };
 }
 
+// ---------- Coin Flip: a big gold coin on a pedestal; a real result makes it fly and land on the real side ----------
+const SKY_GOLD = [[0, '#4b2bd1'], [0.45, '#c23fb4'], [0.8, '#ff8a6b'], [1, '#ffd36b']];
+function coinFaceTexture(letter, bg, fg) {
+  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
+  g.fillStyle = bg; g.beginPath(); g.arc(128, 128, 128, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = fg; g.lineWidth = 10; g.beginPath(); g.arc(128, 128, 108, 0, Math.PI * 2); g.stroke();
+  g.fillStyle = fg; g.font = '800 150px "Chakra Petch", Inter, system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(letter, 128, 138);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+function coinScene() {
+  const scene = new THREE.Scene(); const set = studio(scene, THEME.gold, SKY_GOLD);
+  const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 1.0, 0.9, 48), std(0xffffff, { roughness: 0.3 })); ped.position.y = 0.45; ped.castShadow = ped.receiveShadow = true; scene.add(ped);
+  const pr = new THREE.Mesh(new THREE.TorusGeometry(0.88, 0.03, 8, 64), glow(THEME.gold, 1.8)); pr.rotation.x = Math.PI / 2; pr.position.y = 0.9; scene.add(pr);
+  const REST = 1.05;
+  const side = std(0xe0a420, { metalness: 0.7, roughness: 0.25 });
+  const coin = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 0.14, 64), [side, new THREE.MeshStandardMaterial({ map: coinFaceTexture('H', '#f1b92f', '#7a5200'), metalness: 0.6, roughness: 0.3 }), new THREE.MeshStandardMaterial({ map: coinFaceTexture('T', '#d7d9e6', '#4a4f7a'), metalness: 0.6, roughness: 0.3 })]);
+  coin.castShadow = true; coin.position.y = REST; scene.add(coin);
+  const host = buildHost(); host.position.set(-3.6, 0, 0.6); host.rotation.y = 0.55; host.userData.tag.userData.set('Coin host', { border: '#ffc23d' }); scene.add(host);
+  const banner = label('Heads or tails?', { size: 58, border: '#ffc23d', scale: 1.05 }); banner.position.set(0, 3.9, 0); scene.add(banner);
+  const fx = confetti(scene);
+  const shots = { WIDE: { pos: [0, 2.9, 9.8], look: [0, 2.3, 0], orbit: true }, COIN: { pos: [0, 3.0, 7.6], look: [0, 2.4, 0] }, HOST: { pos: [-1.6, 2.2, 3.6], look: [-3.6, 1.8, 0.6] } };
+  const st = { flip: null, cheer: 0, dir: null, total: 0 };
+  const easeOut = (u) => 1 - (1 - u) ** 3;
+  return {
+    scene, shots, set, idle: 'WIDE',
+    onEvent(d, dir) {
+      if (d.kind !== 'coinflip') return;
+      st.dir = dir; st.total = (d.result === 0 ? 10 : 11) * Math.PI;
+      st.flip = { t: 0, dur: 2.4, result: d.result, win: d.outcome === 'win', done: false };
+      banner.userData.set('Flipping…', { border: '#00e5ff' }); coin.rotation.y = 0; dir.sequence([['COIN', Infinity]]);
+    },
+    update(dt, time) {
+      const f = st.flip;
+      if (!f) { coin.rotation.y += dt * 0.9; coin.position.y = REST + Math.sin(time * 2) * 0.05; }
+      else if (!f.done) {
+        f.t += dt; const u = Math.min(1, f.t / f.dur);
+        coin.position.y = REST + Math.sin(Math.PI * u) * 2.3; coin.rotation.x = st.total * easeOut(u);
+        if (u >= 1) {
+          f.done = true; coin.position.y = REST; coin.rotation.x = st.total;
+          banner.userData.set(`${f.result === 0 ? 'HEADS' : 'TAILS'}${f.win ? ' — you win!' : ' — not this time'}`, { border: f.win ? '#b6ff3b' : '#ff4d6d' });
+          if (f.win) { fx.burst(new THREE.Vector3(0, 1.8, 0.4)); st.cheer = 4; }
+          st.dir?.sequence([['HOST', 2.2], ['WIDE', Infinity]]);
+        }
+      }
+      host.userData.head.rotation.y = Math.sin(time * 0.8) * 0.2;
+      st.cheer = Math.max(0, st.cheer - dt);
+      host.userData.micArm.rotation.x = lerp(host.userData.micArm.rotation.x, st.cheer > 0 ? -0.7 + Math.sin(time * 9) * 0.15 : Math.sin(time * 1.2) * 0.08, dt * 5);
+      host.position.y = st.cheer > 0 ? Math.abs(Math.sin(time * 7)) * 0.08 : 0;
+      fx.update(dt);
+    },
+  };
+}
+
+// ---------- Typing Race: you and the House Bot at keyboards, a glowing track in front; real result replays as a race ----------
+const SKY_TYPE = [[0, '#1b2fb8'], [0.5, '#7a3fd1'], [0.85, '#ff7ab8'], [1, '#ffd0a0']];
+function typingScene() {
+  const scene = new THREE.Scene(); const set = studio(scene, THEME.cyan, SKY_TYPE);
+  const person = buildPerson({ shirt: 0x2f7bff, skin: 0xf2c6a0, hair: 0x3a2416, name: 'You', accent: THEME.cyan }); person.position.set(-3.7, 0, 0); person.rotation.y = 0.5; scene.add(person);
+  const bot = buildRobot(THEME.magenta, 'House Bot'); bot.position.set(3.7, 0, 0); bot.rotation.y = -0.5; scene.add(bot);
+  const keys = [];
+  const desk = (x, color, ry) => {
+    const g = new THREE.Group(); g.position.set(x, 0, 0.9); g.rotation.y = ry;
+    const top = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.1, 0.9), std(0xffffff, { roughness: 0.3 })); top.position.y = 0.82; top.castShadow = true; g.add(top);
+    for (const sx of [-1, 1]) { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.8, 0.08), std(0xd8dcf5, { metalness: 0.6 })); leg.position.set(0.8 * sx, 0.4, 0.3); g.add(leg); }
+    const kb = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.05, 0.5), std(0x1b1e3f)); kb.position.set(0, 0.9, 0.05); g.add(kb);
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 10; c++) {
+      const k = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.035, 0.1), glow(color, 0.5)); k.position.set(-0.64 + c * 0.142, 0.945, -0.12 + r * 0.14); g.add(k); keys.push({ k, side: x < 0 ? 'p' : 'b' });
+    }
+    scene.add(g);
+  };
+  desk(-3.5, THEME.cyan, 0.5); desk(3.5, THEME.magenta, -0.5);
+  // track
+  const X0 = -3.2, X1 = 3.2;
+  const lane = (z, color) => {
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(X1 - X0 + 0.6, 0.05, 0.34), std(0x2a2d6b, { roughness: 0.5 })); bar.position.set(0, 0.06, z); bar.receiveShadow = true; scene.add(bar);
+    const edge = new THREE.Mesh(new THREE.BoxGeometry(X1 - X0 + 0.6, 0.02, 0.03), glow(color, 1.4)); edge.position.set(0, 0.1, z - 0.19); scene.add(edge);
+    const m = new THREE.Mesh(new THREE.SphereGeometry(0.2, 24, 20), glow(color, 1.6)); m.position.set(X0, 0.3, z); m.castShadow = true; scene.add(m);
+    return m;
+  };
+  const youM = lane(2.35, THEME.cyan), botM = lane(3.05, THEME.magenta);
+  for (const z of [2.35, 3.05]) { const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.9), std(0xffffff)); pole.position.set(X1 + 0.35, 0.5, z); scene.add(pole); const flag = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.24, 0.02), std(0xffffff)); flag.position.set(X1 + 0.52, 0.85, z); scene.add(flag); }
+  const banner = label('Type the phrase before the bot', { size: 54, border: '#00e5ff', scale: 1.0 }); banner.position.set(0, 3.6, 0); scene.add(banner);
+  const fx = confetti(scene);
+  const shots = { WIDE: { pos: [0, 2.8, 9.2], look: [0, 1.2, 1.2], orbit: true }, TRACK: { pos: [0, 1.7, 6.4], look: [0, 0.4, 2.7] }, YOU: { pos: [-1.2, 2.2, 4.6], look: [-3.7, 1.4, 0.4] } };
+  const st = { racing: false, p: 0, bp: 0, run: null, cheer: 0, dir: null };
+  const px = (p) => X0 + p * (X1 - X0);
+  return {
+    scene, shots, set, idle: 'WIDE',
+    onEvent(d, dir) {
+      st.dir = dir;
+      if (d.kind === 'typingstart') { st.racing = true; st.run = null; st.p = 0; st.bp = 0; banner.userData.set('Type it! The bot is typing too', { border: '#00e5ff' }); dir.sequence([['YOU', 1.6], ['TRACK', Infinity]]); }
+      if (d.kind === 'typingprogress') st.p = Math.max(st.p, Number(d.p) || 0);
+      if (d.kind === 'typingresult') {
+        const k = 5 / Math.max(1, d.playerMs, d.botMs);
+        st.run = { t: 0, pDur: Math.max(0.3, d.playerMs * k), bDur: Math.max(0.3, d.botMs * k), p0: st.p, win: d.outcome === 'win', outcome: d.outcome, done: false };
+        banner.userData.set('Photo finish…', { border: '#ffc23d' }); dir.go('TRACK');
+      }
+    },
+    update(dt, time) {
+      const r = st.run;
+      if (r && !r.done) {
+        r.t += dt; st.p = lerp(r.p0, 1, Math.min(1, r.t / r.pDur)); st.bp = Math.min(1, r.t / r.bDur);
+        if (r.t >= Math.max(r.pDur, r.bDur)) {
+          r.done = true; st.racing = false;
+          banner.userData.set(r.win ? 'You beat the House Bot!' : r.outcome === 'refund' ? 'Dead heat — stake back' : 'The House Bot wins', { border: r.win ? '#b6ff3b' : r.outcome === 'refund' ? '#ffc23d' : '#ff4d6d' });
+          if (r.win) { fx.burst(new THREE.Vector3(px(1) - 1, 1.6, 2.4)); st.cheer = 4; }
+          st.dir?.sequence([['YOU', 2], ['WIDE', Infinity]]);
+        }
+      }
+      youM.position.x = lerp(youM.position.x, px(st.p), dt * 12); botM.position.x = lerp(botM.position.x, px(st.bp), dt * 12);
+      const typing = st.racing || (r && !r.done);
+      keys.forEach((q, i) => { const on = typing && Math.sin(time * 18 + i * 1.7) > 0.55; q.k.material.emissiveIntensity = on ? 2.4 : 0.5; });
+      bot.userData.arms.forEach((a, i) => { a.rotation.x = typing ? -0.9 + Math.sin(time * 16 + i * 2) * 0.35 : Math.sin(time * 1.4 + i) * 0.06; });
+      bot.userData.head.rotation.y = Math.sin(time * 0.9) * 0.2;
+      st.cheer = Math.max(0, st.cheer - dt);
+      person.position.y = st.cheer > 0 ? Math.abs(Math.sin(time * 7)) * 0.08 : 0;
+      if (person.userData.head) person.userData.head.rotation.y = Math.sin(time * 0.8) * 0.15;
+      fx.update(dt);
+    },
+  };
+}
+
 export function createStage(canvas, { game = 'rps', reducedMotion = false, onShot } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15;
   const camera = new THREE.PerspectiveCamera(45, 2, 0.1, 80);
-  const world = { rps: rpsScene, pf: pfScene, ai: pfScene, updown: updownScene }[game]();
+  const world = { rps: rpsScene, pf: pfScene, ai: pfScene, updown: updownScene, coin: coinScene, typing: typingScene }[game]();
   const look = new THREE.Vector3(); const wantPos = new THREE.Vector3(); const wantLook = new THREE.Vector3();
   let clock = 0;
   const director = {

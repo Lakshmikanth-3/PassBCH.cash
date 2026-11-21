@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { api, sats } from './api.js';
+import Stage3D from '../three/Stage3D.jsx';
+import { show } from '../three/show.js';
 import { StakePicker } from './StakePicker.jsx';
 import { VerifiedCard } from './VerifiedCard.jsx';
 import LowBalance from './LowBalance.jsx';
@@ -16,7 +18,7 @@ export function CoinFlip({ rules, player, explorer, network, onChange }) {
   useEffect(() => { fresh(); api('qmine', { q: '&kind=coin' }).then(setMine).catch(() => {}); }, []);
   const flip = async () => {
     setBusy(true); setErr(null);
-    try { const r = await api('cfplay', { body: { id: round.id, pick, stake, clientSeed: randomHex() } }); setTimeout(() => { setRes(r); setBusy(false); onChange?.(); api('qmine', { q: '&kind=coin' }).then(setMine).catch(() => {}); }, 1300); setRes({ spinning: true }); }
+    try { const r = await api('cfplay', { body: { id: round.id, pick, stake, clientSeed: randomHex() } }); show({ kind: 'coinflip', result: r.result, outcome: r.outcome }); setRes({ spinning: true }); setTimeout(() => { setRes(r); setBusy(false); onChange?.(); api('qmine', { q: '&kind=coin' }).then(setMine).catch(() => {}); }, 3000); }
     catch (e) { setErr(e.message); setBusy(false); }
   };
   const [txid, setTxid] = useState(null);
@@ -30,10 +32,7 @@ export function CoinFlip({ rules, player, explorer, network, onChange }) {
   return (
     <div className="gamelayout">
       <div className="stagecol">
-        <div className="coinstage">
-          <div className={`coin ${face}`} aria-label="coin"><span className="cf h">H</span><span className="cf t">T</span></div>
-          <p className="muted small center" style={{ margin: 0 }}>{res && !res.spinning ? `It landed ${res.result === 0 ? 'heads' : 'tails'}` : 'Heads or tails'}</p>
-        </div>
+        <Stage3D game="coin" height="clamp(300px, 48vw, 520px)" live={!!busy || (res && !res.spinning)} />
       </div>
       <div className="col">
         <div className="card">
@@ -79,19 +78,20 @@ export function TypingRace({ rules, player, explorer, network, onChange }) {
   }, [res?.id]);
   const start = async () => {
     setBusy(true); setErr(null); setRes(null); setText(''); done.current = false;
-    try { const r = await api('trstart', { body: { stake } }); t0.current = Date.now(); setMs(0); setRace(r); onChange?.(); }
+    try { const r = await api('trstart', { body: { stake } }); t0.current = Date.now(); setMs(0); setRace(r); show({ kind: 'typingstart' }); onChange?.(); }
     catch (e) { setErr(e.message); } finally { setBusy(false); }
   };
   const finish = async (value) => {
     if (done.current) return; done.current = true;
-    try { setRes(await api('trfinish', { body: { id: race.id, text: value } })); onChange?.(); } catch (e) { setErr(e.message); done.current = false; }
+    try { const r = await api('trfinish', { body: { id: race.id, text: value } }); setRes(r); show({ kind: 'typingresult', playerMs: r.playerMs, botMs: r.botMs, outcome: r.outcome }); onChange?.(); } catch (e) { setErr(e.message); done.current = false; }
   };
-  const onType = (v) => { setText(v); if (v === race.phrase) finish(v); };
+  const onType = (v) => { setText(v); show({ kind: 'typingprogress', p: [...v].filter((c, i) => c === race.phrase[i]).length / race.phrase.length }); if (v === race.phrase) finish(v); };
   const correct = race ? [...text].filter((c, i) => c === race.phrase[i]).length : 0;
   return (
     <div className="gamelayout">
       <div className="stagecol">
-        <div className="card typing">
+        <Stage3D game="typing" height="clamp(260px, 40vw, 420px)" live={!!race && !res} />
+        <div className="card typing" style={{ marginTop: 16 }}>
           <div className="row between"><h2>Typing Race</h2><span className="mono">{(ms / 1000).toFixed(1)}s</span></div>
           {!race && <p className="muted">Type a short phrase faster than the House Bot (45 to 80 words per minute, locked by a hash before you start). Winner takes 1.9× the stake. Same phrase for everyone in the same game, drawn from the game id.</p>}
           {race && (

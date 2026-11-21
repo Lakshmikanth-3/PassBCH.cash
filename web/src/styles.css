@@ -445,3 +445,5 @@ main + .foot, .foot { margin-top: auto; } #root > main { width: 100%; }
 .cards4 { grid-template-columns: repeat(3, 1fr); }
 @media (max-width: 900px) { .cards4 { grid-template-columns: 1fr 1fr; } } @media (max-width: 520px) { .cards4 { grid-template-columns: 1fr; } }
 .seg.four { display: flex; flex-wrap: wrap; } .seg.four button { flex: 1 1 auto; }
+
+.seg.five { display: flex; flex-wrap: wrap; } .seg.five button { flex: 1 1 auto; white-space: nowrap; }
