@@ -83,6 +83,18 @@ const routes = {
   async pfjoin(req, b) { const r = await S.pfJoin(tokenOf(req), b); await recordSoon(); return r; },
   async pf(req, b, q) { const r = await S.pfGet(q.get('id'), tokenOf(req)); if (r.status === 'done' && !r.recordTxid) await recordSoon(); return r; },
   async pfopen() { return S.pfOpen(); },
+  async player(req, b, q) { return S.player(q.get('name')); },
+  /** Raw transaction + the DB view of the game it records. The browser decodes and recomputes everything itself. */
+  async verify(req, b, q) {
+    const txid = q.get('txid') ?? '';
+    if (!/^[0-9a-f]{64}$/.test(txid)) throw new S.UserError('enter a 64-character transaction id');
+    const raw = await timed(chain.provider().getRawTransaction(txid), 10000, 'transaction lookup').catch(() => null);
+    if (!raw) throw new S.UserError('transaction not found on ' + chain.NETWORK, 404);
+    const kinds = { '53444c31': 'SDL1', '53554431': 'SUD1', '53504631': 'SPF1', '53414931': 'SAI1' };
+    const m = raw.match(/6a(?:4c[0-9a-f]{2}|[0-9a-f]{2})(53444c31|53554431|53504631|53414931)([0-9a-f]{32})/);
+    const kind = m ? kinds[m[1]] : null;
+    return { txid, raw, network: chain.NETWORK, explorer: chain.EXPLORER, kind, match: kind ? await S.matchById(kind, m[2]) : null };
+  },
   async winners(req, b, q) { await S.sweep(); return S.winners({ game: q.get('game') ?? 'all', period: q.get('period') ?? 'all' }); },
   async walletutxos(req, b) {
     const addrs = Array.isArray(b.addresses) ? b.addresses.slice(0, 40).filter((a) => /^(bchtest|bitcoincash):q[0-9a-z]{40,}$/.test(a)) : [];

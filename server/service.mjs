@@ -116,6 +116,7 @@ export async function reveal(token, { id, move, salt }) {
     if (!d.b_player) throw new UserError('nobody has joined yet');
     if (!E.checkReveal(d.a_commit, move, salt)) throw new UserError('that move does not match your commitment');
     if (E.duelStatus(d, nowS()) === 'reveal_timeout') return finish(c, d, { result: 2, reason: 'reveal timeout' });
+    await c.query('update duels set a_salt=$1 where id=$2', [salt, d.id]);
     return finish(c, d, { result: E.outcome(move, d.b_move), aMove: move, reason: 'revealed' });
   });
 }
@@ -507,4 +508,48 @@ export async function winners({ game = 'all', period = 'all' } = {}) {
   ]);
   const num = (r) => ({ ...r, won: r.won != null ? Number(r.won) : undefined, amount: r.amount != null ? Number(r.amount) : undefined });
   return { top: top.map(num), biggest: biggest.map(num), latest: latest.map(num), totals: { ...t, paid: Number(t.paid), ...played } };
+}
+
+// ---------- Proof: look up the game behind an on-chain record; player profiles ----------
+/** DB side of a record id (duel / bet / fight), so the browser can compare it with what the chain says. */
+export async function matchById(kind, id) {
+  const c = await db();
+  if (kind === 'SDL1') {
+    const { rows: [d] } = await c.query('select d.*, pa.name a_name, pb.name b_name from duels d join players pa on pa.id=d.a_player left join players pb on pb.id=d.b_player where d.id=$1', [id]);
+    return d && { game: 'rps', id: d.id, aName: d.a_name, bName: d.b_name, stake: d.stake, aMove: d.a_move, bMove: d.b_move, aSalt: d.a_salt, commit: d.a_commit, result: d.result, recordTxid: d.record_txid, settledAt: d.settled_at };
+  }
+  if (kind === 'SUD1') {
+    const { rows: [b] } = await c.query('select b.*, p.name from bets b join players p on p.id=b.player_id where b.id=$1', [id]);
+    return b && { game: 'updown', id: b.id, name: b.name, side: b.side, stake: b.stake, roundStart: Number(b.round_start), open: Number(b.open_price), close: Number(b.close_price), result: b.result, outcome: b.outcome, payout: b.payout, source: b.price_source, recordTxid: b.record_txid };
+  }
+  if (kind === 'SPF1') {
+    const { rows: [m] } = await c.query('select m.*, pa.name a_name, pb.name b_name from pf_matches m join players pa on pa.id=m.a_player left join players pb on pb.id=m.b_player where m.id=$1', [id]);
+    return m && { game: 'pf', id: m.id, aName: m.a_name, bName: m.b_name, stake: m.stake, target: m.target, maxStep: m.max_step, first: m.first, turns: m.turns, winner: m.winner, aPrompt: m.a_prompt, bPrompt: m.b_prompt, recordTxid: m.record_txid };
+  }
+  return null;
+}
+
+/** Public profile: totals per game and the full history, each with its on-chain record. */
+export async function player(name) {
+  const c = await db();
+  const { rows: [p] } = await c.query('select id, name, created_at from players where lower(name)=lower($1) and not is_house order by id limit 1', [String(name ?? '')]);
+  if (!p) throw new UserError('no such player', 404);
+  const { rows: history } = await c.query(`
+    select 'rps' game, d.id, d.settled_at at, d.stake, case when d.result = 0 then 'draw' when d.winner = $1 then 'win' else 'lose' end outcome,
+           case when d.winner = $1 then d.stake * 2 when d.result = 0 then d.stake else 0 end paid, d.record_txid tx,
+           case when d.a_player = $1 then pb.name else pa.name end opponent
+      from duels d join players pa on pa.id=d.a_player left join players pb on pb.id=d.b_player
+      where (d.a_player = $1 or d.b_player = $1) and d.settled_at is not null and d.b_player is not null
+    union all
+    select 'updown', b.id, b.settled_at, b.stake, case when b.outcome = 'refund' then 'draw' else b.outcome end, coalesce(b.payout, 0), b.record_txid, b.side from bets b where b.player_id = $1 and b.settled_at is not null
+    union all
+    select 'pf', m.id, m.settled_at, m.stake, case when m.winner_id = $1 then 'win' else 'lose' end, case when m.winner_id = $1 then m.stake * 2 else 0 end, m.record_txid,
+           case when m.a_player = $1 then pb.name else pa.name end
+      from pf_matches m join players pa on pa.id=m.a_player left join players pb on pb.id=m.b_player where (m.a_player = $1 or m.b_player = $1) and m.status = 'done'
+    order by at desc limit 100`, [p.id]);
+  const stats = { games: history.length, wins: history.filter((h) => h.outcome === 'win').length, losses: history.filter((h) => h.outcome === 'lose').length,
+    staked: history.reduce((s, h) => s + h.stake, 0), paid: history.reduce((s, h) => s + Number(h.paid), 0) };
+  stats.net = stats.paid - stats.staked; stats.winRate = stats.games ? stats.wins / stats.games : 0;
+  stats.verified = history.filter((h) => h.tx).length;
+  return { name: p.name, since: p.created_at, stats, history: history.map((h) => ({ ...h, paid: Number(h.paid) })) };
 }

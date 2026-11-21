@@ -29,6 +29,7 @@ create table if not exists duels (
 );
 alter table duels add column if not exists record_try_at timestamptz;
 alter table players add column if not exists wagered bigint not null default 0;
+alter table duels add column if not exists a_salt text;
 create index if not exists duels_settled on duels (settled_at desc);
 create table if not exists deposits (txid text not null, vout int not null, player_id int not null references players(id), sats bigint not null, created_at timestamptz not null default now(), primary key (txid, vout));
 create table if not exists withdrawals (id serial primary key, player_id int not null references players(id), address text not null, amount bigint not null, fee bigint not null, txid text, status text not null default 'pending', created_at timestamptz not null default now());
