@@ -205,3 +205,14 @@ select { background: #080920; color: var(--text); border: 1px solid var(--border
 .cards4 .gcard p { margin: 0; }
 @media (max-width: 900px) { .stats4 { grid-template-columns: 1fr 1fr; } .seg.four { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 640px) { .hide-sm { display: none !important; } }
+
+/* phone top bar: one line, compact */
+.topbar .wrap { flex-wrap: nowrap; gap: 8px; }
+.topbar nav, .topbar .row.gap { flex-wrap: nowrap; }
+@media (max-width: 640px) {
+  .brand { font-size: 18px; white-space: nowrap; }
+  .chipbtn { padding: 6px 10px; font-size: 13px; }
+  .fiatsm { display: none; }
+  .topbar .primary { padding: 8px 12px; font-size: 14px; }
+  .banner-row { font-size: 11px; }
+}

@@ -13,7 +13,10 @@ export default function Stage3D({ game, height, children }) {
     import('./stage.js').then(({ createStage }) => {
       if (!alive || !canvas.current) return;
       try { stage = createStage(canvas.current, { game, reducedMotion: reduced, onShot: setShot }); } catch { setFailed(true); }
-    }).catch(() => setFailed(true));
+    }).catch(() => {
+      try { if (!sessionStorage.getItem('pb.reloaded')) { sessionStorage.setItem('pb.reloaded', '1'); location.reload(); return; } } catch { /* storage blocked */ }
+      setFailed(true);
+    });
     return () => { alive = false; stage?.dispose(); };
   }, [game]);
   // Feed live data so the stage is alive even before you play.

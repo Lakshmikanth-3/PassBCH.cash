@@ -30,7 +30,7 @@ export function Winners({ explorer }) {
         <>
           <div className="stats4">
             <div className="card stat"><span className="muted small">Paid to winners</span><b>{sats(w.totals.paid)}</b><span className="muted small">{fiat(w.totals.paid, rates, ccy)}</span></div>
-            <div className="card stat"><span className="muted small">Wins</span><b>{w.totals.wins}</b><span className="muted small">{w.totals.winners} different winners</span></div>
+            <div className="card stat"><span className="muted small">Wins</span><b>{w.totals.wins}</b><span className="muted small">{w.totals.winners} {w.totals.winners === 1 ? 'winner' : 'different winners'}</span></div>
             <div className="card stat"><span className="muted small">Games played</span><b>{w.totals.duels + w.totals.bets + w.totals.fights}</b><span className="muted small">{w.totals.duels} duels · {w.totals.bets} predictions · {w.totals.fights} fights</span></div>
             <div className="card stat"><span className="muted small">Players</span><b>{w.totals.players}</b><span className="muted small">worldwide</span></div>
           </div>
@@ -66,7 +66,7 @@ export function WinnersStrip({ onOpen }) {
   if (!w) return null;
   return (
     <button className="card winstrip" onClick={onOpen}>
-      <span><Trophy size={20} /> <b>{sats(w.totals.paid)}</b> paid to <b>{w.totals.winners}</b> winners · <b>{w.totals.duels + w.totals.bets + w.totals.fights}</b> games played</span>
+      <span><Trophy size={20} /> <b>{sats(w.totals.paid)}</b> paid to <b>{w.totals.winners}</b> {w.totals.winners === 1 ? 'winner' : 'winners'} · <b>{w.totals.duels + w.totals.bets + w.totals.fights}</b> games played</span>
       <span className="muted small">{w.latest[0] ? `Latest: ${w.latest[0].name} won ${sats(w.latest[0].amount)}` : 'Be the first winner'} · See all winners →</span>
     </button>
   );

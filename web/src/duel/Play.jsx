@@ -37,7 +37,7 @@ export function Signup({ onDone, refCode }) {
   return (
     <form className="card signup" onSubmit={go}>
       <div className="seg"><button type="button" className="on">New player</button><button type="button" onClick={() => setMode('code')}>Log in</button></div>
-      <h2>Get {refCode ? '50,000' : '25,000'} free sats and play</h2>
+      <h2>Get {refCode ? '0.0005' : '0.00025'} BCH free and play</h2>
       <p className="muted">No wallet needed to start. Pick a name; your bonus is ready instantly.</p>
       <input aria-label="Player name" placeholder="Your player name" value={name} onChange={(e) => setName(e.target.value)} maxLength={20} required />
       <input aria-label="Referral code" placeholder="Referral code (optional)" value={ref} onChange={(e) => setRef(e.target.value.toUpperCase())} maxLength={6} />
