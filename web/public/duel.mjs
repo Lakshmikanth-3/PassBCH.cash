@@ -17,7 +17,18 @@ const width = (s) => [...strip(s)].reduce((n, ch) => n + (/[\u{1F300}-\u{1FAFF}\
 const pad = (s, n) => s + ' '.repeat(Math.max(0, n - width(s)));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const sats = (n) => `${(Number(n ?? 0) / 1e8).toFixed(8).replace(/0+$/, '').replace(/\.$/, '')} BCH`;
-export const VERSION = '2026.11.21-4'; // must match CLIENT_VERSION in api/duel.mjs
+export const VERSION = '2026.11.21-5'; // must match CLIENT_VERSION in api/duel.mjs
+let NETWORK = 'chipnet';
+const CUR = { USD: '$', INR: '₹', JPY: '¥', EUR: '€', GBP: '£', AED: 'AED ', SGD: 'S$', IDR: 'Rp ', PHP: '₱', NGN: '₦', BRL: 'R$' };
+let fxCache = null;
+async function rates() { if (fxCache && Date.now() - fxCache.at < 60000) return fxCache.r; const r = await api('rates'); fxCache = { at: Date.now(), r }; return r; }
+const ccy = () => cfg.currency || (/IN$/.test(Intl.DateTimeFormat().resolvedOptions().locale) ? 'INR' : 'USD');
+function money(n, fx) {
+  const c = ccy(); if (!fx?.[c]) return '';
+  const v = (Number(n) / 1e8) * fx[c];
+  return `≈ ${CUR[c] ?? ''}${v.toLocaleString(undefined, { maximumFractionDigits: v < 1 ? 3 : 2 })}${NETWORK !== 'mainnet' ? ' at mainnet value' : ''}`;
+}
+const rulesLine = () => dim('Win = the pot · 5% fee only when you withdraw · free bonus must be played 2× before withdrawing · [r] rules');
 
 // ---------- input (works for people typing and for piped input) ----------
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -43,8 +54,17 @@ function box(title, rows, color = cyan) {
   const top = color(`╔${'═'.repeat(w + 2)}╗`), bot = color(`╚${'═'.repeat(w + 2)}╝`);
   const t = title ? color('║ ') + bold(pad(title, w)) + color(' ║') : null;
   const sep = color(`╟${'─'.repeat(w + 2)}╢`);
-  const fit = (r) => { if (width(r) <= w) return r; let out = ''; for (const ch of strip(r)) { if (width(out + ch) > w - 1) break; out += ch; } return out + '…'; };
-  const body = rows.map((r) => color('║ ') + pad(fit(r), w) + color(' ║'));
+  // Long rows wrap onto the next line (word by word) instead of being cut off.
+  const wrap = (r) => {
+    if (width(r) <= w) return [r];
+    const out = []; let line = '';
+    for (const word of strip(r).split(' ')) {
+      if (width(line ? line + ' ' + word : word) > w) { if (line) out.push(line); line = word; while (width(line) > w) { out.push(line.slice(0, w)); line = line.slice(w); } }
+      else line = line ? line + ' ' + word : word;
+    }
+    if (line) out.push(line); return out;
+  };
+  const body = rows.flatMap(wrap).map((r) => color('║ ') + pad(r, w) + color(' ║'));
   console.log([top, ...(t ? [t, sep] : []), ...body, bot].join('\n'));
 }
 function logo() {
@@ -103,15 +123,18 @@ async function welcome() {
 }
 
 async function home() {
-  const { player } = await api('me');
+  const [{ player }, fx] = await Promise.all([api('me'), rates().catch(() => null)]);
   console.log('');
-  box(`${player.name}   ${gold(sats(player.bonus + player.cash))}  ${dim(`(bonus ${sats(player.bonus)} · withdrawable ${sats(player.cash)})`)}`, [
-    `${bold(gold('[1]'))} ${bold('Rock · Paper · Scissors')}      ${dim('table with a host · vs House Bot or a friend')}`,
+  box(`${player.name}   ${gold(sats(player.bonus + player.cash))} ${dim(money(player.bonus + player.cash, fx))}`, [
+    dim(`bonus ${sats(player.bonus)} · withdrawable ${sats(player.cash)} · ${NETWORK === 'mainnet' ? 'mainnet' : 'test BCH on chipnet'}`),
+    '',
+    `${bold(gold('[1]'))} ${bold('Rock · Paper · Scissors')}      ${dim('table with a host · House Bot, friend or open challenges')}`,
     `${bold(cyan('[2]'))} ${bold('Up or Down')}                  ${dim('1-minute BCH price call · pays 1.9×')}`,
     `${bold(lime('[3]'))} ${bold('Prompt Fight')}                ${dim('your prompt trains an AI agent · it fights live')}`,
     `${bold(mag('[4]'))} ${dim('Upcoming BCH games — coming soon')}`,
     '',
-    `${bold('[w]')} Wallet & login code   ${bold('[l]')} Leaderboard   ${bold('[o]')} Log out   ${bold('[q]')} Quit`,
+    `${bold('[w]')} Vault   ${bold('[l]')} Winners worldwide   ${bold('[p]')} Player profile   ${bold('[v]')} Verify a result`,
+    `${bold('[r]')} Rules & fees   ${bold('[o]')} Log out   ${bold('[q]')} Quit`,
   ]);
   return (await ask('  > ')).trim().toLowerCase();
 }
@@ -146,9 +169,18 @@ async function tableShow(meName, them, myMove, theirMove, result) {
 }
 
 async function rps(rules) {
-  box('Rock · Paper · Scissors', [`${bold('[1]')} Play the House Bot   ${bold('[2]')} Challenge a friend (share link)   ${bold('[3]')} Join a friend's duel`, dim('Your move is locked as a hash before anyone plays. Not revealing in 2 min = you lose.')], gold);
+  const open = await api('open').catch(() => []);
+  box('Rock · Paper · Scissors', [`${bold('[1]')} Play the House Bot   ${bold('[2]')} Challenge a friend (share link)   ${bold('[3]')} Join by link or id`,
+    `${bold('[4]')} Accept an open challenge ${dim(`(${open.length} waiting)`)}`,
+    dim('Your move is locked as a hash before anyone plays. Not revealing in 2 min = you lose.'), rulesLine()], gold);
   const c = (await ask('  > ')).trim();
   if (c === '3') return join((await ask('  Duel link or id: ')).trim().split(/duel[=/]/).pop());
+  if (c === '4') {
+    if (!open.length) return console.log(dim('  No open challenges right now — create one with [2].'));
+    box('Open challenges', open.slice(0, 9).map((o, i) => `${bold(`[${i + 1}]`)} ${o.name} challenges anyone · ${gold(sats(o.stake))}`), gold);
+    const pick = open[Number((await ask('  Accept which? ')).trim()) - 1];
+    return pick ? join(pick.id) : undefined;
+  }
   if (c !== '1' && c !== '2') return;
   const move = await pickMove(); const stake = await pickStake(rules);
   const salt = randomBytes(16).toString('hex'); const commit = createHash('sha256').update(`${move}:${salt}`).digest('hex');
@@ -260,10 +292,18 @@ async function writePrompt() {
 }
 
 async function promptFight(rules) {
-  box('Prompt Fight', [`${bold('[1]')} Fight the House Agent   ${bold('[2]')} Challenge a friend (share link)   ${bold('[3]')} Join a friend's fight`, dim('Rules are enforced by code. Your prompt stays hidden until the fight ends.')], lime);
-  const c = (await ask('  > ')).trim();
+  const openF = await api('pfopen').catch(() => []);
+  box('Prompt Fight', [`${bold('[1]')} Fight the House Agent   ${bold('[2]')} Challenge a friend (share link)   ${bold('[3]')} Join by link or id`,
+    `${bold('[4]')} Accept an open fight ${dim(`(${openF.length} waiting)`)}`,
+    dim('Race to N: agents add 1..k in turn; landing exactly on N wins. Code enforces the rules — no AI judge.'), rulesLine()], lime);
+  let c = (await ask('  > ')).trim(); let picked = null;
+  if (c === '4') {
+    if (!openF.length) return console.log(dim('  No open fights right now — create one with [2].'));
+    box('Open fights', openF.slice(0, 9).map((o, i) => `${bold(`[${i + 1}]`)} ${o.name} wants a fight · ${gold(sats(o.stake))}`), lime);
+    picked = openF[Number((await ask('  Accept which? ')).trim()) - 1]; if (!picked) return; c = '3';
+  }
   if (c === '3') {
-    const id = (await ask('  Fight link or id: ')).trim().split(/fight[=/]/).pop();
+    const id = picked ? picked.id : (await ask('  Fight link or id: ')).trim().split(/fight[=/]/).pop();
     const m = await api('pf', { q: `&id=${id}` });
     if (m.status !== 'open') return console.log(red(`  That fight is ${m.status}.`));
     box(`${m.aName} challenges your agent for ${sats(m.stake)}`, [dim('Their prompt is hidden until the fight ends.')], mag);
@@ -288,32 +328,129 @@ async function promptFight(rules) {
   }
 }
 
-async function board() {
-  const { top, feed, stats } = await api('leaderboard');
-  box(`Leaderboard · ${stats.duels} duels · ${sats(stats.volumeSats)} played`, [
-    ...top.slice(0, 10).map((t, i) => `${pad(`${['🥇', '🥈', '🥉'][i] ?? ` ${i + 1}.`} ${t.name}`, 26)} ${lime(pad(`+${sats(t.won_sats)}`, 18))} ${t.wins}W ${t.losses}L ${t.draws}D`),
-    ...(top.length ? [] : [dim('No games yet — be the first!')]),
-    '', bold('Live duels'),
-    ...feed.slice(0, 6).map((f) => `${f.a_name} vs ${f.b_name} → ${f.winner_name ? lime(`${f.winner_name} +${sats(2 * f.stake)}`) : gold('draw')}`),
-  ], gold);
+const GAME = { rps: 'Rock·Paper·Scissors', updown: 'Up or Down', pf: 'Prompt Fight' };
+const ago = (t) => { const x = Math.max(1, Math.floor((Date.now() - new Date(t).getTime()) / 1000)); return x < 60 ? `${x}s` : x < 3600 ? `${Math.floor(x / 60)}m` : x < 86400 ? `${Math.floor(x / 3600)}h` : `${Math.floor(x / 86400)}d`; };
+
+async function winners() {
+  let game = 'all', period = 'all';
+  for (;;) {
+    const [w, fx] = await Promise.all([api('winners', { q: `&game=${game}&period=${period}` }), rates().catch(() => null)]);
+    const t = w.totals;
+    box(`Worldwide winners · ${game === 'all' ? 'all games' : GAME[game]} · ${{ all: 'all time', week: '7 days', today: 'today' }[period]}`, [
+      `${gold(sats(t.paid))} paid to ${bold(t.winners)} ${t.winners === 1 ? 'winner' : 'winners'} ${dim(money(t.paid, fx))} · ${t.duels + t.bets + t.fights} games · ${t.players} players`,
+      '', bold('Top winners'),
+      ...(w.top.length ? w.top.slice(0, 8).map((x, i) => `${pad(`${i + 1}. ${x.name}`, 26)} ${pad(`${x.wins} ${x.wins === 1 ? 'win' : 'wins'}`, 10)} ${lime(sats(x.won))}`) : [dim('No wins in this period yet — be the first.')]),
+      '', bold('Latest wins'),
+      ...(w.latest.length ? w.latest.slice(0, 6).map((x) => `${pad(x.name, 16)} ${pad(GAME[x.game], 22)} ${lime(pad(sats(x.amount), 16))} ${dim(`${ago(x.at)} ago`)} ${x.tx ? dim(x.tx.slice(0, 10) + '…') : ''}`) : [dim('Nothing yet.')]),
+      '', `${dim('game:')} [a]ll [1] RPS [2] Up/Down [3] Prompt Fight   ${dim('period:')} [t]oday [7] days [e]ver   ${dim('[Enter] back')}`,
+    ], gold);
+    const k = (await ask('  > ')).trim().toLowerCase();
+    if (!k) return;
+    game = { a: 'all', 1: 'rps', 2: 'updown', 3: 'pf' }[k] ?? game; period = { t: 'today', 7: 'week', e: 'all' }[k] ?? period;
+  }
 }
 
-async function wallet(rules) {
-  const { player, withdraw } = await api('me');
-  box(`Wallet · ${player.name}`, [
-    `bonus ${gold(sats(player.bonus))} (play only)   withdrawable ${lime(sats(player.cash))}   record ${player.wins}W ${player.losses}L`,
-    withdraw && !withdraw.ok ? gold(`withdrawals unlock after you play ${sats(withdraw.left)} more (bonus must be played 2×)`) : lime('withdrawals unlocked'),
-    `invite friends: ${cyan(`${BASE}/?ref=${player.refCode}`)} ${dim('(you both get 25,000)')}`,
-    '', `${bold('[d]')} deposit   ${bold('[w]')} withdraw   ${bold('[c]')} show login code   ${dim('[Enter] back')}`,
-  ], gold);
-  const a = (await ask('  > ')).trim().toLowerCase();
-  if (a === 'c') box('Login code', [white(cfg.token), dim('Use it on the website (Log in) or another terminal. Keep it private.')], mag);
-  if (a === 'd') { const d = await api('deposit'); box('Deposit', [`send BCH to ${bold(d.address)}`, d.added ? lime(`credited ${sats(d.added)}`) : dim('open the wallet again after sending to credit it')], cyan); }
-  if (a === 'w') {
-    const address = (await ask('  Your BCH address: ')).trim();
-    const amount = Number((await ask(`  Amount (min ${rules.minWithdraw}, fee ${rules.withdrawFeePct}%): `)).trim());
-    const w = await api('withdraw', { body: { address, amount } });
-    box('Withdrawal sent', [`${lime(sats(w.send))} sent (fee ${sats(w.fee)})`, dim(`tx ${w.txid}`)], lime);
+async function profile(name) {
+  name = name || (await ask('  Player name: ')).trim(); if (!name) return;
+  const p = await api('player', { q: `&name=${encodeURIComponent(name)}` });
+  const s2 = p.stats;
+  box(`Player · ${p.name}`, [
+    `net ${s2.net >= 0 ? lime('+' + sats(s2.net)) : red(sats(s2.net))} · win rate ${bold(Math.round(s2.winRate * 100) + '%')} (${s2.wins}W ${s2.losses}L) · ${s2.games} games · ${s2.verified}/${s2.games} on chain`,
+    '',
+    ...(p.history.length ? p.history.slice(0, 12).map((h) => `${pad(GAME[h.game], 21)} ${pad(String(h.opponent ?? ''), 14)} ${pad(sats(h.stake), 14)} ${h.outcome === 'win' ? lime(pad('win', 6)) : h.outcome === 'lose' ? red(pad('lose', 6)) : pad(h.outcome, 6)} ${h.tx ? dim(h.tx.slice(0, 12) + '…') : dim('recording')}`) : [dim('No finished games yet.')]),
+    '', dim('Verify any game with [v] and its transaction id.'),
+  ], cyan);
+}
+
+// Decode the on-chain record and recompute the result locally (same checks as the website's Verify page).
+function decodeRecord(raw) {
+  const m = raw.match(/6a(?:4c[0-9a-f]{2}|[0-9a-f]{2})((?:53444c31|53554431|53504631)[0-9a-f]+)/); if (!m) return null;
+  const b = Buffer.from(m[1], 'hex'); const kind = b.toString('ascii', 0, 4); const id = b.subarray(4, 20).toString('hex'); const MV = ['rock', 'paper', 'scissors'];
+  if (kind === 'SDL1') return { kind, id, result: b[20], stake: b.readUInt32LE(21), moveA: MV[b[25]] ?? null, moveB: MV[b[26]], commit: b.subarray(27, 59).toString('hex') };
+  if (kind === 'SUD1') return { kind, id, side: ['flat', 'up', 'down'][b[20]], result: ['flat', 'up', 'down'][b[21]], stake: b.readUInt32LE(22), open: b.readUInt32LE(30) / 1e4, close: b.readUInt32LE(34) / 1e4 };
+  if (kind === 'SPF1') return { kind, id, winner: b[20] === 1 ? 'a' : 'b', target: b[21], maxStep: b[22], stake: b.readUInt32LE(23), turnsHash: b.subarray(27, 59).toString('hex') };
+  return null;
+}
+async function verify() {
+  const txid = (await ask('  Transaction id: ')).trim().split('/').pop(); if (!txid) return;
+  const r = await api('verify', { q: `&txid=${txid}` });
+  const rec = decodeRecord(r.raw); const m = r.match;
+  if (!rec) return box('Verify', [red('This transaction has no PassBCH game record.')], red);
+  const sha = (x) => createHash('sha256').update(x).digest('hex'); const out = [];
+  const chk = (ok, t) => out.push(`${ok === null ? gold('ⓘ') : ok ? lime('✓') : red('✗')} ${t}`);
+  chk(!!m && rec.id === m.id, 'record id matches the game'); chk(!!m && rec.stake === m.stake, `stake ${sats(rec.stake)} matches`);
+  if (m && rec.kind === 'SDL1') {
+    chk(rec.commit === m.commit, 'commitment on chain = the one locked before the opponent played');
+    if (m.aSalt && rec.moveA) chk(sha(`${rec.moveA}:${m.aSalt}`) === rec.commit, `sha256("${rec.moveA}:salt") = commitment`); else if (rec.moveA) chk(null, 'salt check not available for this older duel');
+    const MV = ['rock', 'paper', 'scissors']; const o = rec.moveA ? (rec.moveA === rec.moveB ? 0 : (MV.indexOf(rec.moveA) - MV.indexOf(rec.moveB) + 3) % 3 === 1 ? 1 : 2) : 2;
+    chk(o === rec.result, `recomputed: ${rec.moveA ?? '(no reveal)'} vs ${rec.moveB}`); chk(rec.result === m.result, 'result on chain = result paid out');
+  }
+  if (m && rec.kind === 'SUD1') { const rr = rec.close > rec.open ? 'up' : rec.close < rec.open ? 'down' : 'flat'; chk(rr === rec.result, `recomputed: $${rec.open} → $${rec.close} = ${rr.toUpperCase()}`); chk((rec.side === rec.result) === (m.outcome === 'win'), `bet ${rec.side.toUpperCase()} → ${m.outcome}`); }
+  if (m && rec.kind === 'SPF1') {
+    const t = m.turns ?? []; chk(sha(JSON.stringify(t.map((x) => [x.side, x.add]))) === rec.turnsHash, 'sha256 of every move = hash on chain');
+    let total = 0, ok = true; t.forEach((x, i) => { if (x.add < 1 || x.add > rec.maxStep || (i && x.side === t[i - 1].side)) ok = false; total += x.add; });
+    chk(ok, `every move 1–${rec.maxStep}, players alternated`); chk(total === rec.target && t.at(-1)?.side === rec.winner, `recomputed: total reaches ${rec.target} on the winner's move`);
+  }
+  const allOk = out.every((x) => !strip(x).startsWith('✗'));
+  box(allOk ? 'VERIFIED ✓' : 'MISMATCH', [`${{ SDL1: 'Rock·Paper·Scissors', SUD1: 'Up or Down', SPF1: 'Prompt Fight' }[rec.kind]} · ${r.network} · ${dim(r.explorer + r.txid)}`, '', ...out], allOk ? lime : red);
+}
+
+function rulesScreen(r) {
+  box('Rules, fairness & fees', [
+    bold('Rock · Paper · Scissors'), dim('Your move is sent as sha256(move:salt) and revealed after the opponent plays. No reveal in 2 min = you lose. Winner takes the pot; draw = stakes back.'),
+    bold('Up or Down'), dim(`Entry = Coinbase BCH-USD last trade when you confirm; exit = last trade exactly 60 s later. Higher = UP, lower = DOWN, same = stake back. Pays ${(r.updownPayoutPct ?? 190) / 100}×.`),
+    bold('Prompt Fight'), dim('Your prompt guides an AI agent in Race to N (N 15–24, steps 1–k). Code enforces every move; each agent sees only its own prompt.'),
+    bold('Proof'), dim('Every result is an OP_RETURN record on Bitcoin Cash (SDL1 / SUD1 / SPF1). Use [v] to recompute any of them.'),
+    bold('Fees & bonus'), dim(`Withdrawal fee ${r.withdrawFeePct}% (min ${sats(r.networkFee)}). Free bonus must be played 2× before withdrawing; won bonus in friend duels stays bonus.`),
+    bold('Responsible play'), dim('18+. Test BCH on chipnet during the hackathon. Real-money games are regulated in many countries — check your local law.'),
+  ], cyan);
+}
+
+async function vault(rules) {
+  for (;;) {
+    const [{ player, withdraw }, fx] = await Promise.all([api('me'), rates().catch(() => null)]);
+    box(`Vault · ${player.name}`, [
+      `total ${gold(sats(player.bonus + player.cash))} ${dim(money(player.bonus + player.cash, fx))}`,
+      `withdrawable ${lime(sats(player.cash))} ${dim(money(player.cash, fx))} · bonus ${sats(player.bonus)} (play only)`,
+      withdraw && !withdraw.ok ? gold(`withdrawals unlock after you play ${sats(withdraw.left)} more (bonus must be played 2×)`) : lime('withdrawals unlocked'),
+      `invite: ${cyan(`https://passbch.vercel.app/?ref=${player.refCode}`)} ${dim('(you both get a bonus)')}`,
+      '', `${bold('[a]')} Add funds   ${bold('[w]')} Withdraw   ${bold('[h]')} History   ${bold('[c]')} Currency (${ccy()})   ${bold('[k]')} Login code   ${dim('[Enter] back')}`,
+    ], gold);
+    const a = (await ask('  > ')).trim().toLowerCase();
+    if (!a) return;
+    if (a === 'k') box('Login code', [white(cfg.token), dim('Use it on the website (Log in) or another terminal. Keep it private.')], mag);
+    if (a === 'c') { const c = (await ask(`  Currency ${dim(Object.keys(CUR).join(' '))}: `)).trim().toUpperCase(); if (CUR[c]) { cfg.currency = c; save(cfg); } }
+    if (a === 'h') {
+      const h = await api('activity');
+      box('History', [bold('Games'), ...(h.games.slice(0, 8).map((g) => `${pad(GAME[g.game], 21)} ${g.outcome === 'win' ? lime(pad('+' + sats(g.paid - g.stake), 16)) : g.outcome === 'lose' ? red(pad('-' + sats(g.stake), 16)) : pad('refund', 16)} ${dim(`${ago(g.at)} ago`)}`)),
+        '', bold('Money'), ...(h.money.slice(0, 8).map((x) => `${pad(x.kind, 11)} ${x.amount >= 0 ? lime(pad('+' + sats(x.amount), 16)) : red(pad(sats(x.amount), 16))} ${dim(x.note ?? '')}`)), ...(h.games.length + h.money.length ? [] : [dim('Nothing yet.')])], cyan);
+    }
+    if (a === 'a') {
+      const t = (await ask(`  Add with ${bold('[1]')} BCH  ${bold('[2]')} other crypto  ${bold('[3]')} bank · card · UPI: `)).trim();
+      if (t === '1') { const d = await api('deposit'); box('Add BCH', [`send BCH to ${bold(d.address)}`, d.added ? lime(`credited ${sats(d.added)}`) : dim('open [a] again after sending to credit it'), dim('or use WizardConnect on the website')], cyan); }
+      if (t === '2') {
+        const coin = (await ask(`  Coin ${dim('usdt-ethereum usdt-tron usdc-ethereum btc eth sol ltc doge')}: `)).trim() || 'usdt-ethereum';
+        const amt = Number((await ask('  Amount to send: ')).trim()) || 20; const q = await api('swapquote', { q: `&coin=${coin}&dir=in` });
+        box('Add other crypto', [`${amt} ${q.from} → ${lime((amt * q.rate).toFixed(8) + ' BCH')} into your vault`, dim(`SideShift rate ${q.rate} (includes their fee) · min ${q.min} ${q.from}`), NETWORK === 'mainnet' ? '' : gold('Swaps run on mainnet; during testing use BCH.')], cyan);
+      }
+      if (t === '3') {
+        const c = ccy(); const amt = Number((await ask(`  Amount in ${c}: `)).trim()) || 500; const r = fx?.[c];
+        box('Add with bank · card · UPI', [`${CUR[c] ?? ''}${amt} → ${lime(r ? (amt / r).toFixed(8) + ' BCH' : '?')} into your vault`, dim(`1 BCH = ${CUR[c] ?? ''}${r?.toLocaleString(undefined, { maximumFractionDigits: 2 })} (live) · partner fees not included`), NETWORK === 'mainnet' ? '' : gold('Licensed on-ramp partner switches on with mainnet.')], cyan);
+      }
+    }
+    if (a === 'w') {
+      const t = (await ask(`  Withdraw to ${bold('[1]')} BCH  ${bold('[2]')} other crypto  ${bold('[3]')} bank · UPI: `)).trim();
+      if (t === '1') {
+        const address = (await ask(`  Your BCH address ${dim(NETWORK === 'mainnet' ? '(bitcoincash:…)' : '(bchtest:…)')}: `)).trim();
+        const bch = Number((await ask(`  Amount in BCH (min ${rules.minWithdraw / 1e8}, fee ${rules.withdrawFeePct}%): `)).trim());
+        const w = await api('withdraw', { body: { address, amount: Math.round(bch * 1e8) } });
+        box('Withdrawal sent', [`${lime(sats(w.send))} sent (fee ${sats(w.fee)})`, dim(`tx ${w.txid}`)], lime);
+      } else if (t === '2' || t === '3') {
+        const bch = Number((await ask('  Amount in BCH: ')).trim()) || 0.01;
+        if (t === '2') { const q = await api('swapquote', { q: '&coin=usdt-ethereum&dir=out' }); box('Withdraw to other crypto', [`${bch} BCH → ${lime((bch * q.rate).toFixed(2) + ' ' + q.to)} ${dim('(SideShift quote)')}`, NETWORK === 'mainnet' ? '' : gold('Swaps run on mainnet; during testing withdraw BCH.')], cyan); }
+        else { const c = ccy(); box('Withdraw to bank · UPI', [`${bch} BCH → ${lime(`${CUR[c] ?? ''}${(bch * (fx?.[c] ?? 0)).toLocaleString(undefined, { maximumFractionDigits: 2 })}`)}`, NETWORK === 'mainnet' ? '' : gold('Off-ramp partner switches on with mainnet.')], cyan); }
+      }
+    }
   }
 }
 
@@ -333,6 +470,7 @@ async function selfUpdate(latest) {
 
 async function main() {
   const { rules, network, clientVersion } = await api('config');
+  NETWORK = network;
   if (await selfUpdate(clientVersion)) return;
   if (!cfg.token) { if (!(await welcome())) return; }
   else { console.clear?.(); logo(); }
@@ -347,8 +485,11 @@ async function main() {
       else if (c === '2') await updown(rules);
       else if (c === '3') await promptFight(rules);
       else if (c === '4') box('Upcoming BCH games', ['Tournaments · lucky draws · team battles · more', dim('Coming soon — stay tuned!')], mag);
-      else if (c === 'w') await wallet(rules);
-      else if (c === 'l') await board();
+      else if (c === 'w') await vault(rules);
+      else if (c === 'l') await winners();
+      else if (c === 'p') await profile();
+      else if (c === 'v') await verify();
+      else if (c === 'r') rulesScreen(rules);
       else if (c === 'o') { cfg = {}; save(cfg); console.log(dim('  logged out')); if (!(await welcome())) return; }
       else if (c === 'q') return;
     } catch (e) { endFrame(); console.log(red(`  ✗ ${e.message}`)); }

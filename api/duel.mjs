@@ -7,7 +7,7 @@ import { spot, recentCloses, rates, swapQuote } from '../server/price.mjs';
 import { nextRound, UPDOWN } from '../server/engine.mjs';
 
 // Bump when web/public/duel.mjs changes: old terminal clients update themselves.
-export const CLIENT_VERSION = '2026.11.21-4';
+export const CLIENT_VERSION = '2026.11.21-5';
 
 const json = (res, status, body) => { res.statusCode = status; res.setHeader('content-type', 'application/json'); res.setHeader('cache-control', 'no-store'); res.end(JSON.stringify(body)); };
 const tokenOf = (req) => (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '') || null;
