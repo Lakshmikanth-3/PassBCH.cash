@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 // Satoshi Duel in your terminal. No install, no dependencies: needs Node 18+.
-//   PowerShell:  irm https://passrate-cash.vercel.app/play.ps1 | iex
-//   bash/zsh:    curl -fsSL https://passrate-cash.vercel.app/play.sh | sh
+//   PowerShell:  irm https://satoshi-duel.vercel.app/play.ps1 | iex
+//   bash/zsh:    curl -fsSL https://satoshi-duel.vercel.app/play.sh | sh
 import { createHash, randomBytes } from 'node:crypto';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import readline from 'node:readline';
 
-const BASE = process.env.DUEL_URL ?? 'https://passrate-cash.vercel.app';
+const BASE = process.env.DUEL_URL ?? 'https://satoshi-duel.vercel.app';
 const CFG = path.join(os.homedir(), '.satoshi-duel.json');
 const MOVES = ['rock', 'paper', 'scissors'], EMOJI = { rock: '✊', paper: '✋', scissors: '✌️ ' };
 const c = (n) => (s) => (process.stdout.isTTY ? `\x1b[${n}m${s}\x1b[0m` : s);
