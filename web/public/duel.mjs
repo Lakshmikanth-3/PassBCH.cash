@@ -16,7 +16,8 @@ const strip = (s) => String(s).replace(/\x1b\[[0-9;]*m/g, '');
 const width = (s) => [...strip(s)].reduce((n, ch) => n + (/[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/u.test(ch) ? 2 : ch === '\uFE0F' ? 0 : 1), 0);
 const pad = (s, n) => s + ' '.repeat(Math.max(0, n - width(s)));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const sats = (n) => `${Number(n ?? 0).toLocaleString()} sats`;
+const sats = (n) => `${(Number(n ?? 0) / 1e8).toFixed(8).replace(/0+$/, '').replace(/\.$/, '')} BCH`;
+export const VERSION = '2026.11.21-3'; // must match CLIENT_VERSION in api/duel.mjs
 
 // ---------- input (works for people typing and for piped input) ----------
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -116,7 +117,7 @@ async function home() {
 }
 
 async function pickStake(rules) {
-  const s = (await ask(`  Stake ${dim(rules.stakes.map((x, i) => `[${i + 1}] ${x.toLocaleString()}`).join('  '))} ${dim('sats')}: `)).trim();
+  const s = (await ask(`  Stake ${dim(rules.stakes.map((x, i) => `[${i + 1}] ${sats(x)}`).join('  '))}: `)).trim();
   return rules.stakes[Number(s) - 1] ?? (rules.stakes.includes(Number(s)) ? Number(s) : rules.stakes[0]);
 }
 async function pickMove() {
@@ -186,10 +187,11 @@ const spark = (xs) => { const lo = Math.min(...xs), hi = Math.max(...xs), s = Ma
 async function updown(rules) {
   const p = await api('price', { q: '&history=1' });
   const hist = [...(p.history ?? []), p.price];
+  const round = rules.updownRoundS ?? 60;
   box('Up or Down · BCH/USD', [
     `${bold(white('$' + p.price.toFixed(2)))}   ${spark(hist)}   ${dim('last 12 min')}`,
-    `next round starts in ${bold(gold(`${p.nextRound - p.now}s`))} · a right call pays ${lime('1.9×')} · unchanged = refund`,
-    dim('Settled by the public Coinbase BCH-USD 1-minute candle.'),
+    `tap UP or DOWN · result in exactly ${bold(gold('1 minute'))} · a right call pays ${lime('1.9×')} · same price = refund`,
+    dim('Entry = price when you confirm. Exit = public Coinbase trade price 60 s later.'),
   ], cyan);
   const side = (await ask(`  ${lime(bold('[u] ▲ UP'))}    ${red(bold('[d] ▼ DOWN'))}   ${dim('[Enter] back')}: `)).trim().toLowerCase()[0];
   if (side !== 'u' && side !== 'd') return;
@@ -197,19 +199,26 @@ async function updown(rules) {
   const ok = (await ask(`  Confirm ${side === 'u' ? lime('▲ UP') : red('▼ DOWN')} for ${gold(sats(stake))}? ${dim('[y/N]')} `)).trim().toLowerCase();
   if (ok !== 'y') return console.log(dim('  cancelled'));
   const b = await api('bet', { body: { side: side === 'u' ? 'up' : 'down', stake } });
-  const pts = [p.price];
+  const entry = Number(b.entryPrice); const pts = [entry];
   for (;;) {
-    await sleep(4000);
     const m = (await api('bets')).mine.find((x) => x.id === b.id);
     if (m?.outcome) {
       endFrame();
-      box(m.outcome === 'win' ? '🏆 YOU WIN' : m.outcome === 'lose' ? '💀 YOU LOSE' : '🤝 FLAT', [`$${Number(m.open_price).toFixed(2)} → $${Number(m.close_price).toFixed(2)}  ${m.result === 'up' ? lime('▲ UP') : m.result === 'down' ? red('▼ DOWN') : 'flat'}`,
+      box(m.outcome === 'win' ? 'YOU WIN' : m.outcome === 'lose' ? 'YOU LOSE' : 'SAME PRICE — REFUND', [
+        `entry $${Number(m.open_price).toFixed(2)} → exit $${Number(m.close_price).toFixed(2)}  ${m.result === 'up' ? lime('▲ UP') : m.result === 'down' ? red('▼ DOWN') : 'flat'}`,
         m.outcome === 'win' ? lime(`+${sats(m.payout)}`) : m.outcome === 'lose' ? red(`-${sats(stake)}`) : 'stake refunded'], m.outcome === 'win' ? lime : m.outcome === 'lose' ? red : gold);
       return;
     }
-    const q = await api('price').catch(() => null); if (q) pts.push(q.price); if (pts.length > 30) pts.shift();
-    const now = Math.floor(Date.now() / 1000); const st = b.roundStart > now ? `starts in ${b.roundStart - now}s` : b.roundEnd > now ? `${red('●')} LIVE · ${b.roundEnd - now}s left` : 'settling…';
-    frame([`  ${side === 'u' ? lime('▲ UP') : red('▼ DOWN')} ${sats(stake)} · ${st}`, `  ${bold('$' + pts[pts.length - 1].toFixed(2))}  ${spark(pts)}`]);
+    const q = await api('price').catch(() => null); if (q) pts.push(q.price); if (pts.length > 40) pts.shift();
+    const nowS = Math.floor(Date.now() / 1000); const left = b.roundEnd - nowS; const cur = pts[pts.length - 1];
+    const winning = side === 'u' ? cur > entry : cur < entry;
+    const bar = '█'.repeat(Math.max(0, Math.round(((round - Math.max(0, left)) / round) * 30))).padEnd(30, '░');
+    frame([
+      `  ${side === 'u' ? lime('▲ UP') : red('▼ DOWN')} ${sats(stake)} · entry ${bold('$' + entry.toFixed(2))} · now ${bold('$' + cur.toFixed(2))} ${cur === entry ? gold('level') : winning ? lime('winning') : red('losing')}`,
+      `  ${gold(bar)} ${left > 0 ? bold(`${left}s`) : dim('settling…')}`,
+      `  ${spark(pts)}`,
+    ]);
+    await sleep(2000);
   }
 }
 
@@ -308,11 +317,26 @@ async function wallet(rules) {
   }
 }
 
+async function selfUpdate(latest) {
+  if (!latest || latest === VERSION || process.env.PASSBCH_NO_UPDATE) return false;
+  console.log(dim(`  updating terminal client ${VERSION} → ${latest}…`));
+  const r = await fetch(`${BASE}/duel.mjs?v=${encodeURIComponent(latest)}`, { cache: 'no-store' });
+  if (!r.ok) return false;
+  const file = path.join(os.tmpdir(), `passbch-${latest}.mjs`);
+  fs.writeFileSync(file, await r.text());
+  rl.close(); process.stdin.pause();
+  const { spawn } = await import('node:child_process');
+  const child = spawn(process.execPath, [file, ...process.argv.slice(2)], { stdio: 'inherit', env: { ...process.env, PASSBCH_NO_UPDATE: '1' } });
+  await new Promise((done) => child.on('exit', done));
+  return true;
+}
+
 async function main() {
-  const { rules, network } = await api('config');
+  const { rules, network, clientVersion } = await api('config');
+  if (await selfUpdate(clientVersion)) return;
   if (!cfg.token) { if (!(await welcome())) return; }
   else { console.clear?.(); logo(); }
-  console.log(dim(`  network: ${network} · ${BASE}`));
+  console.log(dim(`  network: ${network} · ${BASE} · client ${VERSION}`));
   const [cmd, arg] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
   if (cmd === 'join' && arg) { await join(arg); return; }
   for (;;) {
