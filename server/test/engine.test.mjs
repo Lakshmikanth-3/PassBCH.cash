@@ -108,3 +108,25 @@ describe('up / down', () => {
     expect(E.parseBetRecord(b)).toEqual(r);
   });
 });
+
+describe('AI pass or fail', () => {
+  test('exercise draw is deterministic, in range and changes with the block', () => {
+    expect(E.drawTask('r1', 'aa', 141)).toBe(E.drawTask('r1', 'aa', 141));
+    const seen = new Set(); for (let i = 0; i < 300; i++) { const t = E.drawTask('r1', `b${i}`, 141); expect(t).toBeGreaterThanOrEqual(0); expect(t).toBeLessThan(141); seen.add(t); }
+    expect(seen.size).toBeGreaterThan(80);
+  });
+  test('odds follow the model record with a 5% edge and limits', () => {
+    expect(E.aiOdds({ pass: 0, n: 0 })).toMatchObject({ passPct: 190, failPct: 190 });
+    const strong = E.aiOdds({ pass: 9, n: 10 });
+    expect(strong.passPct).toBeLessThan(120); expect(strong.failPct).toBeGreaterThan(500 - 1);
+    expect(E.aiOdds({ pass: 1000, n: 1000 }).passPct).toBe(110);
+  });
+  test('settlement', () => {
+    expect(E.settleAiBet('pass', true, 5000, 150)).toEqual({ outcome: 'win', cash: 7500 });
+    expect(E.settleAiBet('fail', true, 5000, 300)).toEqual({ outcome: 'lose', cash: 0 });
+    expect(E.settleAiBet('fail', false, 2500, 300)).toEqual({ outcome: 'win', cash: 7500 });
+  });
+  test('on-chain record is 60 bytes', () => {
+    expect(E.aiRecordBytes({ id: 'ab'.repeat(16), pass: true, passed: 14, total: 14, taskIdx: 78, modelIdx: 0, transcriptHash: 'cd'.repeat(32) }).length).toBe(60);
+  });
+});

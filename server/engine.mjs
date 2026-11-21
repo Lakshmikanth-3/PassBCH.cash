@@ -1,4 +1,4 @@
-// Satoshi Duel: game rules. Pure functions, no I/O, so every rule is unit-tested.
+// PassBCH.cash: game rules. Pure functions, no I/O, so every rule is unit-tested.
 import { createHash, randomBytes } from 'node:crypto';
 
 export const MOVES = ['rock', 'paper', 'scissors'];
@@ -126,4 +126,29 @@ export function parseBetRecord(b) {
   if (b.length !== 38 || b.toString('ascii', 0, 4) !== 'SUD1') return null;
   const name = ['flat', 'up', 'down'];
   return { id: b.subarray(4, 20).toString('hex'), side: name[b[20]], result: name[b[21]], stake: b.readUInt32LE(22), roundStart: b.readUInt32LE(26), open: b.readUInt32LE(30) / 1e4, close: b.readUInt32LE(34) / 1e4 };
+}
+
+// ---------- AI Pass or Fail: bet on whether an AI agent's code passes a chain-drawn exercise ----------
+export const AI = { betWindowS: 75, voidAfterS: 15 * 60, models: ['openai/gpt-oss-120b', 'openai/gpt-oss-20b'], edgePct: 95, minPct: 110, maxPct: 500 };
+
+/** Exercise index drawn from a block hash the operator can't choose: sha256(roundId || blockHash) mod n. */
+export const drawTask = (roundId, blockHash, n) => Number(BigInt(`0x${sha256(`${roundId}:${blockHash}`)}`) % BigInt(n));
+
+/** Odds from the model's public record (+1/+2 prior): payout % for PASS and FAIL, with a 5% platform edge. */
+export function aiOdds({ pass, n }) {
+  const p = (pass + 1) / (n + 2);
+  const clamp = (x) => Math.max(AI.minPct, Math.min(AI.maxPct, Math.floor(x)));
+  return { pPass: p, passPct: clamp(AI.edgePct / p), failPct: clamp(AI.edgePct / (1 - p)) };
+}
+export function settleAiBet(side, passed, stake, oddsPct) {
+  const won = (side === 'pass') === passed;
+  return won ? { outcome: 'win', cash: Math.floor((stake * oddsPct) / 100) } : { outcome: 'lose', cash: 0 };
+}
+/** OP_RETURN record: "SAI1" | roundId(16) | pass(1) | passed(2) | total(2) | taskIdx(2) | modelIdx(1) | transcriptHash(32) = 60 bytes */
+export function aiRecordBytes({ id, pass, passed, total, taskIdx, modelIdx, transcriptHash }) {
+  const b = Buffer.alloc(60);
+  b.write('SAI1', 0, 'ascii'); Buffer.from(id, 'hex').copy(b, 4);
+  b[20] = pass ? 1 : 0; b.writeUInt16LE(passed, 21); b.writeUInt16LE(total, 23); b.writeUInt16LE(taskIdx, 25); b[27] = modelIdx;
+  Buffer.from(transcriptHash, 'hex').copy(b, 28);
+  return b;
 }
