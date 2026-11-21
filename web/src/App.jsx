@@ -63,7 +63,7 @@ function TopBar({ me, go, logout, loading }) {
   );
 }
 
-function Landing({ go, me }) {
+function Landing({ go, me, cfg }) {
   return (
     <main className="landing">
       <section className="wrap hero">
@@ -148,7 +148,7 @@ export default function App() {
       {screen === '' && <Banner config={{ ...CONFIG, network: cfg?.network ?? CONFIG.network }} />}
       <TopBar me={me} go={go} logout={logout} loading={!hydrated} />
       {err && <div className="wrap"><div className="card err">Can't reach the game server: {err}</div></div>}
-      {screen === '' && <Landing go={go} me={me} />}
+      {screen === '' && <Landing go={go} me={me} cfg={cfg} />}
       {screen === 'login' && cfg && (
         <main className="wrap narrow"><Signup refCode={ref} onDone={async () => { await refresh(); go(duel ? 'rps' : 'games', duel); }} /></main>
       )}
