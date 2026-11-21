@@ -12,9 +12,9 @@ export default defineConfig({
   optimizeDeps: { esbuildOptions: { target: 'es2022' } },
   test: {
     root: here('..'),
-    include: ['web/test/**/*.test.{js,jsx}', 'server/test/**/*.test.mjs'],
+    include: ['web/test/**/*.test.{js,jsx}', 'server/test/**/*.test.mjs', 'panel/*.test.mjs'],
     environment: 'jsdom',
-    environmentMatchGlobs: [['server/**', 'node']],
+    environmentMatchGlobs: [['server/**', 'node'], ['panel/**', 'node']],
     setupFiles: [here('test/setup.js')],
     globals: true,
   },
