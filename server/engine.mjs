@@ -4,12 +4,12 @@ import { createHash, randomBytes } from 'node:crypto';
 export const MOVES = ['rock', 'paper', 'scissors'];
 export const EMOJI = { rock: '✊', paper: '✋', scissors: '✌️' };
 export const RULES = {
-  stakes: [1000, 2500, 5000, 10000], // sats per side
-  signupBonus: 10000,                // ≈ 5 US cents at ~$450/BCH
-  referralBonus: 10000,              // to BOTH the inviter and the new player
+  stakes: [2500, 5000, 10000, 25000], // sats per side
+  signupBonus: 25000,                // ≈ 5 US cents at ~$190/BCH
+  referralBonus: 25000,              // to BOTH the inviter and the new player
   bonusCap: 100,                     // total bonus grants, platform-wide (abuse limit)
   withdrawFeePct: 5,                 // platform fee, taken only on withdrawal
-  minWithdraw: 5000,
+  minWithdraw: 10000,
   networkFee: 400,                   // paid by the platform out of the fee
   revealTimeoutS: 120,               // creator must reveal within 2 min of a join, or loses
   openTimeoutS: 24 * 3600,           // unjoined duels refund after 24 h
@@ -94,4 +94,36 @@ export function parseRecord(buf) {
   if (buf.length !== 59 || buf.toString('ascii', 0, 4) !== 'SDL1') return null;
   return { id: buf.subarray(4, 20).toString('hex'), result: buf[20], stake: buf.readUInt32LE(21),
     moveA: MOVES[buf[25]] ?? null, moveB: MOVES[buf[26]], commit: buf.subarray(27).toString('hex') };
+}
+
+// ---------- Up / Down: bet on the next 1-minute BCH/USD candle ----------
+export const UPDOWN = { roundS: 60, payoutPct: 190, settleDelayS: 5 };
+
+/** Bets placed now go into the round that starts at the next full minute (betting closes when it starts). */
+export const nextRound = (nowS) => Math.floor(nowS / 60) * 60 + 60;
+export const roundEnds = (roundStart) => roundStart + UPDOWN.roundS;
+export const canSettle = (roundStart, nowS) => nowS >= roundEnds(roundStart) + UPDOWN.settleDelayS;
+/** The candle decides: close above open = up, below = down, equal = flat (refund). */
+export function candleResult(open, close) {
+  if (!(open > 0) || !(close > 0)) throw new Error('bad candle');
+  return close > open ? 'up' : close < open ? 'down' : 'flat';
+}
+/** Win pays 1.9x (the 0.1 is the platform edge); flat refunds in the same buckets; loss pays nothing. */
+export function settleBet(side, result, stake, split) {
+  if (result === 'flat') return { outcome: 'refund', bonus: split.fromBonus, cash: split.fromCash };
+  if (side === result) return { outcome: 'win', bonus: 0, cash: Math.floor((stake * UPDOWN.payoutPct) / 100) };
+  return { outcome: 'lose', bonus: 0, cash: 0 };
+}
+/** OP_RETURN record: "SUD1" | betId(16) | side(1) | result(1) | stake(4) | roundStart(4) | open*1e4(4) | close*1e4(4) = 38 bytes */
+export function betRecordBytes({ id, side, result, stake, roundStart, open, close }) {
+  const b = Buffer.alloc(38); const code = { up: 1, down: 2, flat: 0 };
+  b.write('SUD1', 0, 'ascii'); Buffer.from(id, 'hex').copy(b, 4);
+  b[20] = code[side]; b[21] = code[result]; b.writeUInt32LE(stake, 22); b.writeUInt32LE(roundStart, 26);
+  b.writeUInt32LE(Math.round(open * 1e4), 30); b.writeUInt32LE(Math.round(close * 1e4), 34);
+  return b;
+}
+export function parseBetRecord(b) {
+  if (b.length !== 38 || b.toString('ascii', 0, 4) !== 'SUD1') return null;
+  const name = ['flat', 'up', 'down'];
+  return { id: b.subarray(4, 20).toString('hex'), side: name[b[20]], result: name[b[21]], stake: b.readUInt32LE(22), roundStart: b.readUInt32LE(26), open: b.readUInt32LE(30) / 1e4, close: b.readUInt32LE(34) / 1e4 };
 }

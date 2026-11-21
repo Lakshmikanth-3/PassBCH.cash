@@ -31,11 +31,11 @@ describe('commit / reveal', () => {
 
 describe('money', () => {
   test('stake uses bonus first', () => {
-    expect(E.takeStake({ bonus: 700, cash: 5000 }, 1000)).toEqual({ fromBonus: 700, fromCash: 300 });
-    expect(E.takeStake({ bonus: 5000, cash: 0 }, 1000)).toEqual({ fromBonus: 1000, fromCash: 0 });
+    expect(E.takeStake({ bonus: 700, cash: 5000 }, 2500)).toEqual({ fromBonus: 700, fromCash: 1800 });
+    expect(E.takeStake({ bonus: 9000, cash: 0 }, 5000)).toEqual({ fromBonus: 5000, fromCash: 0 });
   });
   test('cannot stake more than the balance or an odd amount', () => {
-    expect(() => E.takeStake({ bonus: 400, cash: 0 }, 1000)).toThrow(/insufficient/);
+    expect(() => E.takeStake({ bonus: 400, cash: 0 }, 2500)).toThrow(/insufficient/);
     expect(() => E.takeStake({ bonus: 9999, cash: 0 }, 777)).toThrow(/not allowed/);
   });
   test('winner takes the whole pot as cash; money is conserved', () => {
@@ -47,14 +47,14 @@ describe('money', () => {
   });
   test('withdrawal fee is 5% with a floor that covers the network fee', () => {
     expect(E.withdrawQuote(100000, 20000)).toEqual({ amount: 20000, fee: 1000, send: 19000 });
-    expect(E.withdrawQuote(100000, 5000)).toEqual({ amount: 5000, fee: 400, send: 4600 });
-    expect(() => E.withdrawQuote(4000, 5000)).toThrow(/more than/);
+    expect(E.withdrawQuote(100000, 10000)).toEqual({ amount: 10000, fee: 500, send: 9500 });
+    expect(() => E.withdrawQuote(9000, 10000)).toThrow(/more than/);
     expect(() => E.withdrawQuote(99999, 100)).toThrow(/minimum/);
   });
   test('signup bonus, referral bonus to both sides, global cap', () => {
-    expect(E.signupGrants({ hasReferrer: false, grantsSoFar: 0 })).toEqual([{ to: 'self', sats: 10000 }]);
-    expect(E.signupGrants({ hasReferrer: true, grantsSoFar: 0 })).toEqual([{ to: 'self', sats: 20000 }, { to: 'referrer', sats: 10000 }]);
-    expect(E.signupGrants({ hasReferrer: true, grantsSoFar: 99 })).toEqual([{ to: 'self', sats: 20000 }]);
+    expect(E.signupGrants({ hasReferrer: false, grantsSoFar: 0 })).toEqual([{ to: 'self', sats: 25000 }]);
+    expect(E.signupGrants({ hasReferrer: true, grantsSoFar: 0 })).toEqual([{ to: 'self', sats: 50000 }, { to: 'referrer', sats: 25000 }]);
+    expect(E.signupGrants({ hasReferrer: true, grantsSoFar: 99 })).toEqual([{ to: 'self', sats: 50000 }]);
     expect(E.signupGrants({ hasReferrer: true, grantsSoFar: 100 })).toEqual([]);
   });
 });
@@ -79,5 +79,32 @@ describe('names, statuses, records', () => {
     expect(E.parseRecord(b)).toEqual(r);
     expect(E.parseRecord(E.recordBytes({ ...r, moveA: null })).moveA).toBeNull();
     expect(E.parseRecord(Buffer.from('nope'))).toBeNull();
+  });
+});
+
+describe('up / down', () => {
+  test('bets go into the next full minute; settle 5 s after it ends', () => {
+    expect(E.nextRound(1000)).toBe(1020);
+    expect(E.nextRound(1020)).toBe(1080);
+    expect(E.canSettle(1020, 1084)).toBe(false);
+    expect(E.canSettle(1020, 1085)).toBe(true);
+  });
+  test('candle decides', () => {
+    expect(E.candleResult(190, 190.5)).toBe('up');
+    expect(E.candleResult(190, 189.9)).toBe('down');
+    expect(E.candleResult(190, 190)).toBe('flat');
+    expect(() => E.candleResult(0, 1)).toThrow();
+  });
+  test('payouts: win 1.9x, loss 0, flat refunds the same buckets', () => {
+    const split = { fromBonus: 3000, fromCash: 2000 };
+    expect(E.settleBet('up', 'up', 5000, split)).toEqual({ outcome: 'win', bonus: 0, cash: 9500 });
+    expect(E.settleBet('up', 'down', 5000, split)).toEqual({ outcome: 'lose', bonus: 0, cash: 0 });
+    expect(E.settleBet('down', 'flat', 5000, split)).toEqual({ outcome: 'refund', bonus: 3000, cash: 2000 });
+  });
+  test('on-chain bet record round trip (38 bytes)', () => {
+    const r = { id: 'ab'.repeat(16), side: 'down', result: 'up', stake: 25000, roundStart: 1795259760, open: 190.01, close: 190.06 };
+    const b = E.betRecordBytes(r);
+    expect(b.length).toBe(38);
+    expect(E.parseBetRecord(b)).toEqual(r);
   });
 });
