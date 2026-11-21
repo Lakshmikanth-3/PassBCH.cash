@@ -61,14 +61,23 @@ function studio(scene, accent, sky) {
   }
   scene.add(tiles);
   const cams = [];
-  for (const [x, z, ry] of [[-4.4, 3.4, -0.9], [4.4, 3.4, 0.9], [-2.6, -4.6, 2.6]]) {
+  const camColors = [THEME.cyan, THEME.magenta, THEME.gold];
+  [[-4.4, 3.4, -0.9], [4.4, 3.4, 0.9], [-2.6, -4.6, 2.6]].forEach(([x, z, ry], n) => {
+    const tint = camColors[n % 3];
     const rig = new THREE.Group(); rig.position.set(x, 0, z); rig.rotation.y = ry + Math.PI; scene.add(rig);
-    for (let k = 0; k < 3; k++) { const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 1.5), std(0x2a2d55)); leg.position.set(Math.sin(k * 2.1) * 0.25, 0.7, Math.cos(k * 2.1) * 0.25); leg.rotation.z = Math.sin(k * 2.1) * 0.25; leg.rotation.x = -Math.cos(k * 2.1) * 0.25; rig.add(leg); }
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.3, 0.6), std(0x23264d, { metalness: 0.6 })); body.position.y = 1.55; rig.add(body);
-    const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.13, 0.25, 20), std(0x05060f, { metalness: 0.8, roughness: 0.2 })); lens.rotation.x = Math.PI / 2; lens.position.set(0, 1.55, 0.42); rig.add(lens);
-    const rec = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 10), glow(THEME.red, 3)); rec.position.set(0.12, 1.74, 0.2); rig.add(rec);
+    for (let k = 0; k < 3; k++) { const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 1.5), std(0xd8dcf5, { metalness: 0.6, roughness: 0.3 })); leg.position.set(Math.sin(k * 2.1) * 0.25, 0.7, Math.cos(k * 2.1) * 0.25); leg.rotation.z = Math.sin(k * 2.1) * 0.25; leg.rotation.x = -Math.cos(k * 2.1) * 0.25; rig.add(leg); }
+    const head = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.12, 16), std(0x2a2d55, { metalness: 0.7 })); head.position.y = 1.42; rig.add(head);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.32, 0.62), std(tint, { metalness: 0.35, roughness: 0.35 })); body.position.y = 1.62; rig.add(body);
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.37, 0.05, 0.63), std(0xffffff, { roughness: 0.3 })); stripe.position.y = 1.62; rig.add(stripe);
+    const hood = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.26, 0.12), std(0x1b1e3f)); hood.position.set(0, 1.62, 0.37); rig.add(hood);
+    const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.22, 24), std(0x0b0c1e, { metalness: 0.9, roughness: 0.15 })); lens.rotation.x = Math.PI / 2; lens.position.set(0, 1.62, 0.52); rig.add(lens);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.105, 0.015, 8, 24), glow(tint, 1.6)); ring.position.set(0, 1.62, 0.63); rig.add(ring);
+    const glass = new THREE.Mesh(new THREE.CircleGeometry(0.085, 24), new THREE.MeshStandardMaterial({ color: 0x3b5bff, metalness: 1, roughness: 0.05, emissive: 0x1a2a88, emissiveIntensity: 0.6 })); glass.position.set(0, 1.62, 0.635); rig.add(glass);
+    const handle = new THREE.Mesh(new THREE.CapsuleGeometry(0.025, 0.3, 4, 8), std(0x2a2d55)); handle.rotation.x = Math.PI / 2; handle.position.set(0, 1.84, 0.02); rig.add(handle);
+    const screen = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.14, 0.02), glow(0x7bd6ff, 0.8)); screen.position.set(0.2, 1.66, -0.15); screen.rotation.y = 0.5; rig.add(screen);
+    const rec = new THREE.Mesh(new THREE.SphereGeometry(0.04, 12, 12), glow(THEME.red, 3.2)); rec.position.set(0.13, 1.82, 0.22); rig.add(rec);
     cams.push({ rig, rec });
-  }
+  });
   return { tiles, cams };
 }
 
@@ -96,7 +105,8 @@ function buildHand(skinHex) {
   const skin = std(skinHex, { roughness: 0.62 }); const nail = std(0xf6d9d2, { roughness: 0.3 });
   const hand = new THREE.Group();
   const palm = new THREE.Mesh(new THREE.SphereGeometry(0.5, 24, 16), skin); palm.scale.set(0.42, 0.13, 0.36); palm.castShadow = true; hand.add(palm);
-  const wrist = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.15, 0.32, 18), skin); wrist.rotation.z = Math.PI / 2; wrist.position.x = -0.27; hand.add(wrist);
+  const wrist = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.085, 0.14, 18), skin); wrist.rotation.z = Math.PI / 2; wrist.position.x = -0.24; hand.add(wrist);
+  const knuckles = new THREE.Mesh(new THREE.CapsuleGeometry(0.045, 0.26, 4, 12), skin); knuckles.rotation.x = Math.PI / 2; knuckles.position.set(0.17, 0.01, 0.01); hand.add(knuckles);
   const fingers = [];
   [[0.135, 0.95, 0.07], [0.05, 1.05, 0.02], [-0.035, 0.92, -0.02], [-0.11, 0.74, -0.06]].forEach(([z, s, spread]) => {
     const base = new THREE.Group(); base.position.set(0.19, 0, z); base.rotation.y = -spread; hand.add(base);
@@ -149,13 +159,53 @@ function buildPerson({ shirt, skin, hair, name, accent, host = false }) {
   for (const x of [-0.2, 0.2]) { const ear = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 10), std(skin)); ear.scale.set(0.5, 1, 0.8); ear.position.set(x, 0, 0); head.add(ear); }
   const shoulder = new THREE.Group(); shoulder.position.set(0.26, 1.36, 0.02); g.add(shoulder);
   const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.085, 0.42, 4, 12), std(shirt, { roughness: 0.7 })); upper.rotation.x = Math.PI / 2.3; upper.position.set(-0.02, -0.08, 0.22); upper.castShadow = true; shoulder.add(upper);
-  const fore = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.4, 4, 12), std(skin)); fore.rotation.x = Math.PI / 2.05; fore.position.set(-0.05, -0.15, 0.62); fore.castShadow = true; shoulder.add(fore);
-  const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.085, 0.022, 6, 18), glow(accent, 1.3)); cuff.position.set(-0.04, -0.13, 0.45); shoulder.add(cuff);
-  const hand = buildHand(skin); hand.rotation.set(0, -Math.PI / 2, 0); hand.position.set(-0.07, -0.13, 0.95); hand.scale.setScalar(1.35); shoulder.add(hand);
+  const fore = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.36, 4, 14), std(shirt, { roughness: 0.7 })); fore.rotation.x = Math.PI / 2.05; fore.position.set(-0.05, -0.14, 0.6); fore.castShadow = true; shoulder.add(fore);
+  const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.02, 8, 20), glow(accent, 1.4)); cuff.position.set(-0.06, -0.135, 0.8); shoulder.add(cuff);
+  const hand = buildHand(skin); hand.rotation.set(0, -Math.PI / 2, 0); hand.position.set(-0.07, -0.13, 0.98); hand.scale.setScalar(1.1); shoulder.add(hand);
   const other = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.42, 4, 10), std(shirt, { roughness: 0.7 })); other.position.set(-0.31, 1.1, 0.05); other.rotation.z = 0.15; g.add(other);
   if (host) { shoulder.visible = false; const bow = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.025, 6, 12), glow(THEME.gold, 1.4)); bow.position.set(0, 1.47, 0.2); g.add(bow); }
   const tag = label(name, { size: 44, border: hex(accent), scale: 0.8 }); tag.position.y = 2.25; g.add(tag);
   g.userData = { head, shoulder, hand, tag };
+  return g;
+}
+
+/** Game-show host: purple jacket with gold lapels, white shirt, gold bow tie, styled hair, microphone, glowing podium. */
+function buildHost() {
+  const g = new THREE.Group();
+  const podium = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.65, 1.05, 6), std(0x2a1b6b, { metalness: 0.3, roughness: 0.4 })); podium.position.y = 0.525; podium.castShadow = true; g.add(podium);
+  const pTop = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.06, 6), std(0xffffff, { roughness: 0.3 })); pTop.position.y = 1.08; g.add(pTop);
+  const pGlow = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.025, 6, 6), glow(THEME.gold, 1.8)); pGlow.rotation.x = Math.PI / 2; pGlow.position.y = 1.08; g.add(pGlow);
+  const pLogo = label('HOST', { size: 40, border: '#ffc23d', scale: 0.7 }); pLogo.position.set(0, 0.62, 0.62); g.add(pLogo);
+  const jacket = std(0x7b2cff, { roughness: 0.55 }); const skin = 0xe0aa82;
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.27, 0.42, 6, 18), jacket); torso.position.set(0, 1.42, -0.15); torso.castShadow = true; g.add(torso);
+  const shirt = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.42, 0.05), std(0xffffff, { roughness: 0.4 })); shirt.position.set(0, 1.5, 0.11); g.add(shirt);
+  for (const sx of [-1, 1]) { const lapel = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.36, 0.04), glow(THEME.gold, 0.6)); lapel.position.set(0.11 * sx, 1.52, 0.115); lapel.rotation.z = -0.25 * sx; g.add(lapel); }
+  const bow = new THREE.Group(); bow.position.set(0, 1.7, 0.14); g.add(bow);
+  for (const sx of [-1, 1]) { const w = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.1, 3), glow(THEME.gold, 1.4)); w.rotation.z = (Math.PI / 2) * sx; w.position.x = 0.05 * sx; bow.add(w); }
+  const knot = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), glow(THEME.gold, 1.6)); bow.add(knot);
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.08, 0.12, 12), std(skin)); neck.position.set(0, 1.82, -0.12); g.add(neck);
+  const head = new THREE.Group(); head.position.set(0, 2.06, -0.1); g.add(head);
+  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.21, 28, 24), std(skin, { roughness: 0.6 })); skull.scale.set(1, 1.08, 1); skull.castShadow = true; head.add(skull);
+  const hair = new THREE.Mesh(new THREE.SphereGeometry(0.222, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2.1), std(0x1f1208, { roughness: 0.85 })); hair.rotation.x = -0.25; head.add(hair);
+  const quiff = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), std(0x1f1208, { roughness: 0.85 })); quiff.scale.set(1.4, 0.6, 1); quiff.position.set(0, 0.17, 0.09); head.add(quiff);
+  for (const x of [-0.07, 0.07]) {
+    const white = new THREE.Mesh(new THREE.SphereGeometry(0.032, 12, 12), std(0xffffff)); white.position.set(x, 0.03, 0.185); head.add(white);
+    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.017, 10, 10), std(0x1a1030)); pupil.position.set(x, 0.03, 0.212); head.add(pupil);
+    const brow = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.014, 0.01), std(0x1f1208)); brow.position.set(x, 0.09, 0.2); brow.rotation.z = x > 0 ? -0.2 : 0.2; head.add(brow);
+  }
+  const smile = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.013, 6, 18, Math.PI), std(0xb0303f)); smile.rotation.z = Math.PI; smile.position.set(0, -0.07, 0.195); head.add(smile);
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.026, 10, 10), std(skin)); nose.position.set(0, -0.005, 0.215); head.add(nose);
+  for (const x of [-0.2, 0.2]) { const ear = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 10), std(skin)); ear.scale.set(0.5, 1, 0.8); ear.position.set(x, 0, 0); head.add(ear); }
+  // left arm rests on the podium, right arm holds a microphone up
+  const armL = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.4, 4, 10), jacket); armL.position.set(-0.32, 1.3, -0.02); armL.rotation.set(0.6, 0, 0.25); g.add(armL);
+  const micArm = new THREE.Group(); micArm.position.set(0.3, 1.62, -0.12); g.add(micArm);
+  const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.32, 4, 10), jacket); upper.rotation.x = 1.1; upper.position.set(0, -0.08, 0.14); micArm.add(upper);
+  const fist = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 12), std(skin)); fist.position.set(-0.02, 0.06, 0.32); micArm.add(fist);
+  const mic = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.018, 0.22, 12), std(0x1b1e3f, { metalness: 0.7 })); mic.position.set(-0.02, 0.17, 0.33); micArm.add(mic);
+  const micHead = new THREE.Mesh(new THREE.SphereGeometry(0.05, 14, 14), std(0xc9cde6, { metalness: 0.8, roughness: 0.3 })); micHead.position.set(-0.02, 0.29, 0.33); micArm.add(micHead);
+  const micBand = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.04, 12), glow(THEME.cyan, 1.4)); micBand.position.set(-0.02, 0.11, 0.33); micArm.add(micBand);
+  const tag = label('Host', { size: 44, border: '#ffc23d', scale: 0.8 }); tag.position.y = 2.55; g.add(tag);
+  g.userData = { head, micArm, tag };
   return g;
 }
 
@@ -193,7 +243,7 @@ function rpsScene() {
   const seat = (deg, p) => { const a = (deg * Math.PI) / 180; p.position.set(Math.sin(a) * 2.05, 0, Math.cos(a) * 2.05); p.rotation.y = a + Math.PI; scene.add(p); return p; };
   const you = seat(-55, buildPerson({ shirt: 0x2f7bff, skin: 0xf2c6a0, hair: 0x3a2416, name: 'You', accent: THEME.cyan }));
   const opp = seat(55, buildPerson({ shirt: 0xe23a9a, skin: 0x9a6342, hair: 0x15100c, name: 'Opponent', accent: THEME.magenta }));
-  const host = seat(180, buildPerson({ shirt: 0x24264f, skin: 0xd9a27c, hair: 0x6b4a2b, name: 'Host', accent: THEME.gold, host: true }));
+  const host = buildHost(); host.position.set(0, 0, -2.2); scene.add(host);
   const sign = label('Pick your move to start', { size: 56, border: '#ffc23d', scale: 1.05 }); sign.position.set(0, 3.05, 0); scene.add(sign);
   const spot = new THREE.SpotLight(0xfff2c0, 0, 9, 0.38, 0.5, 1); spot.position.set(0, 6, 0); scene.add(spot); scene.add(spot.target);
   const fx = confetti(scene);
@@ -202,7 +252,7 @@ function rpsScene() {
   const a = new THREE.Vector3(), b = new THREE.Vector3(); you.userData.hand.getWorldPosition(a); opp.userData.hand.getWorldPosition(b); const mid = a.add(b).multiplyScalar(0.5);
   const shots = {
     WIDE: { pos: [0, 3.3, 5.9], look: [0, 1.25, 0], orbit: true },
-    HOST: face(host, 2.0, 2.0), 'CAM YOU': face(you), 'CAM OPPONENT': face(opp),
+    HOST: { pos: [0, 2.15, -0.2], look: [0, 1.9, -2.2] }, 'CAM YOU': face(you), 'CAM OPPONENT': face(opp),
     HANDS: { pos: [mid.x, 2.05, mid.z + 2.4], look: [mid.x, mid.y - 0.05, mid.z - 0.1] },
   };
   const st = { phase: 'idle', t: 0, a: 'rock', b: 'rock', res: null };
@@ -218,6 +268,7 @@ function rpsScene() {
     update(dt, time) {
       st.t += dt;
       [you, opp, host].forEach((p, i) => { p.userData.head.rotation.y = Math.sin(time * 0.7 + i * 2) * 0.12; });
+      host.userData.micArm.rotation.x = lerp(host.userData.micArm.rotation.x, st.phase === 'shake' ? -0.35 + Math.sin(time * 8) * 0.12 : st.phase === 'reveal' ? -0.6 : Math.sin(time * 1.3) * 0.06, dt * 5);
       if (st.phase === 'idle') [you, opp].forEach((p) => { p.userData.hand.userData.target = POSES.rock; p.userData.hand.userData.spread = 0; p.userData.shoulder.rotation.x = lerp(p.userData.shoulder.rotation.x, 0, dt * 4); });
       if (st.phase === 'shake') {
         const k = Math.max(0, st.t - 1.1) / 0.45; const beat = Math.floor(k);
@@ -325,11 +376,21 @@ function updownScene() {
   });
   const arrow = new THREE.Group(); const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.9, 24), glow(THEME.lime, 1.4)); arrow.add(shaft);
   const tip = new THREE.Mesh(new THREE.ConeGeometry(0.36, 0.6, 32), glow(THEME.lime, 1.6)); tip.position.y = 0.72; arrow.add(tip); arrow.position.set(3.7, 2.2, 0); scene.add(arrow);
-  const shots = { WIDE: { pos: [0, 2.7, 7.2], look: [0, 1.5, 0], orbit: true } };
-  const st = { hist: [], price: null, dir: 0 };
+  const presenter = buildHost(); presenter.position.set(-4.0, 0, 0.6); presenter.rotation.y = 0.55; presenter.userData.tag.userData.set('Market host', { border: '#00e5ff' }); scene.add(presenter);
+  const banner = label('Call it: UP or DOWN in 60 seconds', { size: 54, border: '#00e5ff', scale: 1.05 }); banner.position.set(0, 3.45, 0); scene.add(banner);
+  const fx = confetti(scene);
+  const shots = { WIDE: { pos: [0, 2.7, 7.2], look: [0, 1.5, 0], orbit: true }, CHART: { pos: [1.2, 2.0, 4.2], look: [0.6, 1.4, 0] }, HOST: { pos: [-2.6, 2.1, 2.6], look: [-4.0, 1.9, 0.6] } };
+  const st = { hist: [], price: null, dir: 0, cheer: 0 };
   return {
     scene, shots, set, idle: 'WIDE',
-    onEvent(d) {
+    onEvent(d, dir) {
+      if (d.kind === 'udbet') { banner.userData.set(`${d.side === 'up' ? 'UP' : 'DOWN'} from $${Number(d.entry).toFixed(2)} · 60 s on the clock`, { border: d.side === 'up' ? '#2bd16f' : '#ff4d6d' }); dir.sequence([['CHART', 4], ['WIDE', Infinity]]); return; }
+      if (d.kind === 'udresult') {
+        const win = d.outcome === 'win';
+        banner.userData.set(d.outcome === 'refund' ? `Same price — stake back` : win ? `You called it! $${d.open} → $${d.close}` : `Not this time · $${d.open} → $${d.close}`, { border: win ? '#b6ff3b' : d.outcome === 'refund' ? '#ffc23d' : '#ff4d6d' });
+        if (win) fx.burst(new THREE.Vector3(0, 2.6, 0.5));
+        st.cheer = win ? 4 : 0; dir.sequence([['HOST', 2.5], ['CHART', 2.5], ['WIDE', Infinity]]); return;
+      }
       if (d.kind !== 'price') return;
       if (d.history?.length) st.hist = [...d.history];
       if (d.price) { if (st.price) st.dir = Math.sign(d.price - st.price) || st.dir; st.price = d.price; st.hist.push(d.price); if (st.hist.length > 15) st.hist.shift(); }
@@ -348,6 +409,11 @@ function updownScene() {
       const up = st.dir >= 0, col = up ? 0x2bd16f : THEME.red;
       arrow.rotation.z = lerp(arrow.rotation.z, up ? 0 : Math.PI, dt * 6); arrow.position.y = 2.2 + Math.sin(time * 3) * 0.15; arrow.rotation.y += dt * 1.4;
       for (const m of [shaft, tip]) { m.material.color.setHex(col); m.material.emissive.setHex(col); }
+      presenter.userData.head.rotation.y = Math.sin(time * 0.8) * 0.2;
+      st.cheer = Math.max(0, st.cheer - dt);
+      presenter.userData.micArm.rotation.x = lerp(presenter.userData.micArm.rotation.x, st.cheer > 0 ? -0.7 + Math.sin(time * 9) * 0.15 : Math.sin(time * 1.2) * 0.08, dt * 5);
+      presenter.position.y = st.cheer > 0 ? Math.abs(Math.sin(time * 7)) * 0.08 : 0;
+      fx.update(dt);
     },
   };
 }
