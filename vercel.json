@@ -35,6 +35,36 @@
   },
   "rewrites": [
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*PowerShell.*"
+        }
+      ],
+      "destination": "/play.ps1"
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(curl|Wget).*"
+        }
+      ],
+      "destination": "/play.sh"
+    },
+    {
+      "source": "/ps",
+      "destination": "/play.ps1"
+    },
+    {
+      "source": "/sh",
+      "destination": "/play.sh"
+    },
+    {
       "source": "/((?!api/|assets/|.*\\..*).*)",
       "destination": "/index.html"
     }
