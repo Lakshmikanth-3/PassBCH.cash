@@ -49,6 +49,19 @@ const routes = {
     const { added } = await S.creditDeposits(tokenOf(req), utxos);
     return { address, added };
   },
+  /** Coins of a WizardConnect wallet (public addresses only), so the browser can build the deposit for the wallet to sign. */
+  async walletutxos(req, b) {
+    const addrs = Array.isArray(b.addresses) ? b.addresses.slice(0, 40).filter((a) => /^(bchtest|bitcoincash):q[0-9a-z]{40,}$/.test(a)) : [];
+    const p = chain.provider();
+    const out = {};
+    await timed(Promise.all(addrs.map(async (a) => { out[a] = (await p.getUtxos(a)).filter((u) => !u.token).map((u) => ({ txid: u.txid, vout: u.vout, satoshis: Number(u.satoshis) })); })), 15000, 'wallet lookup');
+    return out;
+  },
+  async broadcast(req, b) {
+    if (!/^[0-9a-f]{100,200000}$/i.test(b.hex ?? '')) throw new S.UserError('bad transaction');
+    try { return { txid: await timed(chain.provider().sendRawTransaction(b.hex), 15000, 'broadcast') }; }
+    catch (e) { if (/already|known|txn-mempool-conflict/i.test(e.message)) return { already: true }; throw new S.UserError(`broadcast failed: ${e.message}`); }
+  },
   async withdraw(req, b) {
     const q = await S.requestWithdrawal(tokenOf(req), b);
     let signed = null;
