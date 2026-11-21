@@ -64,9 +64,11 @@ let ratesCache = null;
 /** 1 BCH in other currencies (fiat + crypto), cached 60 s. */
 export async function rates() {
   if (ratesCache && Date.now() - ratesCache.at < 60000) return ratesCache.data;
-  const j = await (await fetch('https://api.coinbase.com/v2/exchange-rates?currency=BCH', { signal: timed(5000) })).json();
+  // Single source of truth: the BCH/USD spot price (same feed as Up/Down) times plain USD FX rates.
+  const [{ price }, fx] = await Promise.all([spot(), fetch('https://api.coinbase.com/v2/exchange-rates?currency=USD', { signal: timed(5000) }).then((r) => r.json())]);
   const keep = ['USD', 'INR', 'JPY', 'EUR', 'GBP', 'AED', 'SGD', 'IDR', 'PHP', 'NGN', 'BRL', 'USDT', 'USDC', 'BTC', 'ETH', 'SOL', 'LTC', 'DOGE'];
-  const data = Object.fromEntries(keep.filter((k) => j.data?.rates?.[k]).map((k) => [k, Number(j.data.rates[k])]));
+  const data = Object.fromEntries(keep.filter((k) => fx.data?.rates?.[k]).map((k) => [k, price * Number(fx.data.rates[k])]));
+  data.USD = price; data.source = 'Coinbase BCH-USD';
   ratesCache = { at: Date.now(), data };
   return data;
 }
