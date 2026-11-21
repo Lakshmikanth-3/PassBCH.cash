@@ -8,6 +8,10 @@ export function Wallet({ player, rules, explorer, network, onChange }) {
   const [addr, setAddr] = useState(''); const [amt, setAmt] = useState('');
   const [msg, setMsg] = useState(null); const [err, setErr] = useState(null); const [copied, setCopied] = useState(false);
   const invite = `${location.origin}/?ref=${player.refCode}`;
+  const [showCode, setShowCode] = useState(false); const [codeCopied, setCodeCopied] = useState(false);
+  const [rule, setRule] = useState(null);
+  useEffect(() => { api('me').then((m) => setRule(m.withdraw)).catch(() => {}); }, [player.cash, player.bonus]);
+  const token = (() => { try { return JSON.parse(localStorage.getItem('sd.session'))?.token; } catch { return null; } })();
   const showDeposit = async () => {
     setErr(null);
     try { const d = await api('deposit'); setDep(d); setQr(await QRCode.toDataURL(d.address, { margin: 1, width: 220 })); if (d.added) { setMsg(`Credited ${sats(d.added)}`); onChange(); } }
@@ -37,7 +41,15 @@ export function Wallet({ player, rules, explorer, network, onChange }) {
         {dep && <div className="deposit">{qr && <img src={qr} alt="Deposit address QR" width="180" height="180" />}<code>{dep.address}</code><button className="link" onClick={showDeposit}>I sent it — check now</button></div>}
       </details>
       <details>
+        <summary>🔑 Login code (use it on another device or in the terminal)</summary>
+        <p className="muted small">Anyone with this code controls your balance. Keep it private.</p>
+        <div className="row gap"><code className="linkbox">{showCode ? token : '•'.repeat(24)}</code>
+          <button className="secondary" type="button" onClick={() => setShowCode((v) => !v)}>{showCode ? 'Hide' : 'Show'}</button>
+          <button className="secondary" type="button" onClick={async () => { try { await navigator.clipboard.writeText(token); setCodeCopied(true); setTimeout(() => setCodeCopied(false), 1500); } catch { /* blocked */ } }}>{codeCopied ? 'Copied ✓' : 'Copy'}</button></div>
+      </details>
+      <details>
         <summary>Withdraw winnings</summary>
+        {rule && !rule.ok && <p className="warnbox">Free bonus must be played 2× before withdrawing: play <b>{sats(rule.left)}</b> more.</p>}
         <form onSubmit={withdraw} className="withdraw">
           <input placeholder="Your BCH address" value={addr} onChange={(e) => setAddr(e.target.value)} required />
           <input placeholder={`Amount (min ${rules.minWithdraw})`} inputMode="numeric" value={amt} onChange={(e) => setAmt(e.target.value.replace(/\D/g, ''))} required />

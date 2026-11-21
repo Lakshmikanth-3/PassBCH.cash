@@ -8,14 +8,21 @@ import { UpDown, UpDownFeed } from './duel/UpDown.jsx';
 import { AiGame } from './duel/AiGame.jsx';
 import Stage3D from './three/Stage3D.jsx';
 
-const ROUTES = ['', 'login', 'games', 'rps', 'predict', 'ai', 'wallet'];
+// Real pages: /  /login  /games  /games/rps  /games/predict  /games/ai  /wallet  /duel/<id>
+const PATHS = { '': '/', login: '/login', games: '/games', rps: '/games/rps', predict: '/games/predict', ai: '/games/ai', wallet: '/wallet' };
 const readRoute = () => {
   if (typeof location === 'undefined') return { route: '' };
   const q = new URLSearchParams(location.search);
-  if (q.get('duel')) return { route: 'rps', duel: q.get('duel') };
-  const r = location.hash.replace(/^#\/?/, '');
-  return { route: ROUTES.includes(r) ? r : '' };
+  if (q.get('duel')) return { route: 'rps', duel: q.get('duel') }; // old share links
+  const path = location.pathname.replace(/\/+$/, '') || '/';
+  const m = path.match(/^\/duel\/([0-9a-f]{32})$/);
+  if (m) return { route: 'rps', duel: m[1] };
+  const legacy = location.hash.replace(/^#\/?/, ''); // old #/games links
+  if (legacy && PATHS[legacy]) return { route: legacy };
+  const route = Object.keys(PATHS).find((k) => PATHS[k] === path);
+  return { route: route ?? '' };
 };
+const TITLES = { '': 'PassBCH.cash — play while your AI thinks', login: 'Log in · PassBCH.cash', games: 'Games · PassBCH.cash', rps: 'Rock Paper Scissors · PassBCH.cash', predict: 'Up or Down · PassBCH.cash', ai: 'AI Fight · PassBCH.cash', wallet: 'Wallet · PassBCH.cash' };
 
 export const GAMES = [
   { id: 'rps', icon: '✊', title: 'Rock · Paper · Scissors', line: 'Sit at the table. Beat a friend or the House Bot. Winner takes the pot.', tag: 'PvP · 2 min', color: 'gold' },
@@ -24,7 +31,7 @@ export const GAMES = [
   { id: 'soon', icon: '⏳', title: 'Upcoming BCH games', line: 'Tournaments, lucky draws, team battles and more — coming soon.', tag: 'Coming soon', color: 'magenta', soon: true },
 ];
 
-function TopBar({ me, go }) {
+function TopBar({ me, go, logout }) {
   return (
     <header className="topbar">
       <div className="wrap row between">
@@ -33,8 +40,9 @@ function TopBar({ me, go }) {
           <nav className="row gap">
             <button className="chipbtn" onClick={() => go('games')}>🎮 Games</button>
             <button className="chipbtn balchip" onClick={() => go('wallet')} title="Bonus + withdrawable">💰 {sats(me.bonus + me.cash)}</button>
+            <button className="chipbtn" onClick={logout} title={`Log out ${me.name}`}>⎋</button>
           </nav>
-        ) : <button className="primary" onClick={() => go('login')}>Play now</button>}
+        ) : <div className="row gap"><button className="chipbtn" onClick={() => go('login')}>Log in</button><button className="primary" onClick={() => go('login')}>Play now</button></div>}
       </div>
     </header>
   );
@@ -103,17 +111,21 @@ export default function App() {
   useEffect(() => { const f = () => setNav(readRoute()); window.addEventListener('hashchange', f); window.addEventListener('popstate', f); return () => { window.removeEventListener('hashchange', f); window.removeEventListener('popstate', f); }; }, []);
 
   const go = (r, d) => {
-    try { history.pushState(null, '', d ? `/?duel=${d}` : `/${r ? `#/${r}` : ''}`); } catch { /* sandboxed */ }
+    const keep = new URLSearchParams(location.search).get('ref');
+    const url = (d ? `/duel/${d}` : PATHS[r] ?? '/') + (keep && (r === 'login' || r === '') ? `?ref=${keep}` : '');
+    try { history.pushState(null, '', url); } catch { /* sandboxed */ }
     setNav({ route: r, duel: d }); window.scrollTo?.({ top: 0 });
   };
+  const logout = () => { session.clear(); setMe(null); go(''); };
   // Signed-out players go to login for anything but the landing page (a shared duel link still opens).
   const needLogin = !me && cfg && route && route !== 'login' && !(route === 'rps' && duel);
   const screen = needLogin ? 'login' : route === 'login' && me ? 'games' : route;
+  useEffect(() => { document.title = TITLES[screen] ?? TITLES['']; }, [screen]);
 
   return (
     <>
       <Banner config={{ ...CONFIG, network: cfg?.network ?? CONFIG.network }} />
-      <TopBar me={me} go={go} />
+      <TopBar me={me} go={go} logout={logout} />
       {err && <div className="wrap"><div className="card err">Can't reach the game server: {err}</div></div>}
       {screen === '' && <Landing go={go} me={me} />}
       {screen === 'login' && cfg && (

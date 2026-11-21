@@ -155,3 +155,8 @@ table { width: 100%; border-collapse: collapse; font-size: 14px; } th, td { text
 @media (max-width: 900px) { .cards4 { grid-template-columns: 1fr 1fr; } .grid { grid-template-columns: 1fr; } .how3 { grid-template-columns: 1fr; } }
 @media (max-width: 520px) { .cards4 { grid-template-columns: 1fr; } .cards4.big .gcard { min-height: 0; } .bal { grid-template-columns: 1fr 1fr; } .hand { font-size: 48px; } .hero { padding-top: 36px; } .topbar .chipbtn:first-child { display: none; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: #080920; border: 1px solid var(--border); border-radius: 12px; padding: 4px; margin-bottom: 16px; }
+.seg button { background: none; border: 0; color: var(--muted); padding: 9px; border-radius: 9px; font-weight: 700; }
+.seg button.on { background: var(--surface2); color: var(--text); }
+.warnbox { background: #2a1f05; border: 1px solid #5a4512; color: var(--gold); border-radius: 10px; padding: 10px 12px; font-size: 14px; }

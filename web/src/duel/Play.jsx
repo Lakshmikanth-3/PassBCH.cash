@@ -3,6 +3,8 @@ import { api, commitMove, session, MOVES, EMOJI, sats } from './api.js';
 import { show } from '../three/show.js';
 
 export function Signup({ onDone, refCode }) {
+  const [mode, setMode] = useState('new');
+  const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [ref, setRef] = useState(refCode ?? '');
   const [err, setErr] = useState(null); const [busy, setBusy] = useState(false);
@@ -11,8 +13,24 @@ export function Signup({ onDone, refCode }) {
     try { const r = await api('signup', { body: { name, ref: ref || undefined } }); session.set({ token: r.token }); onDone(r); }
     catch (x) { setErr(x.message); } finally { setBusy(false); }
   };
+  const logIn = async (e) => {
+    e.preventDefault(); setBusy(true); setErr(null);
+    try { const t = code.trim(); await api('login', { body: { code: t } }); session.set({ token: t }); onDone(); }
+    catch (x) { setErr(/unknown|not signed/.test(x.message) ? 'That login code is not valid.' : x.message); } finally { setBusy(false); }
+  };
+  if (mode === 'code') return (
+    <form className="card signup" onSubmit={logIn}>
+      <div className="seg"><button type="button" onClick={() => setMode('new')}>New player</button><button type="button" className="on">Log in</button></div>
+      <h2>Welcome back</h2>
+      <p className="muted">Paste the login code from your Wallet page (or from the terminal game) to continue on this device.</p>
+      <input aria-label="Login code" placeholder="Your login code" value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" required />
+      <button className="primary big" disabled={busy}>{busy ? 'Checking…' : 'Log in'}</button>
+      {err && <p className="err">{err}</p>}
+    </form>
+  );
   return (
     <form className="card signup" onSubmit={go}>
+      <div className="seg"><button type="button" className="on">New player</button><button type="button" onClick={() => setMode('code')}>Log in</button></div>
       <h2>Get {refCode ? '50,000' : '25,000'} free sats and play</h2>
       <p className="muted">No wallet needed to start. Pick a name; your bonus is ready instantly.</p>
       <input aria-label="Player name" placeholder="Your player name" value={name} onChange={(e) => setName(e.target.value)} maxLength={20} required />
@@ -74,7 +92,7 @@ export function DuelView({ id, me, explorer, onClose, onChange }) {
   const revealing = useRef(false);
   const shown = useRef(false);
   const mine = session.salt(id);
-  const link = `${location.origin}/?duel=${id}`;
+  const link = `${location.origin}/duel/${id}`;
 
   useEffect(() => {
     let stop = false;
