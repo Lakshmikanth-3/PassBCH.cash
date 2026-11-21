@@ -366,3 +366,30 @@ export async function unrecordedAi(limit = 3) {
 }
 export async function setAiRecord(id, txid) { await (await db()).query('update ai_rounds set record_txid=$1 where id=$2', [txid, id]); }
 export async function markAiRecordTry(id) { await (await db()).query('update ai_rounds set record_try_at=now() where id=$1', [id]); }
+
+/**
+ * Claim up to `limit` settled rows that still need an on-chain record. The claim (record_try_at = now) is atomic,
+ * so two servers never record the same row, and nothing is ever left locked if a server freezes:
+ * an unrecorded claim simply becomes claimable again after 30 s.
+ */
+const RECORDABLE = {
+  duels: "settled_at is not null and b_player is not null",
+  bets: "settled_at is not null",
+  ai_rounds: "status = 'done'",
+};
+export async function claimUnrecorded(table, limit = 3) {
+  const where = RECORDABLE[table];
+  if (!where) throw new Error('bad table');
+  const { rows } = await (await db()).query(
+    `update ${table} set record_try_at = now() where id in (
+       select id from ${table} where ${where} and record_txid is null
+         and (record_try_at is null or record_try_at < now() - interval '30 seconds')
+       order by settled_at limit $1 for update skip locked)
+     returning *`, [limit]);
+  return rows;
+}
+/** A record whose broadcast failed must not keep a txid that never reached the chain. */
+export async function clearRecordTx(table, id) {
+  if (!RECORDABLE[table]) throw new Error('bad table');
+  await (await db()).query(`update ${table} set record_txid = null where id = $1`, [id]);
+}

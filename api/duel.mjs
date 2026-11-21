@@ -16,25 +16,22 @@ async function body(req) {
 const within = (p, ms) => Promise.race([p, new Promise((r) => setTimeout(r, ms))]);
 const timed = (p, ms, what) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(`${what} timed out`)), ms))]);
 
-/** Write pending duel results to the chain, one at a time platform-wide (advisory lock). Budgeted: never blocks a response for long. */
+/** Write pending results (duels, AI rounds, Up/Down bets) to the chain. Budgeted: never blocks a response for long. */
 const recordSoon = () => within(recordPending().catch((e) => console.error('recordPending', e.message)), 7000);
 async function recordPending() {
-  const c = await (await db()).connect();
-  try {
-    const { rows: [{ ok }] } = await c.query('select pg_try_advisory_lock(42) ok');
-    if (!ok) return;
-    try {
-      for (const d of await S.unrecorded(5)) {
-        try { await timed(chain.recordDuel(d, (t) => S.setRecordTx(d.id, t)), 6000, 'record'); } catch (e) { await S.markRecordTry(d.id); console.error('record', d.id, e.message); break; }
+  const jobs = [
+    ['duels', (d) => chain.recordDuel(d, (t) => S.setRecordTx(d.id, t))],
+    ['ai_rounds', (r) => chain.recordAi(r, (t) => S.setAiRecord(r.id, t))],
+    ['bets', (b) => chain.recordBet(b, (t) => S.setBetRecord(b.id, t))],
+  ];
+  for (const [table, send] of jobs) {
+    for (const row of await S.claimUnrecorded(table, 3)) {
+      try { await timed(send(row), 6000, `${table} record`); } catch (e) {
+        if (!/timed out/.test(e.message)) await S.clearRecordTx(table, row.id); // definite failure: retry later; a timeout may still land
+        console.error('record', table, row.id, e.message); return;
       }
-      for (const r of await S.unrecordedAi(3)) {
-        try { await timed(chain.recordAi(r, (t) => S.setAiRecord(r.id, t)), 6000, 'ai record'); } catch (e) { await S.markAiRecordTry(r.id); console.error('ai record', r.id, e.message); break; }
-      }
-      for (const b of await S.unrecordedBets(5)) {
-        try { await timed(chain.recordBet(b, (t) => S.setBetRecord(b.id, t)), 6000, 'bet record'); } catch (e) { await S.markBetRecordTry(b.id); console.error('bet record', b.id, e.message); break; }
-      }
-    } finally { await c.query('select pg_advisory_unlock(42)'); }
-  } finally { c.release(); }
+    }
+  }
 }
 
 const routes = {
