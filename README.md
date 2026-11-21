@@ -1,4 +1,4 @@
-# PassBCH.cash 🤖📈✊
+# PassBCH.cash
 
 **Play while your AI thinks.** Every developer stares at Claude Code saying *"Cogitating…"*. PassBCH.cash turns that wait into three quick games played for real Bitcoin Cash, and every result is written on chain.
 
@@ -20,16 +20,16 @@ Built from scratch for **BCH BLAZE 2026** (Mainnet Track). Network: **chipnet** 
 ## 1 minute: the three games
 | Game | You predict | Settled by |
 |---|---|---|
-| 🤖 **AI Pass or Fail** | Will an AI coding agent pass a live exam? | Real unit tests run in a sealed sandbox. A BCH block hash picks the exercise. |
-| 📈 **Up or Down** | Will BCH/USD close the next minute up or down? | The public Coinbase 1-minute candle |
-| ✊ **Duel** | Beat a friend or the House Bot at rock-paper-scissors | Commit-reveal: your move is hashed until you reveal |
+| **Prompt Fight** | Write a strategy prompt; your AI agent plays "Race to N" live against another agent | Game rules enforced by code (no AI judge). Each agent sees only its own prompt. |
+| **Up or Down** | Will BCH/USD close the next minute up or down? | The public Coinbase 1-minute candle |
+| **Rock · Paper · Scissors** | Beat a friend or the House Bot at a TV-show table | Commit-reveal: your move is hashed until you reveal |
 
 **To start playing:**
 - Pick a name and get **25,000 free sats** (≈5¢).
 - Invite a friend: you both get 25,000 more.
 - Deposit with **WizardConnect** or by QR, and withdraw winnings any time. The platform fee is 5%.
 
-**🤖 The "woah" moment: the Claude Code panel.** While Claude is thinking, your status bar shows the live AI exam and an invitation to play:
+**The "woah" moment: the Claude Code panel.** While Claude is thinking, your status bar shows the live AI exam and an invitation to play:
 ```
 🤖 gpt-oss-120b vs "book-store" ● BETTING 1:05 · PASS 1.42x | FAIL 3.16x  │ 📈 BCH $192.16
 ✻ Claude thinking 0:42 · play now → passbch-cash.vercel.app
@@ -39,10 +39,12 @@ Set it up with `node panel/panel.mjs install` and `node panel/panel.mjs feed`.
 ## 5 minutes: why it's fair
 | Game | Rule |
 |---|---|
-| 🤖 AI | The exercise is `sha256(roundId ‖ latest BCH block hash) mod 141`, drawn from public Exercism tasks. Betting closes before the AI starts. The AI gets 1 try plus 1 retry, in Docker with no network. A round with no result in 15 minutes is void and refunded. The odds come from each AI's public record. |
-| 📈 Up/Down | Bets close before the minute starts. The public Coinbase BCH-USD candle settles the round (Kraken is the fallback). A win pays 1.9×; an unchanged price refunds the bet. |
-| ✊ Duel | You send only `sha256(move:salt)`. Reveals must match the commitment. If you don't reveal within 2 minutes, you lose. The bot's move is fixed by a secret seed per duel. |
-| All | Every result is written to BCH as an `OP_RETURN` record: `SAI1` (AI round), `SUD1` (Up/Down bet), `SDL1` (duel). |
+| Prompt Fight | The target (15–24), the step size (2–4) and who moves first are drawn from the match id. The server enforces every move; an unusable reply plays the smallest legal move (marked). Prompts are hidden until the fight ends. Winner takes the pot in the same buckets it was staked in. |
+| Up/Down | Bets close before the minute starts. The public Coinbase BCH-USD candle settles the round (Kraken is the fallback). A win pays 1.9×; an unchanged price refunds the bet. |
+| Duel | You send only `sha256(move:salt)`. Reveals must match the commitment. If you don't reveal within 2 minutes, you lose. The bot's move is fixed by a secret seed per duel. |
+| All | Every result is written to BCH as an `OP_RETURN` record: `SPF1` (Prompt Fight), `SUD1` (Up/Down bet), `SDL1` (duel). |
+
+**Network:** chipnet (testnet) until the project is finished and fully tested; mainnet only at the very end.
 
 **Trust model:** balances are custodial. The platform holds the pot, the way a card room does. The chain serves as the public scoreboard and payment rail. Bonuses are capped at 100 platform-wide and 3 per network address, and bonus credit is play-only.
 
@@ -50,7 +52,8 @@ Set it up with `node panel/panel.mjs install` and `node panel/panel.mjs feed`.
 ```
 api/duel.mjs        one Vercel serverless function (all routes)
 server/             rules (engine.mjs), Postgres service, house wallet (chain.mjs), price feed + tests
-ai/                 AI exam: Docker sandbox harness (Python + Groq), 141-task list, round runner
+server/promptfight.mjs  Prompt Fight rules + Groq agent calls (gpt-oss-20b)
+ai/                 earlier AI coding-exam experiment (not used by the site)
 panel/panel.mjs     Claude Code status line + hooks ("play while your AI thinks")
 web/                React app (3 game tabs, wallet, leaderboard) + terminal client (public/duel.mjs)
 scripts/e2e.mjs     full flow against the live API on chipnet
@@ -64,7 +67,6 @@ npm ci
 npm test                                            # 37 tests: rules, AI/UpDown/Duel, WizardConnect deposit, panel, banner
 npm run build
 BASE=https://passbch-cash.vercel.app npm run e2e    # signup, referral, duels, cheat attempt, on-chain record, withdrawal
-AI_RUNNER_KEY=... npm run ai-runner                 # runs AI rounds (needs Docker + GROQ_KEY in .ENV)
 ```
 
 ## Proof (chipnet)

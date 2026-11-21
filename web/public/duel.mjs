@@ -42,7 +42,8 @@ function box(title, rows, color = cyan) {
   const top = color(`╔${'═'.repeat(w + 2)}╗`), bot = color(`╚${'═'.repeat(w + 2)}╝`);
   const t = title ? color('║ ') + bold(pad(title, w)) + color(' ║') : null;
   const sep = color(`╟${'─'.repeat(w + 2)}╢`);
-  const body = rows.map((r) => color('║ ') + pad(r, w) + color(' ║'));
+  const fit = (r) => { if (width(r) <= w) return r; let out = ''; for (const ch of strip(r)) { if (width(out + ch) > w - 1) break; out += ch; } return out + '…'; };
+  const body = rows.map((r) => color('║ ') + pad(fit(r), w) + color(' ║'));
   console.log([top, ...(t ? [t, sep] : []), ...body, bot].join('\n'));
 }
 function logo() {
@@ -106,7 +107,7 @@ async function home() {
   box(`${player.name}   ${gold(sats(player.bonus + player.cash))}  ${dim(`(bonus ${sats(player.bonus)} · withdrawable ${sats(player.cash)})`)}`, [
     `${bold(gold('[1]'))} ${bold('Rock · Paper · Scissors')}      ${dim('table with a host · vs House Bot or a friend')}`,
     `${bold(cyan('[2]'))} ${bold('Up or Down')}                  ${dim('next minute of BCH · pays 1.9×')}`,
-    `${bold(lime('[3]'))} ${bold('Prompt Fight')}             ${dim('write a strategy prompt · your AI agent fights live')}`,
+    `${bold(lime('[3]'))} ${bold('Prompt Fight')}                ${dim('your prompt trains an AI agent · it fights live')}`,
     `${bold(mag('[4]'))} ${dim('Upcoming BCH games — coming soon')}`,
     '',
     `${bold('[w]')} Wallet & login code   ${bold('[l]')} Leaderboard   ${bold('[o]')} Log out   ${bold('[q]')} Quit`,
