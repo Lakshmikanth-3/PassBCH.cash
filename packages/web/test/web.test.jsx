@@ -1,13 +1,13 @@
 import React from 'react';
 import { render, screen, within } from '@testing-library/react';
 import { describe, test, expect } from 'vitest';
-import App from '../src/App.jsx';
+import App from '../src/PassRateApp.jsx';
 import Banner from '../src/components/Banner.jsx';
 import Leaderboard from '../src/components/Leaderboard.jsx';
 import RunChain from '../src/components/RunChain.jsx';
 import { CONFIG, T1_CHAIN } from '../src/config.js';
 import DATA from '../src/runs.json';
-import { rowsFrom } from '../src/App.jsx';
+import { rowsFrom } from '../src/PassRateApp.jsx';
 
 describe('BLAZE banner (eligibility)', () => {
   test('links repo and demo, states no pre-hackathon code with first-commit link', () => {
