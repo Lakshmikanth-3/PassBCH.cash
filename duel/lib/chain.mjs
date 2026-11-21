@@ -5,7 +5,7 @@ import { recordBytes } from './engine.mjs';
 
 export const NETWORK = process.env.DUEL_NETWORK === 'mainnet' ? 'mainnet' : 'chipnet';
 const PREFIX = NETWORK === 'mainnet' ? 'bitcoincash' : 'bchtest';
-const HOSTS = { chipnet: ['chipnet.bch.ninja', 'chipnet.imaginary.cash'], mainnet: ['bch.imaginary.cash', 'electroncash.de'] };
+const HOSTS = { chipnet: ['chipnet.bch.ninja', 'chipnet.imaginary.cash'], mainnet: ['bch.imaginary.cash', 'electroncash.dk', 'bch.loping.net'] };
 export const EXPLORER = NETWORK === 'mainnet' ? 'https://explorer.salemkode.com/tx/' : 'https://chipnet.imaginary.cash/tx/';
 const FEE_PER_BYTE = 1n;
 
