@@ -1,7 +1,0 @@
-[0.0s] deposit QR: bchtest:qqtcs3uzf8rthcjjk6yf43u5v3qyrn2dxgp9cee5g7?amount=0.00021346&message=PassRate%20ticket
-[6.8s] wallet paid deposit 7a1c668165bba4f6a5643e8e989ac046348122cfd27d56663dbd2c91e06bf2e8
-[8.8s] deposit detected -> QR closes
-[17.1s] TICKET 3d2fc6010331a425c3fb0f12b6bc83a9c639ed1e10525fa50872ac6bd911a17f -> exercise #78 perfect-numbers
-[1226.7s] START 74a0384c37e15d7a35dc360288e293a49b3ab8ac00094cd8110613746cab7155 seen by browser 1209.6 s after ticket
-[1538.7s] no RESULT within 5 min
-{"deposit":"7a1c668165bba4f6a5643e8e989ac046348122cfd27d56663dbd2c91e06bf2e8","ticket":"3d2fc6010331a425c3fb0f12b6bc83a9c639ed1e10525fa50872ac6bd911a17f","slug":"perfect-numbers","taskIdx":78,"start":"74a0384c37e15d7a35dc360288e293a49b3ab8ac00094cd8110613746cab7155","startLatencyBrowserS":1209.634,"result":null,"totalS":1538.65}

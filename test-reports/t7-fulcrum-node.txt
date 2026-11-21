@@ -1,5 +1,0 @@
-wss://bch.imaginary.cash:50004 OK Fulcrum 2.1.4 tip=977730
-wss://electroncash.de:60002 FAIL Opening handshake has timed out
-wss://bch.loping.net:50004 OK Fulcrum 2.1.4 tip=977730
-wss://fulcrum.greyh.at:50004 OK Fulcrum 2.1.4 tip=977730
-wss://bch.imaginary.cash:50004 vs wss://bch.loping.net:50004: 20/20 header hashes identical
