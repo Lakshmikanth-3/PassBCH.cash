@@ -22,14 +22,9 @@ export default function Stage3D({ game, height, children }) {
     const tick = async () => {
       try {
         if (game === 'updown') { const p = await api('price', { q: seeded ? '' : '&history=1' }); seeded = true; if (!stop) show({ kind: 'price', price: p.price, history: p.history }); }
-        if (game === 'ai') {
-          const s = await api('ai'); if (stop) return;
-          const c = s.current ?? s.recent[0];
-          if (c) show({ kind: 'ai', status: s.current ? (s.current.status === 'open' && s.now < Number(s.current.bet_close_s) ? 'open' : 'running') : c.status, model: c.model.replace('openai/', ''), slug: c.slug, pass: c.pass, passed: c.passed, total: c.total });
-        }
       } catch { /* keep last frame */ }
     };
-    if (game !== 'rps') { tick(); const t = setInterval(tick, game === 'updown' ? 4000 : 4000); return () => { stop = true; clearInterval(t); }; }
+    if (game === 'updown') { tick(); const t = setInterval(tick, game === 'updown' ? 4000 : 4000); return () => { stop = true; clearInterval(t); }; }
     return () => { stop = true; };
   }, [game]);
   return (
