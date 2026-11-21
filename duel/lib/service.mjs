@@ -23,8 +23,8 @@ export async function createPlayer({ name, ref, ipHash }) {
   return tx(async (c) => {
     await c.query('lock table bonus_grants in exclusive mode'); // keeps the global bonus cap exact
     const referrer = ref ? (await c.query('select * from players where ref_code = $1 and not is_house', [String(ref).toUpperCase()])).rows[0] : null;
-    // One signup bonus per network address, so one person can't farm referrals by opening tabs.
-    const ipUsed = ipHash ? (await c.query('select 1 from players where ip_hash = $1 limit 1', [ipHash])).rowCount > 0 : false;
+    // At most 3 bonus signups per network address (friends on one Wi-Fi are fine; tab farming is not).
+    const ipUsed = ipHash ? (await c.query('select count(*)::int n from players where ip_hash = $1', [ipHash])).rows[0].n >= 3 : false;
     const { rows: [{ n }] } = await c.query('select count(*)::int n from bonus_grants');
     const grants = ipUsed ? [] : E.signupGrants({ hasReferrer: !!referrer, grantsSoFar: n });
     let code; do { code = randomBytes(4).toString('hex').toUpperCase().slice(0, 6); } while ((await c.query('select 1 from players where ref_code=$1', [code])).rowCount);
