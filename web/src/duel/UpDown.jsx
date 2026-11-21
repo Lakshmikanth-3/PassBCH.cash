@@ -30,7 +30,8 @@ export function UpDown({ rules, player, explorer, onChange }) {
         });
       } catch { /* ignore */ }
     };
-    poll(); const a = setInterval(poll, 2000);
+    let busy = false; const safe = async () => { if (busy) return; busy = true; try { await poll(); } finally { busy = false; } }; // never pile up requests
+    safe(); const a = setInterval(safe, 2000);
     const t = setInterval(() => setNow(Math.floor(Date.now() / 1000) + skew.current), 250);
     return () => { stop = true; clearInterval(a); clearInterval(t); };
   }, []);

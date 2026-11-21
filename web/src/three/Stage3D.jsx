@@ -30,7 +30,7 @@ export default function Stage3D({ game, height, children }) {
         if (game === 'updown') { const p = await api('price', { q: seeded ? '' : '&history=1' }); seeded = true; if (!stop) show({ kind: 'price', price: p.price, history: p.history }); }
       } catch { /* keep last frame */ }
     };
-    if (game === 'updown') { tick(); const t = setInterval(tick, game === 'updown' ? 4000 : 4000); return () => { stop = true; clearInterval(t); }; }
+    if (game === 'updown') { let busy = false; const safe = async () => { if (busy) return; busy = true; try { await tick(); } finally { busy = false; } }; safe(); const t = setInterval(safe, 4000); return () => { stop = true; clearInterval(t); }; }
     return () => { stop = true; };
   }, [game]);
   return (
