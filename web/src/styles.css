@@ -236,3 +236,4 @@ select { background: #080920; color: var(--text); border: 1px solid var(--border
 .rules ul { color: var(--muted); padding-left: 20px; } .rules li { margin: 6px 0; } .rules b { color: var(--text); }
 .foot a { margin: 0 2px; }
 .toggle { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; } .toggle input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--cyan); }
+.checks li.info span { color: var(--gold); } .checks li.info { color: var(--muted); }

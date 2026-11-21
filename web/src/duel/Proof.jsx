@@ -29,7 +29,8 @@ async function checks(rec, m) {
   if (rec.kind === 'SDL1') {
     add(rec.commit === m.commit, 'Commitment on chain matches the one locked before the opponent played');
     if (m.aSalt && rec.moveA) add((await sha256hex(`${rec.moveA}:${m.aSalt}`)) === rec.commit, `sha256("${rec.moveA}:salt") equals the commitment, so the creator could not change their move`);
-    else add(rec.moveA == null, rec.moveA ? 'Reveal salt not published for this older duel' : 'Creator never revealed: forfeit');
+    else if (rec.moveA) out.push({ ok: null, text: 'Salt check not available: this duel was played before reveal salts were published' });
+    else add(true, 'Creator never revealed in time: forfeit to the joiner');
     if (rec.moveA) add(outcome(rec.moveA, rec.moveB) === rec.result, `Recomputed: ${rec.moveA} vs ${rec.moveB} → ${['draw', 'creator wins', 'joiner wins'][outcome(rec.moveA, rec.moveB)]}`);
     add(rec.result === m.result, 'Result on chain matches the result paid out');
   }
@@ -61,7 +62,7 @@ export function Verify({ txid: initial, go }) {
     } catch (e) { setErr(e.message); } finally { setBusy(false); }
   };
   useEffect(() => { if (initial) run(initial); }, [initial]);
-  const allOk = res?.checks.length && res.checks.every((c) => c.ok);
+  const allOk = res?.checks.length && res.checks.every((c) => c.ok !== false);
   return (
     <main className="wrap narrow">
       <div className="card">
@@ -82,7 +83,7 @@ export function Verify({ txid: initial, go }) {
               {res.match?.game === 'rps' && <p className="center">{res.match.aName} {res.rec.moveA ?? '(no reveal)'} vs {res.rec.moveB} {res.match.bName}</p>}
               {res.match?.game === 'updown' && <p className="center">{res.match.name} bet {res.rec.side.toUpperCase()} · ${res.rec.open} → ${res.rec.close}</p>}
               {res.match?.game === 'pf' && <p className="center">{res.match.aName} vs {res.match.bName} · Race to {res.rec.target} · {res.rec.winner === 'a' ? res.match.aName : res.match.bName} won</p>}
-              <ul className="checks">{res.checks.map((c, i) => <li key={i} className={c.ok ? 'ok' : 'bad'}><span>{c.ok ? '✓' : '✗'}</span>{c.text}</li>)}</ul>
+              <ul className="checks">{res.checks.map((c, i) => <li key={i} className={c.ok === null ? 'info' : c.ok ? 'ok' : 'bad'}><span>{c.ok === null ? 'ⓘ' : c.ok ? '✓' : '✗'}</span>{c.text}</li>)}</ul>
               <details><summary>Raw record decoded from the chain</summary><pre className="raw">{JSON.stringify(res.rec, null, 2)}</pre></details>
             </>
           )}
