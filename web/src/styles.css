@@ -114,3 +114,16 @@ details { border-top: 1px solid var(--border); padding: 10px 0; } summary { curs
 .wc { border-top: 1px solid var(--border); padding: 12px 0; }
 .wcbtn { width: 100%; background: #1b1530; color: #d8c8ff; border: 1px solid #4b3a8a; border-radius: var(--radius); padding: 12px; font-weight: 600; }
 .wcbtn:hover:not(:disabled) { border-color: #9b7bff; }
+.tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 5px; }
+.tabs button { background: none; border: 0; color: var(--muted); padding: 10px; border-radius: 6px; font-weight: 600; }
+.tabs button.on { background: var(--bg); color: var(--text); box-shadow: inset 0 0 0 1px var(--border); }
+.ticker { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 6px 0 14px; }
+.price { font-family: var(--mono); font-size: 36px; font-weight: 600; transition: color .3s; }
+.price.up { color: var(--accent); } .price.down { color: var(--fail); } .red { color: var(--fail); }
+.udbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.upbtn, .downbtn { border: 0; border-radius: 12px; padding: 22px 10px; font-size: 22px; font-weight: 800; letter-spacing: .04em; color: #04130d; transition: transform .1s; }
+.upbtn { background: var(--accent); } .downbtn { background: var(--fail); color: #1a0505; }
+.upbtn:hover:not(:disabled), .downbtn:hover:not(:disabled) { transform: translateY(-2px); }
+.mybets { list-style: none; padding: 0 !important; margin: 8px 0 0; }
+.mybets li { display: grid; grid-template-columns: auto 1fr auto auto; gap: 10px; align-items: center; padding: 8px 0 !important; margin: 0 !important; border-top: 1px solid var(--border); color: var(--text); font-size: 14px; }
+.mybets li.win b { color: var(--accent); } .mybets li.lose b { color: var(--fail); }

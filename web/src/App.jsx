@@ -4,6 +4,7 @@ import { CONFIG } from './config.js';
 import { api, session } from './duel/api.js';
 import { Signup, NewDuel, DuelView } from './duel/Play.jsx';
 import { Wallet, Leaderboard, Terminal } from './duel/Side.jsx';
+import { UpDown, UpDownFeed } from './duel/UpDown.jsx';
 
 const params = () => new URLSearchParams(typeof location === 'undefined' ? '' : location.search);
 
@@ -12,6 +13,7 @@ export default function App() {
   const [me, setMe] = useState(null);
   const [duelId, setDuelId] = useState(params().get('duel'));
   const [err, setErr] = useState(null);
+  const [game, setGame] = useState(params().get('game') === 'updown' ? 'updown' : 'duel');
   const ref = params().get('ref');
 
   const refresh = useCallback(async () => {
@@ -33,14 +35,21 @@ export default function App() {
       <header className="wrap hero">
         <div className="logo" aria-hidden>✊✋✌️</div>
         <h1>Satoshi Duel</h1>
-        <p className="tag">Rock-paper-scissors for real Bitcoin Cash. Free sats to start. Every duel written on chain.</p>
+        <p className="tag">Rock-paper-scissors and Up/Down on BCH price, for real Bitcoin Cash. Free sats to start. Every result written on chain.</p>
       </header>
       <main className="wrap grid">
         <section className="col">
           {err && <div className="card err">Can't reach the game server: {err}</div>}
           {cfg && !me && <Signup refCode={ref} onDone={() => refresh()} />}
           {cfg && duelId && <DuelView id={duelId} me={me} explorer={cfg.explorer} onClose={() => openDuel(null)} onChange={refresh} />}
-          {cfg && me && !duelId && <NewDuel rules={cfg.rules} player={me} onCreated={(id) => openDuel(id)} />}
+          {cfg && me && !duelId && (
+            <div className="tabs" role="tablist">
+              <button role="tab" aria-selected={game === 'duel'} className={game === 'duel' ? 'on' : ''} onClick={() => setGame('duel')}>✊ Duel</button>
+              <button role="tab" aria-selected={game === 'updown'} className={game === 'updown' ? 'on' : ''} onClick={() => setGame('updown')}>📈 Up or Down</button>
+            </div>
+          )}
+          {cfg && me && !duelId && game === 'duel' && <NewDuel rules={cfg.rules} player={me} onCreated={(id) => openDuel(id)} />}
+          {cfg && me && !duelId && game === 'updown' && <UpDown rules={cfg.rules} player={me} explorer={cfg.explorer} onChange={refresh} />}
           {cfg && me && <Wallet player={me} rules={cfg.rules} explorer={cfg.explorer} network={cfg.network} onChange={refresh} />}
           <Terminal />
           <div className="card how">
@@ -53,7 +62,7 @@ export default function App() {
             </ol>
           </div>
         </section>
-        <aside className="col">{cfg && <Leaderboard explorer={cfg.explorer} onOpen={openDuel} />}</aside>
+        <aside className="col">{cfg && <Leaderboard explorer={cfg.explorer} onOpen={openDuel} />}{cfg && <UpDownFeed explorer={cfg.explorer} />}</aside>
       </main>
       <footer className="wrap muted small foot">Built from scratch for BCH BLAZE 2026 · <a href={CONFIG.repoUrl}>source</a> · {cfg?.network ?? 'chipnet'}</footer>
     </>
