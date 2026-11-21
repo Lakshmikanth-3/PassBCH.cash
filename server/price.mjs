@@ -38,13 +38,40 @@ export async function recentCloses(n = 12) {
   return [];
 }
 
-/** Last `n` finished 1-minute candles as [time, close] (oldest first), for the dashboard chart. Display only. */
-export async function chartCloses(n = 60) {
+const CB = 'https://api.exchange.coinbase.com/products/BCH-USD';
+const cbGet = async (path, ms = 5000) => (await fetch(CB + path, { signal: timed(ms), headers: { 'user-agent': 'passbch-cash' } })).json();
+/** Candles [time, close] (oldest first) between from..to (unix s), in chunks of 300 (Coinbase limit). */
+async function candles(gran, from, to) {
+  const out = [];
+  for (let a = from; a < to; a += gran * 300) {
+    const b = Math.min(to, a + gran * 300);
+    const rows = await cbGet(`/candles?granularity=${gran}&start=${new Date(a * 1000).toISOString()}&end=${new Date(b * 1000).toISOString()}`, 6000);
+    if (Array.isArray(rows)) out.push(...rows.map((r) => [r[0], r[4]]));
+  }
+  return [...new Map(out.map((r) => [r[0], r])).values()].sort((x, y) => x[0] - y[0]);
+}
+const RANGE = { '1m': 60, '5m': 300, '15m': 900, '1h': 3600, '5h': 18000, '1y': 365 * 86400, '5y': 5 * 365 * 86400 };
+const chartCache = new Map();
+/**
+ * Real BCH/USD series for the dashboard chart (display only), [time, price] oldest first.
+ * 1m / 5m: individual Coinbase trades. 15m–5h: 1-minute candles. 1y / 5y: daily candles (cached 1 h).
+ */
+export async function chartSeries(range = '1h') {
+  if (!RANGE[range]) range = { 15: '15m', 60: '1h', 300: '5h' }[range] ?? '1h';
+  const now = Math.floor(Date.now() / 1000), span = RANGE[range];
+  const ttl = span >= 86400 * 300 ? 3600e3 : span >= 900 ? 20e3 : 3e3;
+  const hit = chartCache.get(range); if (hit && Date.now() - hit.at < ttl) return hit.data;
+  let data = [];
   try {
-    const rows = await (await fetch('https://api.exchange.coinbase.com/products/BCH-USD/candles?granularity=60', { signal: timed(4000), headers: { 'user-agent': 'passbch-cash' } })).json();
-    if (Array.isArray(rows)) return rows.slice(0, Math.min(300, n)).reverse().map((r) => [r[0], r[4]]);
+    if (span <= 300) {
+      const rows = await cbGet('/trades?limit=1000');
+      if (Array.isArray(rows)) data = rows.map((t) => [Date.parse(t.time) / 1000, Number(t.price)]).filter((r) => r[0] >= now - span).reverse();
+      if (data.length < 2) data = await candles(60, now - Math.max(span, 600), now);
+    } else if (span <= 18000) data = await candles(60, now - span, now);
+    else data = await candles(86400, now - span, now);
   } catch { /* none */ }
-  return [];
+  if (data.length) chartCache.set(range, { at: Date.now(), data });
+  return data;
 }
 
 /**

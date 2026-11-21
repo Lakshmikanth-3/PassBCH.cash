@@ -3,7 +3,7 @@ import * as S from '../server/service.mjs';
 import { RULES, sha256 } from '../server/engine.mjs';
 import { db, tx as dbTx } from '../server/db.mjs';
 import * as chain from '../server/chain.mjs';
-import { spot, recentCloses, chartCloses, rates, swapQuote } from '../server/price.mjs';
+import { spot, recentCloses, chartSeries, rates, swapQuote } from '../server/price.mjs';
 import { nextRound, UPDOWN } from '../server/engine.mjs';
 
 // Bump when web/public/duel.mjs changes: old terminal clients update themselves.
@@ -70,7 +70,7 @@ const routes = {
   /** Coins of a WizardConnect wallet (public addresses only), so the browser can build the deposit for the wallet to sign. */
   async price(req, b, q) {
     const now = Math.floor(Date.now() / 1000);
-    const [p, history, chart] = await Promise.all([timed(spot(), 6000, 'price'), q.get('history') ? recentCloses(12) : [], q.get('chart') ? chartCloses(Number(q.get('chart')) || 60) : null]);
+    const [p, history, chart] = await Promise.all([timed(spot(), 6000, 'price'), q.get('history') ? recentCloses(12) : [], q.get('chart') ? chartSeries(q.get('chart')) : null]);
     return { ...p, now, nextRound: nextRound(now), payoutPct: UPDOWN.payoutPct, history, ...(chart ? { chart } : {}) };
   },
   async bet(req, b) { return S.placeBet(tokenOf(req), b); },
