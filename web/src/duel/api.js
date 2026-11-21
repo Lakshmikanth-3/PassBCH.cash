@@ -29,7 +29,8 @@ export async function commitMove(move) {
   return { salt, commit: [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('') };
 }
 
-export const sats = (n) => `${Number(n ?? 0).toLocaleString()} sats`;
+/** Every amount is shown in BCH (1 BCH = 100,000,000 sats). */
+export const sats = (n) => `${(Number(n ?? 0) / 1e8).toFixed(8).replace(/0+$/, '').replace(/\.$/, '')} BCH`;
 
 /** Message shown under game buttons when the player can't cover the smallest stake (never leave buttons silently grey). */
 export const lowBalance = (player, rules) => player.bonus + player.cash < Math.min(...rules.stakes);

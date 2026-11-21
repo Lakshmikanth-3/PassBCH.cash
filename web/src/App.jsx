@@ -4,13 +4,15 @@ import { CONFIG } from './config.js';
 import { api, session, sats } from './duel/api.js';
 import { Signup, NewDuel, DuelView } from './duel/Play.jsx';
 import { Wallet, Leaderboard, Terminal } from './duel/Side.jsx';
+import { Vault, AddFunds, Withdraw } from './duel/Funds.jsx';
+import { useFx, fiat } from './duel/money.js';
 import { UpDown, UpDownFeed } from './duel/UpDown.jsx';
 import { NewFight, FightView, FightLobby } from './duel/PromptFight.jsx';
 import { Rock, Chart, Agents, Hourglass, Grid, Wallet as WalletIcon, Logout } from './icons.jsx';
 import Stage3D from './three/Stage3D.jsx';
 
 // Real pages: /  /login  /games  /games/rps  /games/predict  /games/ai  /wallet  /duel/<id>
-const PATHS = { '': '/', login: '/login', games: '/games', rps: '/games/rps', predict: '/games/predict', pf: '/games/prompt-fight', wallet: '/wallet' };
+const PATHS = { '': '/', login: '/login', games: '/games', rps: '/games/rps', predict: '/games/predict', pf: '/games/prompt-fight', wallet: '/wallet', add: '/wallet/add', withdraw: '/wallet/withdraw' };
 const readRoute = () => {
   if (typeof location === 'undefined') return { route: '' };
   const q = new URLSearchParams(location.search);
@@ -25,7 +27,7 @@ const readRoute = () => {
   const route = Object.keys(PATHS).find((k) => PATHS[k] === path);
   return { route: route ?? '' };
 };
-const TITLES = { '': 'PassBCH.cash — play while your AI thinks', login: 'Log in · PassBCH.cash', games: 'Games · PassBCH.cash', rps: 'Rock Paper Scissors · PassBCH.cash', predict: 'Up or Down · PassBCH.cash', pf: 'Prompt Fight · PassBCH.cash', wallet: 'Wallet · PassBCH.cash' };
+const TITLES = { '': 'PassBCH.cash — play while your AI thinks', login: 'Log in · PassBCH.cash', games: 'Games · PassBCH.cash', rps: 'Rock Paper Scissors · PassBCH.cash', predict: 'Up or Down · PassBCH.cash', pf: 'Prompt Fight · PassBCH.cash', wallet: 'Vault · PassBCH.cash', add: 'Add funds · PassBCH.cash', withdraw: 'Withdraw · PassBCH.cash' };
 
 export const GAMES = [
   { id: 'rps', Icon: Rock, title: 'Rock · Paper · Scissors', line: 'Sit at the table with the host. Beat a friend or the House Bot. Winner takes the pot.', tag: 'PvP · 2 min', color: 'gold' },
@@ -35,6 +37,7 @@ export const GAMES = [
 ];
 
 function TopBar({ me, go, logout }) {
+  const { rates, ccy } = useFx();
   return (
     <header className="topbar">
       <div className="wrap row between">
@@ -42,7 +45,7 @@ function TopBar({ me, go, logout }) {
         {me ? (
           <nav className="row gap">
             <button className="chipbtn" onClick={() => go('games')}><Grid size={16} /> Games</button>
-            <button className="chipbtn balchip" onClick={() => go('wallet')} title="Bonus + withdrawable"><WalletIcon size={16} /> {sats(me.bonus + me.cash)}</button>
+            <button className="chipbtn balchip" onClick={() => go('wallet')} title="Bonus + withdrawable"><WalletIcon size={16} /> {sats(me.bonus + me.cash)} <span className="fiatsm">{fiat(me.bonus + me.cash, rates, ccy)}</span></button>
             <button className="chipbtn" onClick={logout} title={`Log out ${me.name}`} aria-label="Log out"><Logout size={16} /></button>
           </nav>
         ) : <div className="row gap"><button className="chipbtn" onClick={() => go('login')}>Log in</button><button className="primary" onClick={() => go('login')}>Play now</button></div>}
@@ -173,10 +176,17 @@ export default function App() {
       {screen === 'wallet' && cfg && me && (
         <main className="wrap narrow">
           <button className="back" onClick={() => go('games')}>← All games</button>
+          <Vault player={me} go={go} />
           <Wallet player={me} rules={cfg.rules} explorer={cfg.explorer} network={cfg.network} onChange={refresh} />
           <Leaderboard explorer={cfg.explorer} onOpen={(id) => go('rps', id)} />
           <Terminal />
         </main>
+      )}
+      {screen === 'add' && cfg && me && (
+        <main className="wrap narrow"><button className="back" onClick={() => go('wallet')}>← Vault</button><AddFunds network={cfg.network} onChange={refresh} /></main>
+      )}
+      {screen === 'withdraw' && cfg && me && (
+        <main className="wrap narrow"><button className="back" onClick={() => go('wallet')}>← Vault</button><Withdraw player={me} rules={cfg.rules} explorer={cfg.explorer} network={cfg.network} onChange={refresh} /></main>
       )}
       <footer className="wrap foot">PassBCH.cash · built from scratch for BCH BLAZE 2026 · <a href={CONFIG.repoUrl}>source</a> · {cfg?.network ?? 'chipnet'}</footer>
     </>

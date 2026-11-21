@@ -2,6 +2,7 @@ import LowBalance from './LowBalance.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { api, sats } from './api.js';
 import Stage3D from '../three/Stage3D.jsx';
+import { show } from '../three/show.js';
 
 const fmt = (p) => (p ? `$${Number(p).toFixed(2)}` : '—');
 const clock = (s) => `${Math.floor(Math.max(0, s) / 60)}:${String(Math.max(0, s) % 60).padStart(2, '0')}`;
@@ -18,15 +19,15 @@ export function UpDown({ rules, player, explorer, onChange }) {
   useEffect(() => {
     let stop = false;
     const poll = async () => {
-      try { const p = await api('price'); if (stop) return; skew.current = p.now - Math.floor(Date.now() / 1000); if (last.current) setDir(Math.sign(p.price - last.current) || 0); last.current = p.price; setPx(p); } catch { /* keep */ }
+      try { const p = await api('price'); if (stop) return; show({ kind: 'price', price: p.price }); skew.current = p.now - Math.floor(Date.now() / 1000); if (last.current) setDir(Math.sign(p.price - last.current) || 0); last.current = p.price; setPx(p); } catch { /* keep */ }
       try { const b = await api('bets'); if (!stop) setMine((old) => { if (b.mine.some((x, i) => x.outcome && !old[i]?.outcome)) onChange?.(); return b.mine; }); } catch { /* ignore */ }
     };
-    poll(); const a = setInterval(poll, 4000);
+    poll(); const a = setInterval(poll, 2000);
     const t = setInterval(() => setNow(Math.floor(Date.now() / 1000) + skew.current), 250);
     return () => { stop = true; clearInterval(a); clearInterval(t); };
   }, []);
 
-  const next = Math.floor(now / 60) * 60 + 60;
+  const ROUND = rules.updownRoundS ?? 60;
   const total = player.bonus + player.cash;
   const confirm = async () => {
     setBusy(true); setErr(null);
@@ -42,7 +43,8 @@ export function UpDown({ rules, player, explorer, onChange }) {
           <div className="pricehud">
             <span className="muted small">BCH / USD · live</span>
             <span className={`bigprice ${dir > 0 ? 'up' : dir < 0 ? 'down' : ''}`}>{fmt(px?.price)} {dir > 0 ? '▲' : dir < 0 ? '▼' : ''}</span>
-            <span className="small">next round in <b className="mono">{clock(next - now)}</b></span>
+            {live ? <span className="small">{now < Number(live.round_start) + ROUND ? <>your bet: <b>{live.side === 'up' ? '▲ UP' : '▼ DOWN'}</b> from {fmt(live.open_price)} · <b className="mono">{clock(Number(live.round_start) + ROUND - now)}</b> left · {px && ((live.side === 'up') === (px.price > Number(live.open_price)) ? <b className="green">winning</b> : px.price === Number(live.open_price) ? <b>level</b> : <b className="red">losing</b>)}</> : 'settling…'}</span>
+              : <span className="small">tap UP or DOWN · result in exactly <b>1 minute</b></span>}
           </div>
         </Stage3D>
       </div>
@@ -54,21 +56,21 @@ export function UpDown({ rules, player, explorer, onChange }) {
       </div>
       <LowBalance player={player} rules={rules} />
       <div className="udbtns">
-        <button className="upbtn" disabled={busy || stake > total} onClick={() => setPending('up')}>▲ UP<small>pays {sats(Math.floor((stake * (rules.updownPayoutPct ?? 190)) / 100))}</small></button>
-        <button className="downbtn" disabled={busy || stake > total} onClick={() => setPending('down')}>▼ DOWN<small>pays {sats(Math.floor((stake * (rules.updownPayoutPct ?? 190)) / 100))}</small></button>
+        <button className="upbtn" disabled={busy || stake > total || !!live} onClick={() => setPending('up')}>▲ UP<small>pays {sats(Math.floor((stake * (rules.updownPayoutPct ?? 190)) / 100))}</small></button>
+        <button className="downbtn" disabled={busy || stake > total || !!live} onClick={() => setPending('down')}>▼ DOWN<small>pays {sats(Math.floor((stake * (rules.updownPayoutPct ?? 190)) / 100))}</small></button>
       </div>
       {pending && (
         <div className="confirm" role="dialog" aria-modal="true" aria-label="Confirm your bet">
           <div className="card">
             <h2>{pending === 'up' ? '▲ UP' : '▼ DOWN'} for {sats(stake)}?</h2>
-            <p className="muted">Your bet joins the round starting at {new Date(next * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (in {clock(next - now)}). If BCH closes that minute {pending === 'up' ? 'higher' : 'lower'} than it opened, you get {sats(Math.floor((stake * (rules.updownPayoutPct ?? 190)) / 100))}.</p>
+            <p className="muted">Your entry is the BCH price at the moment you confirm. Exactly 60 seconds later, if the price is {pending === 'up' ? 'higher' : 'lower'}, you get {sats(Math.floor((stake * (rules.updownPayoutPct ?? 190)) / 100))}. Same price = stake back.</p>
             <div className="row gap"><button className={pending === 'up' ? 'upbtn slim' : 'downbtn slim'} disabled={busy} onClick={confirm}>{busy ? 'Placing…' : 'Confirm'}</button><button className="secondary" onClick={() => setPending(null)}>Cancel</button></div>
             {err && <p className="err">{err}</p>}
           </div>
         </div>
       )}
       </div>
-      {live && <p className="center livebet">Your bet: {live.side === 'up' ? '▲ UP' : '▼ DOWN'} {sats(live.stake)} · {now < Number(live.round_start) ? `starts in ${clock(Number(live.round_start) - now)}` : now < Number(live.round_start) + 60 ? `LIVE · ${clock(Number(live.round_start) + 60 - now)} left` : 'settling…'}</p>}
+
       {mine.length > 0 && (
         <div className="card">
           <h2>Your bets</h2>

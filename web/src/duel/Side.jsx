@@ -27,7 +27,7 @@ export function Wallet({ player, rules, explorer, network, onChange }) {
   return (
     <div className="card">
       <h2>{player.name}</h2>
-      <div className="bal">
+      <div className="bal" hidden>
         <div><span className="muted small">Bonus (play only)</span><b>{sats(player.bonus)}</b></div>
         <div><span className="muted small">Withdrawable</span><b className="green">{sats(player.cash)}</b></div>
         <div><span className="muted small">Record</span><b>{player.wins}W {player.losses}L {player.draws}D</b></div>
@@ -36,27 +36,12 @@ export function Wallet({ player, rules, explorer, network, onChange }) {
         <b>Invite a friend → you both get {sats(rules.referralBonus)}</b>
         <div className="row gap"><code className="linkbox">{invite}</code><button className="secondary" onClick={copyInvite}>{copied ? 'Copied ✓' : 'Copy'}</button></div>
       </div>
-      <Suspense fallback={<div className="wc muted small">Loading wallet connect…</div>}><WalletConnect network={network} onDeposited={onChange} onAddress={(a) => { if (!addr) setAddr(a); }} /></Suspense>
-      <details onToggle={(e) => e.target.open && !dep && showDeposit()}>
-        <summary>Deposit by QR (any wallet)</summary>
-        {dep && <div className="deposit">{qr && <img src={qr} alt="Deposit address QR" width="180" height="180" />}<code>{dep.address}</code><button className="link" onClick={showDeposit}>I sent it — check now</button></div>}
-      </details>
       <details>
         <summary><Key size={16} /> Login code (use it on another device or in the terminal)</summary>
         <p className="muted small">Anyone with this code controls your balance. Keep it private.</p>
         <div className="row gap"><code className="linkbox">{showCode ? token : '•'.repeat(24)}</code>
           <button className="secondary" type="button" onClick={() => setShowCode((v) => !v)}>{showCode ? 'Hide' : 'Show'}</button>
           <button className="secondary" type="button" onClick={async () => { try { await navigator.clipboard.writeText(token); setCodeCopied(true); setTimeout(() => setCodeCopied(false), 1500); } catch { /* blocked */ } }}>{codeCopied ? 'Copied ✓' : 'Copy'}</button></div>
-      </details>
-      <details>
-        <summary>Withdraw winnings</summary>
-        {rule && !rule.ok && <p className="warnbox">Free bonus must be played 2× before withdrawing: play <b>{sats(rule.left)}</b> more.</p>}
-        <form onSubmit={withdraw} className="withdraw">
-          <input placeholder="Your BCH address" value={addr} onChange={(e) => setAddr(e.target.value)} required />
-          <input placeholder={`Amount (min ${rules.minWithdraw})`} inputMode="numeric" value={amt} onChange={(e) => setAmt(e.target.value.replace(/\D/g, ''))} required />
-          <button className="primary">Withdraw</button>
-          <p className="muted small">Platform fee {rules.withdrawFeePct}% (min {sats(rules.networkFee)}). Only winnings and deposits can be withdrawn — bonus is for playing.</p>
-        </form>
       </details>
       {msg && <p className="ok">{msg}</p>}{err && <p className="err">{err}</p>}
     </div>
