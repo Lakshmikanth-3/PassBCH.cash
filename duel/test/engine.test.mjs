@@ -35,7 +35,7 @@ describe('money', () => {
     expect(E.takeStake({ bonus: 5000, cash: 0 }, 1000)).toEqual({ fromBonus: 1000, fromCash: 0 });
   });
   test('cannot stake more than the balance or an odd amount', () => {
-    expect(() => E.takeStake({ bonus: 400, cash: 0 }, 500)).toThrow(/insufficient/);
+    expect(() => E.takeStake({ bonus: 400, cash: 0 }, 1000)).toThrow(/insufficient/);
     expect(() => E.takeStake({ bonus: 9999, cash: 0 }, 777)).toThrow(/not allowed/);
   });
   test('winner takes the whole pot as cash; money is conserved', () => {
@@ -47,14 +47,14 @@ describe('money', () => {
   });
   test('withdrawal fee is 5% with a floor that covers the network fee', () => {
     expect(E.withdrawQuote(100000, 20000)).toEqual({ amount: 20000, fee: 1000, send: 19000 });
-    expect(E.withdrawQuote(100000, 2000)).toEqual({ amount: 2000, fee: 400, send: 1600 });
-    expect(() => E.withdrawQuote(1500, 2000)).toThrow(/more than/);
+    expect(E.withdrawQuote(100000, 5000)).toEqual({ amount: 5000, fee: 400, send: 4600 });
+    expect(() => E.withdrawQuote(4000, 5000)).toThrow(/more than/);
     expect(() => E.withdrawQuote(99999, 100)).toThrow(/minimum/);
   });
   test('signup bonus, referral bonus to both sides, global cap', () => {
-    expect(E.signupGrants({ hasReferrer: false, grantsSoFar: 0 })).toEqual([{ to: 'self', sats: 1000 }]);
-    expect(E.signupGrants({ hasReferrer: true, grantsSoFar: 0 })).toEqual([{ to: 'self', sats: 2000 }, { to: 'referrer', sats: 1000 }]);
-    expect(E.signupGrants({ hasReferrer: true, grantsSoFar: 99 })).toEqual([{ to: 'self', sats: 2000 }]);
+    expect(E.signupGrants({ hasReferrer: false, grantsSoFar: 0 })).toEqual([{ to: 'self', sats: 10000 }]);
+    expect(E.signupGrants({ hasReferrer: true, grantsSoFar: 0 })).toEqual([{ to: 'self', sats: 20000 }, { to: 'referrer', sats: 10000 }]);
+    expect(E.signupGrants({ hasReferrer: true, grantsSoFar: 99 })).toEqual([{ to: 'self', sats: 20000 }]);
     expect(E.signupGrants({ hasReferrer: true, grantsSoFar: 100 })).toEqual([]);
   });
 });

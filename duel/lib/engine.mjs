@@ -4,12 +4,12 @@ import { createHash, randomBytes } from 'node:crypto';
 export const MOVES = ['rock', 'paper', 'scissors'];
 export const EMOJI = { rock: '✊', paper: '✋', scissors: '✌️' };
 export const RULES = {
-  stakes: [500, 1000, 2000, 5000],   // sats per side
-  signupBonus: 1000,                 // ≈ 5 US cents
-  referralBonus: 1000,               // to BOTH the inviter and the new player
+  stakes: [1000, 2500, 5000, 10000], // sats per side
+  signupBonus: 10000,                // ≈ 5 US cents at ~$450/BCH
+  referralBonus: 10000,              // to BOTH the inviter and the new player
   bonusCap: 100,                     // total bonus grants, platform-wide (abuse limit)
   withdrawFeePct: 5,                 // platform fee, taken only on withdrawal
-  minWithdraw: 2000,
+  minWithdraw: 5000,
   networkFee: 400,                   // paid by the platform out of the fee
   revealTimeoutS: 120,               // creator must reveal within 2 min of a join, or loses
   openTimeoutS: 24 * 3600,           // unjoined duels refund after 24 h
