@@ -36,6 +36,7 @@ describe('Typing Race', () => {
     expect(E.typingOutcome(phrase, phrase, bot + 1, bot)).toBe('lose');
     expect(E.typingOutcome(phrase, phrase, bot, bot)).toBe('refund');
     expect(E.typingOutcome(phrase + 'x', phrase, bot - 1, bot)).toBe('lose');
+    expect(E.typingOutcome(phrase.toUpperCase(), phrase, bot - 1, bot)).toBe('win'); // Caps Lock is fine
     expect(E.typingOutcome(phrase, phrase, 300, bot)).toBe('lose'); // pasted, not typed
     expect(E.typingOutcome(phrase, phrase, E.QG.maxTypeS * 1000 + 1, 1e9)).toBe('lose');
     expect(ok).toBeLessThan(bot + 10000);

@@ -335,7 +335,7 @@ export async function trFinish(token, { id, text }) {
     const outcome = E.typingOutcome(String(text ?? ''), q.phrase, playerMs, botMs);
     const s2 = await qPay(k, q, outcome, { fromBonus: q.from_bonus, fromCash: q.from_cash });
     await k.query('update qgames set player_ms=$1, bot_ms=$2, outcome=$3, payout=$4, settled_at=now() where id=$5', [playerMs, botMs, outcome, s2.bonus + s2.cash, id]);
-    const wrong = String(text ?? '') !== q.phrase, tooFast = !wrong && playerMs < q.phrase.length * E.QG.minMsPerChar;
+    const wrong = String(text ?? '').toLowerCase() !== q.phrase, tooFast = !wrong && playerMs < q.phrase.length * E.QG.minMsPerChar;
     return { id, outcome, payout: s2.bonus + s2.cash, playerMs, botMs, seed: q.seed, commit: q.commit,
       note: wrong ? 'the text did not match the phrase' : tooFast ? 'too fast to be typed by a person' : playerMs > E.QG.maxTypeS * 1000 ? 'out of time' : null };
   });

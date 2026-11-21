@@ -193,7 +193,7 @@ export const typingBotMs = (seed, id, phrase) => {
 };
 /** Typing result from the player's measured time: too fast = not typed by a human = loss. */
 export function typingOutcome(text, phrase, playerMs, botMs) {
-  if (text !== phrase) return 'lose';
+  if (String(text).toLowerCase() !== phrase) return 'lose'; // capitals do not matter
   if (playerMs > QG.maxTypeS * 1000 || playerMs < phrase.length * QG.minMsPerChar) return 'lose';
   return playerMs < botMs ? 'win' : playerMs === botMs ? 'refund' : 'lose';
 }

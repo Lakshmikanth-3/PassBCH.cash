@@ -38,6 +38,12 @@ export function CoinFlip({ rules, player, explorer, network, onChange }) {
         <div className="card">
           <h2>Coin Flip</h2>
           <p className="muted small">The house locks its secret seed before you pick. Your browser adds its own random seed. The flip comes from both, so neither side can steer it. The seed is revealed after and the Verify page recomputes it. Pays 1.9×.</p>
+          <ol className="how">
+            <li>Choose <b>Heads</b> or <b>Tails</b>.</li>
+            <li>Pick a stake (or a custom amount) and press <b>Flip</b>.</li>
+            <li>The coin flies in the 3D studio. Right side wins <b>1.9×</b> your stake.</li>
+            <li>Press Verify afterwards: the house seed is revealed and the flip is recomputed in your browser.</li>
+          </ol>
           {round && <p className="mono small" style={{ wordBreak: 'break-all' }}>House seed locked: {round.commit.slice(0, 24)}…</p>}
           <div className="row gap" style={{ margin: '10px 0' }}>
             {[['Heads', 0], ['Tails', 1]].map(([l, v]) => <button key={l} type="button" className={`chip ${pick === v ? 'on' : ''}`} style={{ flex: 1, padding: '14px' }} onClick={() => setPick(v)}>{l}</button>)}
@@ -85,8 +91,9 @@ export function TypingRace({ rules, player, explorer, network, onChange }) {
     if (done.current) return; done.current = true;
     try { const r = await api('trfinish', { body: { id: race.id, text: value } }); setRes(r); show({ kind: 'typingresult', playerMs: r.playerMs, botMs: r.botMs, outcome: r.outcome }); onChange?.(); } catch (e) { setErr(e.message); done.current = false; }
   };
-  const onType = (v) => { setText(v); show({ kind: 'typingprogress', p: [...v].filter((c, i) => c === race.phrase[i]).length / race.phrase.length }); if (v === race.phrase) finish(v); };
-  const correct = race ? [...text].filter((c, i) => c === race.phrase[i]).length : 0;
+  const onType = (v) => { setText(v); show({ kind: 'typingprogress', p: [...v.toLowerCase()].filter((c, i) => c === race.phrase[i]).length / race.phrase.length }); if (v.toLowerCase() === race.phrase) finish(v); };
+  const correct = race ? [...text.toLowerCase()].filter((c, i) => c === race.phrase[i]).length : 0;
+  const [caps, setCaps] = useState(false);
   return (
     <div className="gamelayout">
       <div className="stagecol">
@@ -94,11 +101,21 @@ export function TypingRace({ rules, player, explorer, network, onChange }) {
         <div className="card typing" style={{ marginTop: 16 }}>
           <div className="row between"><h2>Typing Race</h2><span className="mono">{(ms / 1000).toFixed(1)}s</span></div>
           {!race && <p className="muted">Type a short phrase faster than the House Bot (45 to 80 words per minute, locked by a hash before you start). Winner takes 1.9× the stake. Same phrase for everyone in the same game, drawn from the game id.</p>}
+          {!race && (
+            <ol className="how">
+              <li>Pick a stake on the right and press <b>Start the race</b>.</li>
+              <li>A short phrase appears and the clock starts. <b>Type it exactly</b> in the box (capitals don't matter, punctuation is not used).</li>
+              <li>It finishes by itself on the last letter. Pasting is blocked.</li>
+              <li>Faster than the House Bot? You win <b>1.9×</b> your stake. Slower? You lose it. The result is written to Bitcoin Cash and you can verify it.</li>
+            </ol>
+          )}
           {race && (
             <>
-              <p className="phrase" aria-label="Type this phrase">{[...race.phrase].map((c, i) => <span key={i} className={i < text.length ? (text[i] === c ? 'ok' : 'bad') : ''}>{c}</span>)}</p>
-              <input autoFocus disabled={!!res} value={text} onChange={(e) => onType(e.target.value)} onPaste={(e) => e.preventDefault()} onDrop={(e) => e.preventDefault()} autoComplete="off" autoCapitalize="off" spellCheck={false} placeholder="Start typing here" aria-label="Your typing" />
+              <p className="phrase" aria-label="Type this phrase">{[...race.phrase].map((c, i) => <span key={i} className={i < text.length ? (text[i].toLowerCase() === c ? 'ok' : 'bad') : ''}>{c}</span>)}</p>
+              <input autoFocus disabled={!!res} value={text} onChange={(e) => onType(e.target.value)} onKeyUp={(e) => setCaps(!!e.getModifierState?.('CapsLock'))} onPaste={(e) => e.preventDefault()} onDrop={(e) => e.preventDefault()} autoComplete="off" autoCapitalize="off" spellCheck={false} placeholder="Start typing here" aria-label="Your typing" />
+              {caps && <p className="hint">Caps Lock is on. It still works (capitals don't matter), but typing is easier with it off.</p>}
               <div className="progressbar"><div style={{ width: `${(correct / race.phrase.length) * 100}%` }} /></div>
+              {!res && <button className="link" type="button" onClick={() => finish('')}>Give up (you lose the stake)</button>}
               <p className="muted small">Time is measured by the server from the moment the phrase appears. Pasting is blocked and speeds above human typing count as a loss.</p>
             </>
           )}

@@ -447,3 +447,6 @@ main + .foot, .foot { margin-top: auto; } #root > main { width: 100%; }
 .seg.four { display: flex; flex-wrap: wrap; } .seg.four button { flex: 1 1 auto; }
 
 .seg.five { display: flex; flex-wrap: wrap; } .seg.five button { flex: 1 1 auto; white-space: nowrap; }
+
+.typing input { text-transform: none; }
+.how { margin: 8px 0 12px; padding-left: 20px; color: var(--muted); font-size: 14px; } .how li { margin: 4px 0; } .how b { color: var(--ink); }

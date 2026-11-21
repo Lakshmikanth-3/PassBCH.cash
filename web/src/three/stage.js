@@ -466,25 +466,48 @@ function updownScene() {
 
 // ---------- Coin Flip: a big gold coin on a pedestal; a real result makes it fly and land on the real side ----------
 const SKY_GOLD = [[0, '#4b2bd1'], [0.45, '#c23fb4'], [0.8, '#ff8a6b'], [1, '#ffd36b']];
-function coinFaceTexture(letter, bg, fg) {
-  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
-  g.fillStyle = bg; g.beginPath(); g.arc(128, 128, 128, 0, Math.PI * 2); g.fill();
-  g.strokeStyle = fg; g.lineWidth = 10; g.beginPath(); g.arc(128, 128, 108, 0, Math.PI * 2); g.stroke();
-  g.fillStyle = fg; g.font = '800 150px "Chakra Petch", Inter, system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(letter, 128, 138);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+function coinFaceTexture(word) {
+  const N = 512, c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d');
+  const base = g.createRadialGradient(200, 170, 40, 256, 256, 270); base.addColorStop(0, '#ffe58a'); base.addColorStop(0.55, '#f0b930'); base.addColorStop(1, '#c8860f');
+  g.fillStyle = base; g.beginPath(); g.arc(256, 256, 256, 0, Math.PI * 2); g.fill();
+  for (let i = 0; i < 1400; i++) { const a = Math.random() * 6.283, r = Math.sqrt(Math.random()) * 250; g.fillStyle = `rgba(${Math.random() > 0.5 ? '255,244,180' : '150,95,10'},${0.05 + Math.random() * 0.06})`; g.fillRect(256 + Math.cos(a) * r, 256 + Math.sin(a) * r, 2 + Math.random() * 7, 1 + Math.random() * 2); } // hammered grain
+  const ring = (r, w, col) => { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.arc(256, 256, r, 0, Math.PI * 2); g.stroke(); };
+  ring(244, 12, '#b9780c'); ring(236, 4, '#ffe9a0'); ring(212, 3, '#a8700b'); ring(208, 2, '#ffeaa5');
+  const emboss = (draw) => { g.save(); g.translate(3, 4); g.fillStyle = g.strokeStyle = 'rgba(120,70,0,0.75)'; draw(); g.restore(); g.save(); g.translate(-1.5, -1.5); g.fillStyle = g.strokeStyle = 'rgba(255,246,190,0.9)'; draw(); g.restore(); g.fillStyle = g.strokeStyle = '#e2a21f'; draw(); };
+  // laurel branches
+  for (const sx of [-1, 1]) for (let i = 0; i < 9; i++) {
+    const a = ((196 - i * 13) * Math.PI) / 180, R = 176; const x = 256 + sx * Math.cos(a) * R * -1 * -1, y = 256 + Math.sin(a) * R * -1;
+    const px = 256 + sx * Math.sin((i * 13 + 20) * Math.PI / 180) * R, py = 256 + Math.cos((i * 13 + 20) * Math.PI / 180) * R * 0.98 - 20;
+    emboss(() => { g.save(); g.translate(px, py); g.rotate(sx * (0.5 + i * 0.2) + (sx > 0 ? 0.2 : -0.2)); g.beginPath(); g.ellipse(0, 0, 11, 27, 0, 0, Math.PI * 2); g.fill(); g.restore(); });
+  }
+  // star and arcs
+  emboss(() => { g.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 9 : 22, a = -Math.PI / 2 + (i * Math.PI) / 5; g.lineTo(256 + Math.cos(a) * r, 66 + Math.sin(a) * r); } g.closePath(); g.fill(); });
+  emboss(() => { g.lineWidth = 5; g.beginPath(); g.arc(256, 150, 120, -2.55, -1.95); g.stroke(); g.beginPath(); g.arc(256, 150, 120, -1.19, -0.59); g.stroke(); });
+  // the B with its two bars, then the side and BCH
+  emboss(() => { g.font = '800 250px Georgia, "Times New Roman", serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('B', 256, 232); g.fillRect(222, 82, 14, 38); g.fillRect(272, 82, 14, 38); g.fillRect(222, 346, 14, 38); g.fillRect(272, 346, 14, 38); });
+  emboss(() => { g.font = '700 62px Georgia, "Times New Roman", serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(word, 256, 410); });
+  emboss(() => { g.font = '700 38px Georgia, "Times New Roman", serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('BCH', 256, 466); g.fillRect(150, 452, 60, 4); g.fillRect(302, 452, 60, 4); });
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+}
+function coinEdgeTexture() {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 8; const g = c.getContext('2d');
+  g.fillStyle = '#d9971a'; g.fillRect(0, 0, 256, 8);
+  for (let x = 0; x < 256; x += 4) { g.fillStyle = '#8c5a05'; g.fillRect(x, 0, 2, 8); g.fillStyle = '#ffe08a'; g.fillRect(x + 2, 0, 1, 8); } // ridged (reeded) edge
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = THREE.RepeatWrapping; t.repeat.set(8, 1); return t;
 }
 function coinScene() {
   const scene = new THREE.Scene(); const set = studio(scene, THEME.gold, SKY_GOLD);
   const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 1.0, 0.9, 48), std(0xffffff, { roughness: 0.3 })); ped.position.y = 0.45; ped.castShadow = ped.receiveShadow = true; scene.add(ped);
   const pr = new THREE.Mesh(new THREE.TorusGeometry(0.88, 0.03, 8, 64), glow(THEME.gold, 1.8)); pr.rotation.x = Math.PI / 2; pr.position.y = 0.9; scene.add(pr);
-  const REST = 1.05;
-  const side = std(0xe0a420, { metalness: 0.7, roughness: 0.25 });
-  const coin = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 0.14, 64), [side, new THREE.MeshStandardMaterial({ map: coinFaceTexture('H', '#f1b92f', '#7a5200'), metalness: 0.6, roughness: 0.3 }), new THREE.MeshStandardMaterial({ map: coinFaceTexture('T', '#d7d9e6', '#4a4f7a'), metalness: 0.6, roughness: 0.3 })]);
+  const REST = 1.1;
+  const face = (word, rot) => { const tex = coinFaceTexture(word); tex.center.set(0.5, 0.5); tex.rotation = rot ? -Math.PI / 2 : Math.PI / 2; /* cap UVs are turned 90 degrees; the flipped face is also turned over */ return new THREE.MeshStandardMaterial({ map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: 0.32, metalness: 0.55, roughness: 0.38 }); };
+  const edge = new THREE.MeshStandardMaterial({ map: coinEdgeTexture(), metalness: 0.7, roughness: 0.3, emissive: 0x6a4300, emissiveIntensity: 0.35 });
+  const coin = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 0.2, 96), [edge, face('HEADS', false), face('TAILS', true)]);
   coin.castShadow = true; coin.position.y = REST; scene.add(coin);
   const host = buildHost(); host.position.set(-3.6, 0, 0.6); host.rotation.y = 0.55; host.userData.tag.userData.set('Coin host', { border: '#ffc23d' }); scene.add(host);
   const banner = label('Heads or tails?', { size: 58, border: '#ffc23d', scale: 1.05 }); banner.position.set(0, 3.9, 0); scene.add(banner);
   const fx = confetti(scene);
-  const shots = { WIDE: { pos: [0, 2.9, 9.8], look: [0, 2.3, 0], orbit: true }, COIN: { pos: [0, 3.0, 7.6], look: [0, 2.4, 0] }, HOST: { pos: [-1.6, 2.2, 3.6], look: [-3.6, 1.8, 0.6] } };
+  const shots = { WIDE: { pos: [0, 2.9, 9.8], look: [0, 2.3, 0], orbit: true }, COIN: { pos: [0, 3.0, 7.6], look: [0, 2.4, 0] }, REVEAL: { pos: [0, 3.3, 2.9], look: [0, 1.1, 0] }, HOST: { pos: [-1.6, 2.2, 3.6], look: [-3.6, 1.8, 0.6] } };
   const st = { flip: null, cheer: 0, dir: null, total: 0 };
   const easeOut = (u) => 1 - (1 - u) ** 3;
   return {
@@ -505,7 +528,7 @@ function coinScene() {
           f.done = true; coin.position.y = REST; coin.rotation.x = st.total;
           banner.userData.set(`${f.result === 0 ? 'HEADS' : 'TAILS'}${f.win ? ' — you win!' : ' — not this time'}`, { border: f.win ? '#b6ff3b' : '#ff4d6d' });
           if (f.win) { fx.burst(new THREE.Vector3(0, 1.8, 0.4)); st.cheer = 4; }
-          st.dir?.sequence([['HOST', 2.2], ['WIDE', Infinity]]);
+          st.dir?.sequence([['REVEAL', 3.2], ['HOST', 2], ['WIDE', Infinity]]);
         }
       }
       host.userData.head.rotation.y = Math.sin(time * 0.8) * 0.2;
