@@ -83,11 +83,10 @@ describe('names, statuses, records', () => {
 });
 
 describe('up / down', () => {
-  test('bets go into the next full minute; settle 5 s after it ends', () => {
-    expect(E.nextRound(1000)).toBe(1020);
-    expect(E.nextRound(1020)).toBe(1080);
-    expect(E.canSettle(1020, 1084)).toBe(false);
-    expect(E.canSettle(1020, 1085)).toBe(true);
+  test('rolling one-minute bets: ends exactly 60 s after entry, settles 3 s later', () => {
+    expect(E.betEnds(1000)).toBe(1060);
+    expect(E.betCanSettle(1000, 1062)).toBe(false);
+    expect(E.betCanSettle(1000, 1063)).toBe(true);
   });
   test('candle decides', () => {
     expect(E.candleResult(190, 190.5)).toBe('up');

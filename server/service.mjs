@@ -2,7 +2,7 @@
 import { randomBytes } from 'node:crypto';
 import * as E from './engine.mjs';
 import { tx, db } from './db.mjs';
-import { getCandle } from './price.mjs';
+import { getCandle, priceAt } from './price.mjs';
 import { PF, cleanPrompt, playMatch, groqAsk } from './promptfight.mjs';
 
 export class UserError extends Error { constructor(m, status = 400) { super(m); this.status = status; } }
@@ -216,38 +216,40 @@ export async function markRecordTry(id) { await (await db()).query('update duels
 export async function placeBet(token, { side, stake }) {
   stake = Number(stake);
   if (side !== 'up' && side !== 'down') throw new UserError('pick up or down');
+  const entryTs = nowS();
+  const entry = await priceAt(entryTs);
+  if (!entry) throw new UserError('price feed unavailable, try again in a moment');
   return tx(async (c) => {
     const p = await playerByToken(c, token, true);
     let split; try { split = E.takeStake({ bonus: Number(p.bonus), cash: Number(p.cash) }, stake); } catch (e) { throw new UserError(e.message); }
     const id = randomBytes(16).toString('hex');
-    const round = E.nextRound(nowS());
     await c.query('update players set bonus = bonus - $1, cash = cash - $2, wagered = wagered + $1 + $2 where id = $3', [split.fromBonus, split.fromCash, p.id]);
-    await c.query('insert into bets (id, player_id, side, stake, from_bonus, from_cash, round_start) values ($1,$2,$3,$4,$5,$6,$7)', [id, p.id, side, stake, split.fromBonus, split.fromCash, round]);
-    return { id, roundStart: round, roundEnd: E.roundEnds(round) };
+    await c.query('insert into bets (id, player_id, side, stake, from_bonus, from_cash, round_start, open_price, price_source) values ($1,$2,$3,$4,$5,$6,$7,$8,$9)',
+      [id, p.id, side, stake, split.fromBonus, split.fromCash, entryTs, entry.price, entry.source]);
+    return { id, roundStart: entryTs, roundEnd: E.betEnds(entryTs), entryPrice: entry.price };
   });
 }
 
-/** Settle every bet whose minute has ended, using that minute's public candle. */
+/** Settle every bet whose 60 s are up, using the public trade price at exactly entry + 60 s. */
 export async function settleBets() {
   const c = await db();
-  const t = nowS();
-  const { rows } = await c.query('select distinct round_start from bets where settled_at is null and round_start <= $1 order by round_start limit 5', [t - 60 - E.UPDOWN.settleDelayS]);
+  const { rows } = await c.query('select * from bets where settled_at is null and round_start <= $1 order by round_start limit 10', [nowS() - E.UPDOWN.roundS - E.UPDOWN.settleDelayS]);
   let n = 0;
-  for (const { round_start } of rows) {
-    const candle = await getCandle(Number(round_start));
-    if (!candle) continue; // exchange hasn't published it yet; next read retries
-    const result = E.candleResult(candle.open, candle.close);
+  for (const b of rows) {
+    const exit = await priceAt(E.betEnds(Number(b.round_start)));
+    if (!exit) continue; // retry on the next read
+    const open = Number(b.open_price);
+    const result = E.candleResult(open, exit.price);
     await tx(async (k) => {
-      const { rows: bets } = await k.query('select * from bets where round_start=$1 and settled_at is null for update', [round_start]);
-      for (const b of bets) {
-        const s = E.settleBet(b.side, result, b.stake, { fromBonus: b.from_bonus, fromCash: b.from_cash });
-        await k.query('update players set bonus = bonus + $1, cash = cash + $2 where id=$3', [s.bonus, s.cash, b.player_id]);
-        if (s.outcome === 'win') await k.query('update players set wins = wins + 1, won_sats = won_sats + $1 where id=$2', [s.cash - b.stake, b.player_id]);
-        if (s.outcome === 'lose') await k.query('update players set losses = losses + 1 where id=$1', [b.player_id]);
-        await k.query(`update bets set open_price=$1, close_price=$2, price_source=$3, result=$4, outcome=$5, payout=$6, settled_at=now() where id=$7`,
-          [candle.open, candle.close, candle.source, result, s.outcome, s.bonus + s.cash, b.id]);
-        n++;
-      }
+      const { rows: [cur] } = await k.query('select * from bets where id=$1 and settled_at is null for update', [b.id]);
+      if (!cur) return;
+      const s2 = E.settleBet(cur.side, result, cur.stake, { fromBonus: cur.from_bonus, fromCash: cur.from_cash });
+      await k.query('update players set bonus = bonus + $1, cash = cash + $2 where id=$3', [s2.bonus, s2.cash, cur.player_id]);
+      if (s2.outcome === 'win') await k.query('update players set wins = wins + 1, won_sats = won_sats + $1 where id=$2', [s2.cash - cur.stake, cur.player_id]);
+      if (s2.outcome === 'lose') await k.query('update players set losses = losses + 1 where id=$1', [cur.player_id]);
+      await k.query('update bets set close_price=$1, price_source=$2, result=$3, outcome=$4, payout=$5, settled_at=now() where id=$6',
+        [exit.price, exit.source, result, s2.outcome, s2.bonus + s2.cash, cur.id]);
+      n++;
     });
   }
   return n;

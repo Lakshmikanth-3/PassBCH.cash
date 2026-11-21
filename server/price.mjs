@@ -37,3 +37,45 @@ export async function recentCloses(n = 12) {
   } catch { /* none */ }
   return [];
 }
+
+/**
+ * BCH/USD price at an exact second: the last public trade at or before `ts` (Coinbase, Kraken fallback).
+ * Anyone can re-check it from the exchange's trade history. Returns { price, tradeTime, source } or null.
+ */
+export async function priceAt(ts) {
+  try {
+    const rows = await (await fetch('https://api.exchange.coinbase.com/products/BCH-USD/trades?limit=1000', { signal: timed(5000), headers: { 'user-agent': 'passbch-cash' } })).json();
+    if (Array.isArray(rows) && rows.length) {
+      const oldest = Date.parse(rows.at(-1).time) / 1000;
+      const hit = rows.find((t) => Date.parse(t.time) / 1000 <= ts);
+      if (hit && ts >= oldest) return { price: Number(hit.price), tradeTime: hit.time, source: 'coinbase' };
+    }
+  } catch { /* fall through */ }
+  try {
+    const j = await (await fetch(`https://api.kraken.com/0/public/Trades?pair=BCHUSD&since=${(ts - 300) * 1e9}`, { signal: timed(5000) })).json();
+    const rows = Object.values(j.result ?? {}).find(Array.isArray) ?? [];
+    let hit = null; for (const t of rows) { if (Number(t[2]) <= ts) hit = t; else break; }
+    if (hit) return { price: Number(hit[0]), tradeTime: new Date(Number(hit[2]) * 1000).toISOString(), source: 'kraken' };
+  } catch { /* none */ }
+  return null;
+}
+
+let ratesCache = null;
+/** 1 BCH in other currencies (fiat + crypto), cached 60 s. */
+export async function rates() {
+  if (ratesCache && Date.now() - ratesCache.at < 60000) return ratesCache.data;
+  const j = await (await fetch('https://api.coinbase.com/v2/exchange-rates?currency=BCH', { signal: timed(5000) })).json();
+  const keep = ['USD', 'INR', 'JPY', 'EUR', 'GBP', 'AED', 'SGD', 'IDR', 'PHP', 'NGN', 'BRL', 'USDT', 'USDC', 'BTC', 'ETH', 'SOL', 'LTC', 'DOGE'];
+  const data = Object.fromEntries(keep.filter((k) => j.data?.rates?.[k]).map((k) => [k, Number(j.data.rates[k])]));
+  ratesCache = { at: Date.now(), data };
+  return data;
+}
+
+/** SideShift.ai public quote for a crypto <-> BCH swap (rate, min, max). Used for previews; swaps run on mainnet. */
+export async function swapQuote(coin, dir) {
+  const ok = /^[a-z0-9]+(-[a-z0-9]+)?$/.test(coin); if (!ok) throw new Error('bad coin');
+  const pair = dir === 'out' ? `bch/${coin}` : `${coin}/bch`;
+  const j = await (await fetch(`https://sideshift.ai/api/v2/pair/${pair}`, { signal: timed(6000) })).json();
+  if (j.error) throw new Error(j.error.message ?? 'no quote');
+  return { rate: Number(j.rate), min: Number(j.min), max: Number(j.max), from: j.depositCoin, to: j.settleCoin, network: dir === 'out' ? j.settleNetwork : j.depositNetwork };
+}

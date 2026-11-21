@@ -106,7 +106,7 @@ export function parseRecord(buf) {
 }
 
 // ---------- Up / Down: bet on the next 1-minute BCH/USD candle ----------
-export const UPDOWN = { roundS: 60, payoutPct: 190, settleDelayS: 5 };
+export const UPDOWN = { roundS: 60, payoutPct: 190, settleDelayS: 3 };
 
 /** Bets placed now go into the round that starts at the next full minute (betting closes when it starts). */
 export const nextRound = (nowS) => Math.floor(nowS / 60) * 60 + 60;
@@ -161,3 +161,7 @@ export function aiRecordBytes({ id, pass, passed, total, taskIdx, modelIdx, tran
   Buffer.from(transcriptHash, 'hex').copy(b, 28);
   return b;
 }
+
+/** Rolling one-minute Up/Down: entry = price the second you bet, exit = price exactly 60 s later. */
+export const betEnds = (entryTs) => entryTs + UPDOWN.roundS;
+export const betCanSettle = (entryTs, nowS) => nowS >= betEnds(entryTs) + UPDOWN.settleDelayS;

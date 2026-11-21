@@ -3,8 +3,11 @@ import * as S from '../server/service.mjs';
 import { RULES, sha256 } from '../server/engine.mjs';
 import { db } from '../server/db.mjs';
 import * as chain from '../server/chain.mjs';
-import { spot, recentCloses } from '../server/price.mjs';
+import { spot, recentCloses, rates, swapQuote } from '../server/price.mjs';
 import { nextRound, UPDOWN } from '../server/engine.mjs';
+
+// Bump when web/public/duel.mjs changes: old terminal clients update themselves.
+export const CLIENT_VERSION = '2026.11.21-3';
 
 const json = (res, status, body) => { res.statusCode = status; res.setHeader('content-type', 'application/json'); res.setHeader('cache-control', 'no-store'); res.end(JSON.stringify(body)); };
 const tokenOf = (req) => (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '') || null;
@@ -36,7 +39,9 @@ async function recordPending() {
 }
 
 const routes = {
-  async config() { return { rules: { ...RULES, updownPayoutPct: UPDOWN.payoutPct }, network: chain.NETWORK, explorer: chain.EXPLORER }; },
+  async config() { return { rules: { ...RULES, updownPayoutPct: UPDOWN.payoutPct, updownRoundS: UPDOWN.roundS }, network: chain.NETWORK, explorer: chain.EXPLORER, clientVersion: CLIENT_VERSION }; },
+  async rates() { return timed(rates(), 7000, 'rates'); },
+  async swapquote(req, b, q) { try { return await timed(swapQuote(q.get('coin'), q.get('dir')), 8000, 'quote'); } catch (e) { throw new S.UserError(e.message); } },
   async signup(req, b) {
     const ip = String(req.headers['x-forwarded-for'] ?? '').split(',')[0].trim();
     return S.createPlayer({ name: b.name, ref: b.ref, ipHash: ip ? sha256(`ip:${process.env.HOUSE_SECRET}:${ip}`) : null });
