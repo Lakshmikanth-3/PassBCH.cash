@@ -19,7 +19,7 @@
 | Rules and FAQ | https://passbch.vercel.app/rules |
 | House wallet (chipnet) | `bchtest:qql3cd7mlgqepacnudgh9qg6xc9na6a40qgmzdahgk` |
 | Code started | 17 Nov 2026 (all code written during BLAZE; about 170 commits) |
-| Tests | 56 automated (all pass) + live end-to-end script (13 checks) + live browser test (27 / 27 checks) |
+| Tests | 62 automated (all pass) + live end-to-end script (13 checks) + live browser test (27 / 27 checks) |
 
 ---
 
@@ -92,7 +92,13 @@ Pitch: **"Play while your AI thinks."**
 - **Record:** `SPF1`, 59 bytes (match id, winner, N, step, stake, sha256 of all moves).
 - **3D show:** two robot agents in a boxing ring; every move is a punch and the counter climbs to N.
 
-### 3.4 Fourth card: "Upcoming BCH games"
+### 3.4 Coin Flip (instant)
+Heads or tails. The house commits sha256 of a secret seed first; your browser adds a random seed; the flip is the parity of sha256(seed : your seed : game id). The seed is revealed after and Verify recomputes it. Pays 1.9x. Record: `SQG1` (66 bytes).
+
+### 3.5 Typing Race (about 15 seconds, web and terminal)
+Type a phrase (drawn from the game id) faster than the House Bot, whose speed (45 to 80 wpm) is fixed by a committed seed. The **server** times you from the moment the phrase appears; the text must match exactly; paste is blocked in the page and speeds above human typing (about 260 wpm) count as a loss. Pays 1.9x. Limit: someone could still script the terminal client with a bot typing just under the speed ceiling; the stake limits cap the damage. Record: `SQG1`.
+
+### 3.6 Fourth card: "Upcoming BCH games"
 Placeholder for tournaments, lucky draws and team battles (coming soon).
 
 ---
@@ -286,7 +292,7 @@ Regulation: real-money games are regulated in many countries (including India). 
 | Record decoding (`web/test/proof.test.js`) | 5 passed |
 | Claude Code panel (`panel/panel.test.mjs`) | 6 passed |
 | Banner (`web/test/banner.test.jsx`) | 3 passed |
-| **Total `npm test`** | **56 passed** (re-run 22 Nov after these changes) |
+| **Total `npm test`** | **62 passed** (re-run 22 Nov after these changes) |
 | Live end-to-end (`npm run e2e`) | 13 / 13: signup, referral, bot duel, friend duel, self-join refused, changed move refused, payout, leaderboard, on-chain record, deposit address, bonus not withdrawable, withdrawal with fee |
 | Live browser test (headless Edge, 21 Nov) | 27 / 27: landing, signup, RPS + Verify, Up/Down settled after 60 s, Prompt Fight, vault, add funds tabs, withdraw, winners, rules, verify, profile, 404, phone width, no JS or server errors |
 | Terminal invite routes (22 Nov, live) | curl → `sh` launcher with `join <id>`; PowerShell → `ps1` launcher with `fight <id>`; browser → web app |
@@ -368,7 +374,7 @@ Regulation: real-money games are regulated in many countries (including India). 
 
 ```bash
 npm ci
-npm test          # 56 tests, no secrets needed
+npm test          # 62 tests, no secrets needed
 npm run dev       # web app on http://localhost:5173
 # own API: DATABASE_URL, HOUSE_SK, HOUSE_SECRET, GROQ_KEY  →  npm run api  (http://localhost:8787)
 BASE=https://passbch.vercel.app npm run e2e   # live end-to-end (spends a little chipnet BCH)

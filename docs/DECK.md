@@ -12,10 +12,12 @@ Live: https://passbch.vercel.app · GitHub: https://github.com/Lakshmikanth-3/Pa
 - Online games ask you to trust the house: did the opponent see my move? Was the price picked after my bet? Was the result edited?
 
 ## Slide 3: Solution
-Three one-minute games you can play from the terminal or the browser:
+Five quick games you can play from the terminal or the browser:
 1. **Rock · Paper · Scissors** (commit-reveal, vs the House Bot or a friend)
 2. **Up or Down** (the next minute of the BCH price, real Coinbase trades)
 3. **Prompt Fight** (your prompt trains an AI agent that fights another one)
+4. **Coin Flip** (house seed committed first, your seed added)
+5. **Typing Race** (beat the House Bot, server-timed)
 Each finished game is written to Bitcoin Cash as a public record.
 
 ## Slide 4: Demo (screenshot or 20 s clip)
@@ -37,7 +39,7 @@ Each finished game is written to Bitcoin Cash as a public record.
 - **Verify:** the browser fetches the raw transaction, decodes the record and recomputes the result.
 
 ## Slide 7: Proof and traction
-- 56 automated tests passing; live end-to-end script 13 of 13; live browser test 27 of 27.
+- 62 automated tests passing; live end-to-end script 13 of 13; live browser test 27 of 27.
 - Real transactions on chipnet for every game type (see README evidence table).
 - Mainnet: [first mainnet game txid] · [first mainnet withdrawal txid]
 - [N] players, [N] games played, [N] on-chain records.
