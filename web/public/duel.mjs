@@ -107,7 +107,7 @@ async function home() {
   console.log('');
   box(`${player.name}   ${gold(sats(player.bonus + player.cash))}  ${dim(`(bonus ${sats(player.bonus)} · withdrawable ${sats(player.cash)})`)}`, [
     `${bold(gold('[1]'))} ${bold('Rock · Paper · Scissors')}      ${dim('table with a host · vs House Bot or a friend')}`,
-    `${bold(cyan('[2]'))} ${bold('Up or Down')}                  ${dim('next minute of BCH · pays 1.9×')}`,
+    `${bold(cyan('[2]'))} ${bold('Up or Down')}                  ${dim('1-minute BCH price call · pays 1.9×')}`,
     `${bold(lime('[3]'))} ${bold('Prompt Fight')}                ${dim('your prompt trains an AI agent · it fights live')}`,
     `${bold(mag('[4]'))} ${dim('Upcoming BCH games — coming soon')}`,
     '',
