@@ -1,3 +1,4 @@
+import LowBalance from './LowBalance.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { api, sats } from './api.js';
 import { show } from '../three/show.js';
@@ -32,6 +33,7 @@ export function NewFight({ rules, player, onCreated }) {
         <button className="primary big" disabled={!!busy || prompt.trim().length < 5 || stake > total} onClick={() => start(true)}><Agents size={20} /> {busy ?? 'Fight the House Agent'}</button>
         <button className="secondary big" disabled={!!busy || prompt.trim().length < 5 || stake > total} onClick={() => start(false)}><Swords size={20} /> Challenge a friend</button>
       </div>
+      <LowBalance player={player} rules={rules} />
       {err && <p className="err">{err}</p>}
     </div>
   );

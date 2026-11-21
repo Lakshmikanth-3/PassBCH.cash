@@ -1,3 +1,4 @@
+import LowBalance from './LowBalance.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { api, commitMove, session, MOVES, sats } from './api.js';
 import { MoveIcon, Agents, Swords } from '../icons.jsx';
@@ -11,7 +12,11 @@ export function Signup({ onDone, refCode }) {
   const [err, setErr] = useState(null); const [busy, setBusy] = useState(false);
   const go = async (e) => {
     e.preventDefault(); setBusy(true); setErr(null);
-    try { const r = await api('signup', { body: { name, ref: ref || undefined } }); session.set({ token: r.token }); onDone(r); }
+    try {
+      const r = await api('signup', { body: { name, ref: ref || undefined } }); session.set({ token: r.token });
+      if (!r.bonusGiven) alert('Account created. The free bonus is not available for this network (limit of 3 per network, 100 in total). Deposit BCH from the Wallet page to play.');
+      onDone(r);
+    }
     catch (x) { setErr(x.message); } finally { setBusy(false); }
   };
   const logIn = async (e) => {
@@ -80,6 +85,7 @@ export function NewDuel({ rules, player, onCreated }) {
         <button className="primary big" disabled={!move || busy || stake > total} onClick={() => start(true)}><Agents size={20} /> Play the House Bot</button>
         <button className="secondary big" disabled={!move || busy || stake > total} onClick={() => start(false)}><Swords size={20} /> Challenge a friend</button>
       </div>
+      <LowBalance player={player} rules={rules} />
       <p className="muted small">Your move is locked as a hash before anyone plays against it. Nobody — not us, not the bot — can see it until you reveal.</p>
       {err && <p className="err">{err}</p>}
     </div>

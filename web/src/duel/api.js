@@ -30,3 +30,6 @@ export async function commitMove(move) {
 }
 
 export const sats = (n) => `${Number(n ?? 0).toLocaleString()} sats`;
+
+/** Message shown under game buttons when the player can't cover the smallest stake (never leave buttons silently grey). */
+export const lowBalance = (player, rules) => player.bonus + player.cash < Math.min(...rules.stakes);

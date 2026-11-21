@@ -1,3 +1,4 @@
+import LowBalance from './LowBalance.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { api, sats } from './api.js';
 import Stage3D from '../three/Stage3D.jsx';
@@ -51,6 +52,7 @@ export function UpDown({ rules, player, explorer, onChange }) {
       <div className="chips">
         {rules.stakes.map((s) => <button key={s} type="button" className={`chip ${stake === s ? 'on' : ''}`} disabled={s > total} onClick={() => setStake(s)}>{sats(s)}</button>)}
       </div>
+      <LowBalance player={player} rules={rules} />
       <div className="udbtns">
         <button className="upbtn" disabled={busy || stake > total} onClick={() => setPending('up')}>▲ UP<small>pays {sats(Math.floor((stake * (rules.updownPayoutPct ?? 190)) / 100))}</small></button>
         <button className="downbtn" disabled={busy || stake > total} onClick={() => setPending('down')}>▼ DOWN<small>pays {sats(Math.floor((stake * (rules.updownPayoutPct ?? 190)) / 100))}</small></button>
