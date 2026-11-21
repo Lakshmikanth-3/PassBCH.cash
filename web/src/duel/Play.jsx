@@ -1,3 +1,4 @@
+import { VerifiedCard } from './VerifiedCard.jsx';
 import { StakePicker } from './StakePicker.jsx';
 import { TermInvite } from './TermInvite.jsx';
 import LowBalance from './LowBalance.jsx';
@@ -89,13 +90,14 @@ export function NewDuel({ rules, player, onCreated }) {
       {!move && <p className="hint">Pick a move first.</p>}
       <p className="rulesline">Win = the whole pot · draw = stakes back · 5% fee only when you withdraw · free bonus must be played 2× before withdrawing · <a href="/rules">Rules</a></p>
       <p className="muted small">Your move is locked as a hash before anyone plays against it. Nobody — not us, not the bot — can see it until you reveal.</p>
+      {d.status === 'settled' && d.bPlayer && revealed && <VerifiedCard txid={d.recordTxid} explorer={explorer} network={network} />}
       {err && <p className="err">{err}</p>}
     </div>
   );
 }
 
 /** One duel: share link while open, auto-reveal for the creator, result animation, on-chain record link. */
-export function DuelView({ id, me, explorer, onClose, onChange }) {
+export function DuelView({ id, me, explorer, network, onClose, onChange }) {
   const [d, setD] = useState(null); const [err, setErr] = useState(null);
   const [move, setMove] = useState(null); const [copied, setCopied] = useState(false);
   const revealing = useRef(false);
@@ -174,7 +176,7 @@ export function DuelView({ id, me, explorer, onClose, onChange }) {
         <p className="muted small">
           {d.settleReason === 'reveal timeout' ? 'Creator did not reveal in time → forfeit. ' : ''}
           Commitment <code>{d.aCommit.slice(0, 16)}…</code> = sha256(move:salt).{' '}
-          {d.recordTxid ? <><a href={`${explorer}${d.recordTxid}`} target="_blank" rel="noreferrer">On-chain record ↗</a> · <a href={`/verify/${d.recordTxid}`}>Verify ✓</a></> : 'Writing on-chain record…'}
+          
         </p>
       )}
       {err && <p className="err">{err}</p>}

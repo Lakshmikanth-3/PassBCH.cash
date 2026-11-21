@@ -419,3 +419,8 @@ main + .foot, .foot { margin-top: auto; } #root > main { width: 100%; }
 .mranges { flex-wrap: wrap; } .mranges button { padding: 6px 9px; }
 
 .customstake { margin: -6px 0 14px; } .customstake input { margin-bottom: 4px; }
+
+.verifiedcard { background: #effaf4; border: 1px solid #a8dcc2; border-radius: 12px; padding: 14px; margin-top: 14px; }
+.verifiedcard .codebtn { margin-top: 4px; }
+.guestnote { background: #fff6dc; border: 1px solid #ecd28a; border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; }
+.guestnote code { word-break: break-all; }

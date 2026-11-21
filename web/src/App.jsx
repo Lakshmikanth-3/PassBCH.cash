@@ -64,7 +64,19 @@ function TopBar({ me, go, logout, loading }) {
   );
 }
 
-function Landing({ go, me, cfg }) {
+function Landing({ go, me, cfg, refresh }) {
+  const [quick, setQuick] = useState(false); const [qerr, setQerr] = useState(null);
+  const bonus = cfg?.rules?.signupBonus ? `${(cfg.rules.signupBonus / 1e8).toFixed(8).replace(/0+$/, '')} BCH` : 'free BCH';
+  // One click: a guest account with the free bonus, then straight to the Rock-Paper-Scissors table vs the House Bot.
+  const quickPlay = async () => {
+    if (me) return go('rps');
+    setQuick(true); setQerr(null);
+    try {
+      const r = await api('signup', { body: { name: `Guest${Math.floor(1000 + Math.random() * 9000)}` } });
+      session.set({ token: r.token }); try { sessionStorage.setItem('pb.guest', '1'); } catch { /* blocked */ }
+      await refresh(); go('rps');
+    } catch (e) { setQerr(e.message); setQuick(false); }
+  };
   return (
     <main className="landing">
       <section className="wrap hero">
@@ -72,14 +84,16 @@ function Landing({ go, me, cfg }) {
         <h1>Play while your <span className="hl">AI thinks</span>.</h1>
         <p className="tag">Claude is cogitating? Jump into a one-minute round: rock-paper-scissors at a live TV table, call BCH up or down, or write a prompt and watch your AI agent fight another one. {cfg?.network === 'mainnet' ? 'Real BCH' : <span className="testpill">Test BCH on chipnet during the hackathon</span>}, every result on chain.</p>
         <div className="row gap center-row">
-          <button className="primary big" onClick={() => go(me ? 'games' : 'login')}>{me ? 'Go to games →' : 'Play free — get 0.00025 BCH →'}</button>
-          <a className="secondary big" href="#how">How it works</a>
+          <button className="primary big" disabled={quick} onClick={quickPlay}>{quick ? 'Setting up your table…' : 'Play Rock Paper Scissors now'}</button>
+          <button className="secondary big" onClick={() => go(me ? 'games' : 'login')}>{me ? 'All games' : 'Log in / pick a name'}</button>
         </div>
+        {qerr && <p className="err">{qerr}</p>}
+        <p className="muted small" style={{ marginTop: 10 }}>{me ? 'Welcome back.' : `No form, no wallet. You get ${bonus} free credit and play the House Bot in one click.`}</p>
       </section>
       <section className="wrap"><WinnersStrip onOpen={() => go('winners')} /></section>
       <section className="wrap"><Showcase onPlay={(g) => go(g === 'updown' ? 'predict' : g)} /></section>
       <section className="wrap cards4">
-        {GAMES.map((g) => (
+        {GAMES.filter((g) => !(g.soon && cfg?.network === 'mainnet')).map((g) => (
           <button key={g.id} className={`gcard ${g.color} ${g.soon ? 'soon' : ''}`} disabled={g.soon} onClick={() => !g.soon && go(g.id)}><div className="gicon"><g.Icon size={36} /></div><b>{g.title}</b><p>{g.line}</p><span className="gtag">{g.tag}</span></button>
         ))}
       </section>
@@ -93,12 +107,29 @@ function Landing({ go, me, cfg }) {
   );
 }
 
-function GameSelect({ go }) {
+/** Shown once after a one-click guest start: the login code is the only key to this account. */
+function GuestNote() {
+  const [on, setOn] = useState(() => { try { return sessionStorage.getItem('pb.guest') === '1'; } catch { return false; } });
+  const [copied, setCopied] = useState(false);
+  if (!on) return null;
+  const code = session.get()?.token ?? '';
+  return (
+    <div className="guestnote">
+      <b>Save your login code</b>
+      <p className="small" style={{ margin: '4px 0' }}>You are playing as a guest. This code is the only way back into this account on another device or in the terminal. Anyone with it can use your balance.</p>
+      <div className="row gap"><code className="linkbox">{code}</code>
+        <button className="secondary" onClick={() => { navigator.clipboard?.writeText(code).then(() => setCopied(true)).catch(() => {}); }}>{copied ? 'Copied' : 'Copy'}</button>
+        <button className="link" onClick={() => { try { sessionStorage.removeItem('pb.guest'); } catch { /* blocked */ } setOn(false); }}>I saved it</button></div>
+    </div>
+  );
+}
+
+function GameSelect({ go, cfg }) {
   return (
     <main className="wrap">
       <h2 className="screen-title">Choose your game</h2>
       <div className="cards4 big">
-        {GAMES.map((g) => (
+        {GAMES.filter((g) => !(g.soon && cfg?.network === 'mainnet')).map((g) => (
           <button key={g.id} className={`gcard ${g.color} ${g.soon ? 'soon' : ''}`} disabled={g.soon} onClick={() => !g.soon && go(g.id)}>
             <div className="gicon"><g.Icon size={46} /></div>
             <b>{g.title}</b>
@@ -149,18 +180,19 @@ export default function App() {
       {screen === '' && <Banner config={{ ...CONFIG, network: cfg?.network ?? CONFIG.network, deckUrl: cfg?.deckUrl ?? CONFIG.deckUrl, emberAddress: cfg?.emberAddress ?? CONFIG.emberAddress }} />}
       <TopBar me={me} go={go} logout={logout} loading={!hydrated} />
       {err && <div className="wrap"><div className="card err">Can't reach the game server: {err}</div></div>}
-      {screen === '' && <Landing go={go} me={me} cfg={cfg} />}
+      {screen === '' && <Landing go={go} me={me} cfg={cfg} refresh={refresh} />}
       {screen === 'login' && cfg && (
         <main className="wrap narrow"><Signup refCode={ref} onDone={async () => { await refresh(); go(duel ? 'rps' : 'games', duel); }} /></main>
       )}
-      {screen === 'games' && me && <GameSelect go={go} />}
+      {screen === 'games' && me && <GameSelect go={go} cfg={cfg} />}
       {screen === 'rps' && cfg && (
         <main className="wrap game">
           <button className="back" onClick={() => go('games')}>← All games</button>
+          {me && <GuestNote />}
           <div className="gamelayout">
             <div className="stagecol"><Stage3D game="rps" /></div>
             <section className="col">
-              {duel ? <DuelView id={duel} me={me} explorer={cfg.explorer} onClose={() => go('rps')} onChange={refresh} />
+              {duel ? <DuelView id={duel} me={me} explorer={cfg.explorer} network={cfg.network} onClose={() => go('rps')} onChange={refresh} />
                 : me ? <NewDuel rules={cfg.rules} player={me} onCreated={(id) => go('rps', id)} /> : null}
               {!me && <Signup refCode={ref} onDone={refresh} />}
             </section>
@@ -182,7 +214,7 @@ export default function App() {
           <div className="gamelayout">
             <div className="stagecol"><Stage3D game="pf" /></div>
             <section className="col">
-              {fight ? <FightView id={fight} me={me} explorer={cfg.explorer} onClose={() => go('pf')} onChange={refresh} />
+              {fight ? <FightView id={fight} me={me} explorer={cfg.explorer} network={cfg.network} onClose={() => go('pf')} onChange={refresh} />
                 : me ? <NewFight rules={cfg.rules} player={me} onCreated={(id) => go('pf', id)} /> : null}
               {!me && <Signup refCode={ref} onDone={refresh} />}
             </section>

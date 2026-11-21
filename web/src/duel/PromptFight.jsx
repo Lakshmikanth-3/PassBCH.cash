@@ -1,3 +1,4 @@
+import { VerifiedCard } from './VerifiedCard.jsx';
 import { StakePicker } from './StakePicker.jsx';
 import { TermInvite } from './TermInvite.jsx';
 import LowBalance from './LowBalance.jsx';
@@ -44,15 +45,15 @@ export function NewFight({ rules, player, onCreated }) {
 }
 
 /** One fight: lobby (share link / join with your own prompt), then the live replay and the revealed prompts. */
-export function FightView({ id, me, explorer, onClose, onChange }) {
+export function FightView({ id, me, explorer, network, onClose, onChange }) {
   const [m, setM] = useState(null); const [err, setErr] = useState(null);
   const [prompt, setPrompt] = useState(''); const [busy, setBusy] = useState(false); const [copied, setCopied] = useState(false);
-  const shown = useRef(false);
+  const shown = useRef(false); const m0 = useRef(null);
   const [revealed, setRevealed] = useState(false);
   const link = `${location.origin}/fight/${id}`;
   const load = async () => {
     try {
-      const x = await api('pf', { q: `&id=${id}` }); setM(x);
+      const x = await api('pf', { q: `&id=${id}` }); setM(x); m0.current = x;
       if (x.status === 'done' && !shown.current) {
         shown.current = true;
         setTimeout(() => setRevealed(true), 1600 + Math.max(0.6, Math.min(1.3, 24 / Math.max(1, x.turns.length))) * x.turns.length * 1000 + 600);
@@ -62,7 +63,7 @@ export function FightView({ id, me, explorer, onClose, onChange }) {
       } else if (x.status === 'open') show({ kind: 'pf', waiting: x.aPlayer === me?.id ? 'Waiting for a challenger…' : `${x.aName} is waiting for you` });
     } catch (e) { setErr(e.message); if (/no such match/.test(e.message)) shown.current = true; }
   };
-  useEffect(() => { load(); const t = setInterval(() => { if (!shown.current) load(); }, 2500); return () => clearInterval(t); }, [id]);
+  useEffect(() => { load(); const t = setInterval(() => { if (!shown.current || m0.current?.status === 'done' && !m0.current?.recordTxid) load(); }, 2500); return () => clearInterval(t); }, [id]);
   if (!m && /no such match/.test(err ?? '')) return <div className="card"><h2>This fight doesn't exist</h2><p className="muted">The link may be mistyped or the fight was removed.</p><button className="primary" onClick={onClose}>Start a new fight</button></div>;
   if (!m) return <div className="card"><p className="muted">Loading fight…</p>{err && <p className="err">{err}</p>}</div>;
   const mine = m.aPlayer === me?.id ? 'a' : m.bPlayer === me?.id ? 'b' : null;
@@ -94,7 +95,8 @@ export function FightView({ id, me, explorer, onClose, onChange }) {
             <div><b className="a">{m.aName}</b><p>{m.aPrompt}</p></div>
             <div><b className="b">{m.bName}</b><p>{m.bPrompt}</p></div>
           </div>
-          <p className="muted small">{m.recordTxid ? <><a href={`${explorer}${m.recordTxid}`} target="_blank" rel="noreferrer">On-chain record ↗</a> · <a href={`/verify/${m.recordTxid}`}>Verify ✓</a></> : 'Writing on-chain record…'} · rules are enforced by code, not by an AI judge.</p>
+          <p className="muted small">Rules are enforced by code, not by an AI judge.</p>
+          <VerifiedCard txid={m.recordTxid} explorer={explorer} network={network} />
         </>
       )}
       {err && <p className="err">{err}</p>}

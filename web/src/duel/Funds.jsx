@@ -11,7 +11,8 @@ const COINS = [
 const FIATS = ['INR', 'JPY', 'USD', 'EUR', 'GBP', 'AED', 'SGD', 'IDR', 'PHP', 'NGN', 'BRL'];
 const bchOf = (n) => `${Number(n).toFixed(8).replace(/0+$/, '').replace(/\.$/, '')} BCH`;
 
-function Tabs({ tab, setTab }) {
+function Tabs({ tab, setTab, network }) {
+  if (network === 'mainnet') return null; // swaps / bank rails are not live on mainnet: BCH only
   return (
     <div className="seg three">
       {[['bch', 'BCH'], ['crypto', 'Other crypto'], ['fiat', 'Bank · Card · UPI']].map(([k, l]) => <button key={k} type="button" className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}
@@ -67,7 +68,7 @@ export function AddFunds({ network, onChange }) {
     <div className="card">
       <h2>Add funds to your vault</h2>
       <p className="muted small">Everything you add becomes BCH in your PassBCH vault. Games are played in BCH only.</p>
-      <Tabs tab={tab} setTab={setTab} />
+      <Tabs tab={tab} setTab={setTab} network={network} />
       {tab === 'bch' && (
         <div>
           <Suspense fallback={<p className="muted small">Loading wallet connect…</p>}><WalletConnect network={network} onDeposited={onChange} /></Suspense>
@@ -97,7 +98,7 @@ export function Withdraw({ player, rules, explorer, network, onChange }) {
       <h2>Withdraw from your vault</h2>
       <p className="muted small">Withdrawable: <b className="green">{sats(player.cash)}</b> · bonus credit is for playing only · platform fee {rules.withdrawFeePct}%</p>
       {rule && !rule.ok && <p className="warnbox">Free bonus must be played 2× before withdrawing: play <b>{sats(rule.left)}</b> more.</p>}
-      <Tabs tab={tab} setTab={setTab} />
+      <Tabs tab={tab} setTab={setTab} network={network} />
       {tab === 'bch' && (
         <form onSubmit={withdraw}>
           <input placeholder={network === 'mainnet' ? 'bitcoincash:…' : 'bchtest:… (chipnet address)'} value={addr} onChange={(e) => setAddr(e.target.value)} required />
