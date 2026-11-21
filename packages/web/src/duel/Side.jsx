@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import { api, sats, EMOJI } from './api.js';
+const WalletConnect = lazy(() => import('./WalletConnect.jsx')); // WizardConnect + crypto load only when needed
 
-export function Wallet({ player, rules, explorer, onChange }) {
+export function Wallet({ player, rules, explorer, network, onChange }) {
   const [dep, setDep] = useState(null); const [qr, setQr] = useState(null);
   const [addr, setAddr] = useState(''); const [amt, setAmt] = useState('');
   const [msg, setMsg] = useState(null); const [err, setErr] = useState(null); const [copied, setCopied] = useState(false);
@@ -30,8 +31,9 @@ export function Wallet({ player, rules, explorer, onChange }) {
         <b>Invite a friend → you both get {sats(rules.referralBonus)}</b>
         <div className="row gap"><code className="linkbox">{invite}</code><button className="secondary" onClick={copyInvite}>{copied ? 'Copied ✓' : 'Copy'}</button></div>
       </div>
+      <Suspense fallback={<div className="wc muted small">Loading wallet connect…</div>}><WalletConnect network={network} onDeposited={onChange} onAddress={(a) => { if (!addr) setAddr(a); }} /></Suspense>
       <details onToggle={(e) => e.target.open && !dep && showDeposit()}>
-        <summary>Deposit BCH</summary>
+        <summary>Deposit by QR (any wallet)</summary>
         {dep && <div className="deposit">{qr && <img src={qr} alt="Deposit address QR" width="180" height="180" />}<code>{dep.address}</code><button className="link" onClick={showDeposit}>I sent it — check now</button></div>}
       </details>
       <details>

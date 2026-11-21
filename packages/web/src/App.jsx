@@ -41,7 +41,7 @@ export default function App() {
           {cfg && !me && <Signup refCode={ref} onDone={() => refresh()} />}
           {cfg && duelId && <DuelView id={duelId} me={me} explorer={cfg.explorer} onClose={() => openDuel(null)} onChange={refresh} />}
           {cfg && me && !duelId && <NewDuel rules={cfg.rules} player={me} onCreated={(id) => openDuel(id)} />}
-          {cfg && me && <Wallet player={me} rules={cfg.rules} explorer={cfg.explorer} onChange={refresh} />}
+          {cfg && me && <Wallet player={me} rules={cfg.rules} explorer={cfg.explorer} network={cfg.network} onChange={refresh} />}
           <Terminal />
           <div className="card how">
             <h2>Why you can trust it</h2>

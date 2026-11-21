@@ -111,3 +111,6 @@ details { border-top: 1px solid var(--border); padding: 10px 0; } summary { curs
 .how ol { margin: 0; padding-left: 20px; color: var(--muted); } .how li { margin: 8px 0; } .how b { color: var(--text); }
 @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } .bal { grid-template-columns: 1fr 1fr; } .hand { font-size: 52px; } }
 @media (prefers-reduced-motion: reduce) { .hand.hidden, .live, .verdict, .hand.shown { animation: none; } }
+.wc { border-top: 1px solid var(--border); padding: 12px 0; }
+.wcbtn { width: 100%; background: #1b1530; color: #d8c8ff; border: 1px solid #4b3a8a; border-radius: var(--radius); padding: 12px; font-weight: 600; }
+.wcbtn:hover:not(:disabled) { border-color: #9b7bff; }
