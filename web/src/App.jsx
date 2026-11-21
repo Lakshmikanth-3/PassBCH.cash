@@ -65,7 +65,7 @@ function Landing({ go, me }) {
         <h1>Play while your <span className="hl">AI thinks</span>.</h1>
         <p className="tag">Claude is cogitating? Jump into a one-minute round: rock-paper-scissors at a live TV table, call BCH up or down, or write a prompt and watch your AI agent fight another one. Real BCH, every result on chain.</p>
         <div className="row gap center-row">
-          <button className="primary big" onClick={() => go(me ? 'games' : 'login')}>{me ? 'Go to games →' : 'Play free — get 25,000 sats →'}</button>
+          <button className="primary big" onClick={() => go(me ? 'games' : 'login')}>{me ? 'Go to games →' : 'Play free — get 0.00025 BCH →'}</button>
           <a className="secondary big" href="#how">How it works</a>
         </div>
       </section>
