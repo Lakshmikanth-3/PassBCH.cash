@@ -20,6 +20,7 @@ const timed = (p, ms, what) => Promise.race([p, new Promise((_, rej) => setTimeo
 const recordSoon = () => within(recordPending().catch((e) => console.error('recordPending', e.message)), 7000);
 async function recordPending() {
   const jobs = [
+    ['pf_matches', (m) => chain.recordPf(m, (t) => S.setPfRecord(m.id, t))],
     ['duels', (d) => chain.recordDuel(d, (t) => S.setRecordTx(d.id, t))],
     ['ai_rounds', (r) => chain.recordAi(r, (t) => S.setAiRecord(r.id, t))],
     ['bets', (b) => chain.recordBet(b, (t) => S.setBetRecord(b.id, t))],
@@ -73,6 +74,10 @@ const routes = {
     if (b.op === 'result') return S.aiResult(b);
     throw new S.UserError('bad op');
   },
+  async pfcreate(req, b) { const r = await S.pfCreate(tokenOf(req), b); return r; },
+  async pfjoin(req, b) { const r = await S.pfJoin(tokenOf(req), b); await recordSoon(); return r; },
+  async pf(req, b, q) { const r = await S.pfGet(q.get('id'), tokenOf(req)); if (r.status === 'done' && !r.recordTxid) await recordSoon(); return r; },
+  async pfopen() { return S.pfOpen(); },
   async walletutxos(req, b) {
     const addrs = Array.isArray(b.addresses) ? b.addresses.slice(0, 40).filter((a) => /^(bchtest|bitcoincash):q[0-9a-z]{40,}$/.test(a)) : [];
     const p = chain.provider();

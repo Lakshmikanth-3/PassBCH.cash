@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto';
 import * as E from './engine.mjs';
 import { tx, db } from './db.mjs';
 import { getCandle } from './price.mjs';
+import { PF, cleanPrompt, playMatch, groqAsk } from './promptfight.mjs';
 
 export class UserError extends Error { constructor(m, status = 400) { super(m); this.status = status; } }
 const nowS = () => Math.floor(Date.now() / 1000);
@@ -377,6 +378,7 @@ export async function markAiRecordTry(id) { await (await db()).query('update ai_
  * an unrecorded claim simply becomes claimable again after 30 s.
  */
 const RECORDABLE = {
+  pf_matches: "status = 'done'",
   duels: "settled_at is not null and b_player is not null",
   bets: "settled_at is not null",
   ai_rounds: "status = 'done'",
@@ -405,3 +407,70 @@ export async function login(code) {
   const { rows: [{ got }] } = await c.query('select coalesce(sum(sats),0)::bigint got from bonus_grants where player_id=$1', [p.id]);
   return { player: pub(p), withdraw: E.withdrawAllowed({ wagered: Number(p.wagered), bonusReceived: Number(got) }) };
 }
+
+// ---------- Prompt Fight ----------
+export async function pfCreate(token, { stake, prompt, vsBot }) {
+  stake = Number(stake);
+  let clean; try { clean = cleanPrompt(prompt); } catch (e) { throw new UserError(e.message); }
+  const id = await tx(async (c) => {
+    const p = await playerByToken(c, token, true);
+    let split; try { split = E.takeStake({ bonus: Number(p.bonus), cash: Number(p.cash) }, stake); } catch (e) { throw new UserError(e.message); }
+    const mid = randomBytes(16).toString('hex');
+    await c.query('update players set bonus = bonus - $1, cash = cash - $2, wagered = wagered + $1 + $2 where id = $3', [split.fromBonus, split.fromCash, p.id]);
+    await c.query('insert into pf_matches (id, stake, vs_bot, a_player, a_prompt, a_from_bonus, a_from_cash, created_s) values ($1,$2,$3,$4,$5,$6,$7,$8)', [mid, stake, !!vsBot, p.id, clean, split.fromBonus, split.fromCash, nowS()]);
+    return mid;
+  });
+  if (vsBot) await pfJoinAs(id, 'house', PF.housePrompt);
+  return { id };
+}
+
+/** Second player locks in a prompt; the agents play immediately; the pot is settled in one transaction. */
+async function pfJoinAs(id, who, prompt) {
+  const m = await tx(async (c) => {
+    const { rows: [m] } = await c.query('select * from pf_matches where id=$1 for update', [id]);
+    if (!m) throw new UserError('no such match', 404);
+    if (m.status !== 'open') throw new UserError('this match already started');
+    const b = who === 'house' ? (await c.query('select * from players where is_house for update')).rows[0] : who;
+    if (b.id === m.a_player) throw new UserError("you can't fight your own agent — send the link to a friend");
+    let split; try { split = E.takeStake({ bonus: Number(b.bonus), cash: Number(b.cash) }, m.stake); } catch (e) { throw new UserError(e.message); }
+    await c.query('update players set bonus = bonus - $1, cash = cash - $2, wagered = wagered + $1 + $2 where id = $3', [split.fromBonus, split.fromCash, b.id]);
+    await c.query("update pf_matches set b_player=$1, b_prompt=$2, b_from_bonus=$3, b_from_cash=$4, status='fighting' where id=$5", [b.id, prompt, split.fromBonus, split.fromCash, id]);
+    return { ...m, b_player: b.id, b_prompt: prompt, b_from_bonus: split.fromBonus, b_from_cash: split.fromCash };
+  });
+  const key = process.env.GROQ_KEY;
+  const ask = key ? groqAsk(key) : async () => { throw new Error('no model key'); };
+  const r = await playMatch({ id, promptA: m.a_prompt, promptB: m.b_prompt, ask });
+  return tx(async (c) => {
+    const result = r.winner === 'a' ? 1 : 2;
+    for (const cr of E.settle(result, m.stake, { fromBonus: m.a_from_bonus, fromCash: m.a_from_cash }, { fromBonus: m.b_from_bonus, fromCash: m.b_from_cash })) {
+      await c.query('update players set bonus = bonus + $1, cash = cash + $2 where id = $3', [cr.bonus, cr.cash, cr.side === 'a' ? m.a_player : m.b_player]);
+    }
+    const win = r.winner === 'a' ? m.a_player : m.b_player, lose = r.winner === 'a' ? m.b_player : m.a_player;
+    await c.query('update players set wins = wins + 1, won_sats = won_sats + $1 where id = $2', [m.stake, win]);
+    await c.query('update players set losses = losses + 1 where id = $1', [lose]);
+    await c.query("update pf_matches set target=$1, max_step=$2, first=$3, turns=$4, winner=$5, winner_id=$6, status='done', settled_at=now() where id=$7",
+      [r.target, r.maxStep, r.first, JSON.stringify(r.turns), r.winner, win, id]);
+    return { id, winner: r.winner };
+  });
+}
+export async function pfJoin(token, { id, prompt }) {
+  let clean; try { clean = cleanPrompt(prompt); } catch (e) { throw new UserError(e.message); }
+  const p = await playerByToken(await db(), token);
+  return pfJoinAs(id, p, clean);
+}
+
+/** Public view: prompts are revealed only after the fight (so nobody copies a strategy mid-lobby). */
+export async function pfGet(id, token) {
+  const c = await db();
+  const { rows: [m] } = await c.query('select m.*, pa.name a_name, pb.name b_name from pf_matches m join players pa on pa.id=m.a_player left join players pb on pb.id=m.b_player where m.id=$1', [id]);
+  if (!m) throw new UserError('no such match', 404);
+  let meId = null; if (token) { try { meId = (await playerByToken(c, token)).id; } catch { /* anonymous */ } }
+  const done = m.status === 'done';
+  return { id: m.id, stake: m.stake, status: m.status, vsBot: m.vs_bot, aName: m.a_name, bName: m.b_name, aPlayer: m.a_player, bPlayer: m.b_player,
+    aPrompt: done || meId === m.a_player ? m.a_prompt : null, bPrompt: done || meId === m.b_player ? m.b_prompt : null,
+    target: m.target, maxStep: m.max_step, first: m.first, turns: m.turns, winner: m.winner, recordTxid: m.record_txid };
+}
+export async function pfOpen() {
+  return (await (await db()).query("select m.id, m.stake, m.created_s, p.name from pf_matches m join players p on p.id=m.a_player where m.status='open' order by m.created_s desc limit 20")).rows;
+}
+export async function setPfRecord(id, txid) { await (await db()).query('update pf_matches set record_txid=$1 where id=$2', [txid, id]); }

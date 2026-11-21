@@ -2,6 +2,7 @@
 import { secp256k1, hexToBin, binToHex, hash160, sha256, encodeCashAddress, CashAddressType, utf8ToBin } from '@bitauth/libauth';
 import { ElectrumNetworkProvider, TransactionBuilder, SignatureTemplate } from 'cashscript';
 import { recordBytes, betRecordBytes, aiRecordBytes } from './engine.mjs';
+import { pfRecordBytes } from './promptfight.mjs';
 
 export const NETWORK = process.env.DUEL_NETWORK === 'mainnet' ? 'mainnet' : 'chipnet';
 const PREFIX = NETWORK === 'mainnet' ? 'bitcoincash' : 'bchtest';
@@ -66,3 +67,4 @@ export async function tip(p = provider()) {
   const { height, hex } = await p.performRequest('blockchain.headers.get_tip');
   return { height, hash: binToHex(sha256.hash(sha256.hash(hexToBin(hex))).reverse()) };
 }
+export const recordPf = (m, beforeSend) => houseSend({ beforeSend, opReturn: pfRecordBytes({ id: m.id, winner: m.winner, target: m.target, maxStep: m.max_step, stake: m.stake, turns: m.turns }) });

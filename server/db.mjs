@@ -50,6 +50,13 @@ create table if not exists ai_bets (
   side text not null check (side in ('pass','fail')), stake int not null, from_bonus int not null, from_cash int not null,
   odds_pct int not null, outcome text, payout int, created_at timestamptz not null default now()
 );
+create table if not exists pf_matches (
+  id text primary key, stake int not null, vs_bot boolean not null default false,
+  a_player int not null references players(id), a_prompt text not null, a_from_bonus int not null, a_from_cash int not null,
+  b_player int references players(id), b_prompt text, b_from_bonus int, b_from_cash int,
+  created_s bigint not null, target int, max_step int, first text, turns jsonb, winner text, winner_id int references players(id),
+  status text not null default 'open', settled_at timestamptz, record_txid text, record_try_at timestamptz
+);
 insert into players (token_hash, name, ref_code, cash, is_house) values ('house', 'House Bot', 'HOUSE', 100000000, true) on conflict do nothing;
 `;
 
