@@ -2,6 +2,7 @@
 import { randomBytes } from 'node:crypto';
 import * as E from './engine.mjs';
 import { tx, db } from './db.mjs';
+import { getCandle } from './price.mjs';
 
 export class UserError extends Error { constructor(m, status = 400) { super(m); this.status = status; } }
 const nowS = () => Math.floor(Date.now() / 1000);
@@ -205,3 +206,60 @@ export async function unrecorded(limit = 5) {
 }
 export async function markRecordTry(id) { await (await db()).query('update duels set record_try_at = now() where id=$1', [id]);
 }
+
+// ---------- Up / Down ----------
+export async function placeBet(token, { side, stake }) {
+  stake = Number(stake);
+  if (side !== 'up' && side !== 'down') throw new UserError('pick up or down');
+  return tx(async (c) => {
+    const p = await playerByToken(c, token, true);
+    let split; try { split = E.takeStake({ bonus: Number(p.bonus), cash: Number(p.cash) }, stake); } catch (e) { throw new UserError(e.message); }
+    const id = randomBytes(16).toString('hex');
+    const round = E.nextRound(nowS());
+    await c.query('update players set bonus = bonus - $1, cash = cash - $2 where id = $3', [split.fromBonus, split.fromCash, p.id]);
+    await c.query('insert into bets (id, player_id, side, stake, from_bonus, from_cash, round_start) values ($1,$2,$3,$4,$5,$6,$7)', [id, p.id, side, stake, split.fromBonus, split.fromCash, round]);
+    return { id, roundStart: round, roundEnd: E.roundEnds(round) };
+  });
+}
+
+/** Settle every bet whose minute has ended, using that minute's public candle. */
+export async function settleBets() {
+  const c = await db();
+  const t = nowS();
+  const { rows } = await c.query('select distinct round_start from bets where settled_at is null and round_start <= $1 order by round_start limit 5', [t - 60 - E.UPDOWN.settleDelayS]);
+  let n = 0;
+  for (const { round_start } of rows) {
+    const candle = await getCandle(Number(round_start));
+    if (!candle) continue; // exchange hasn't published it yet; next read retries
+    const result = E.candleResult(candle.open, candle.close);
+    await tx(async (k) => {
+      const { rows: bets } = await k.query('select * from bets where round_start=$1 and settled_at is null for update', [round_start]);
+      for (const b of bets) {
+        const s = E.settleBet(b.side, result, b.stake, { fromBonus: b.from_bonus, fromCash: b.from_cash });
+        await k.query('update players set bonus = bonus + $1, cash = cash + $2 where id=$3', [s.bonus, s.cash, b.player_id]);
+        if (s.outcome === 'win') await k.query('update players set wins = wins + 1, won_sats = won_sats + $1 where id=$2', [s.cash - b.stake, b.player_id]);
+        if (s.outcome === 'lose') await k.query('update players set losses = losses + 1 where id=$1', [b.player_id]);
+        await k.query(`update bets set open_price=$1, close_price=$2, price_source=$3, result=$4, outcome=$5, payout=$6, settled_at=now() where id=$7`,
+          [candle.open, candle.close, candle.source, result, s.outcome, s.bonus + s.cash, b.id]);
+        n++;
+      }
+    });
+  }
+  return n;
+}
+
+export async function myBets(token) {
+  const c = await db();
+  const p = await playerByToken(c, token);
+  return (await c.query('select id, side, stake, round_start, open_price, close_price, result, outcome, payout, record_txid from bets where player_id=$1 order by created_at desc limit 8', [p.id])).rows;
+}
+export async function betFeed() {
+  return (await (await db()).query(`select b.id, b.side, b.stake, b.round_start, b.open_price, b.close_price, b.result, b.outcome, b.payout, b.record_txid, p.name
+    from bets b join players p on p.id=b.player_id order by b.created_at desc limit 20`)).rows;
+}
+export async function unrecordedBets(limit = 5) {
+  return (await (await db()).query(`select id, side, result, stake, round_start, open_price, close_price from bets where settled_at is not null and record_txid is null
+    and (record_try_at is null or record_try_at < now() - interval '30 seconds') order by settled_at limit $1`, [limit])).rows;
+}
+export async function setBetRecord(id, txid) { await (await db()).query('update bets set record_txid=$1 where id=$2', [txid, id]); }
+export async function markBetRecordTry(id) { await (await db()).query('update bets set record_try_at=now() where id=$1', [id]); }

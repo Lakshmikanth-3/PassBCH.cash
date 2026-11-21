@@ -1,7 +1,7 @@
 // House wallet on BCH: writes duel records (OP_RETURN) and pays withdrawals. Chipnet until final submission.
 import { secp256k1, hexToBin, binToHex, hash160, sha256, encodeCashAddress, CashAddressType, utf8ToBin } from '@bitauth/libauth';
 import { ElectrumNetworkProvider, TransactionBuilder, SignatureTemplate } from 'cashscript';
-import { recordBytes } from './engine.mjs';
+import { recordBytes, betRecordBytes } from './engine.mjs';
 
 export const NETWORK = process.env.DUEL_NETWORK === 'mainnet' ? 'mainnet' : 'chipnet';
 const PREFIX = NETWORK === 'mainnet' ? 'bitcoincash' : 'bchtest';
@@ -57,3 +57,5 @@ export async function houseSend({ p = provider(), opReturn, to, sats = 0n, befor
 export const recordDuel = (d, beforeSend) => houseSend({ beforeSend, opReturn: recordBytes({ id: d.id, result: d.result, stake: d.stake, moveA: d.a_move, moveB: d.b_move, commit: d.a_commit }) });
 export const payWithdrawal = (to, sats, beforeSend, p) => houseSend({ p, to, sats: BigInt(sats), beforeSend });
 export async function depositUtxos(playerId, p = provider()) { return spendable(p, depositKey(playerId).address); }
+export const recordBet = (b, beforeSend) => houseSend({ beforeSend, opReturn: betRecordBytes({ id: b.id, side: b.side, result: b.result, stake: b.stake,
+  roundStart: Number(b.round_start), open: Number(b.open_price), close: Number(b.close_price) }) });

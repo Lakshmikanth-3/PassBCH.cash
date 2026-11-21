@@ -31,6 +31,13 @@ alter table duels add column if not exists record_try_at timestamptz;
 create index if not exists duels_settled on duels (settled_at desc);
 create table if not exists deposits (txid text not null, vout int not null, player_id int not null references players(id), sats bigint not null, created_at timestamptz not null default now(), primary key (txid, vout));
 create table if not exists withdrawals (id serial primary key, player_id int not null references players(id), address text not null, amount bigint not null, fee bigint not null, txid text, status text not null default 'pending', created_at timestamptz not null default now());
+create table if not exists bets (
+  id text primary key, player_id int not null references players(id), side text not null check (side in ('up','down')),
+  stake int not null, from_bonus int not null, from_cash int not null, round_start bigint not null,
+  open_price numeric, close_price numeric, price_source text, result text, outcome text, payout int,
+  created_at timestamptz not null default now(), settled_at timestamptz, record_txid text, record_try_at timestamptz
+);
+create index if not exists bets_round on bets (round_start) where settled_at is null;
 insert into players (token_hash, name, ref_code, cash, is_house) values ('house', 'House Bot', 'HOUSE', 100000000, true) on conflict do nothing;
 `;
 
