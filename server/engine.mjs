@@ -17,7 +17,7 @@ export const RULES = {
   minWithdraw: 10000,
   networkFee: 400,                   // paid by the platform out of the fee
   revealTimeoutS: 120,               // creator must reveal within 2 min of a join, or loses
-  openTimeoutS: 24 * 3600,           // unjoined duels refund after 24 h
+  openTimeoutS: 600,                 // unjoined duels refund after 10 min (or when the creator cancels)
 };
 
 export const sha256 = (s) => createHash('sha256').update(s).digest('hex');

@@ -48,7 +48,7 @@ export function Wallet({ player, rules, explorer, network, onChange }) {
   );
 }
 
-export function Leaderboard({ explorer, onOpen }) {
+export function Leaderboard({ explorer, onOpen, meName }) {
   const [lb, setLb] = useState(null); const [open, setOpen] = useState([]);
   useEffect(() => {
     let stop = false;
@@ -62,7 +62,7 @@ export function Leaderboard({ explorer, onOpen }) {
         <div className="card">
           <h2>Open challenges</h2>
           {open.length === 0 && <p className="muted small" style={{ margin: 0 }}>No open challenges right now. Create one with "Challenge a friend" and share the link.</p>}
-          {open.slice(0, 6).map((o) => <button key={o.id} className="openrow" onClick={() => onOpen(o.id)}><span>{o.name} challenges anyone</span><span><b>{sats(o.stake)}</b><span className="accept">Accept</span></span></button>)}
+          {open.slice(0, 6).map((o) => <button key={o.id} className="openrow" onClick={() => onOpen(o.id)}><span>{o.name === meName ? 'Your challenge' : `${o.name} challenges anyone`}</span><span><b>{sats(o.stake)}</b>{o.name === meName ? <span className="muted small"> waiting…</span> : <span className="accept">Accept</span>}</span></button>)}
         </div>
       )}
       <div className="card">

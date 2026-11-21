@@ -200,7 +200,7 @@ export default function App() {
               {!me && <Signup refCode={ref} onDone={refresh} />}
             </section>
           </div>
-          <Leaderboard explorer={cfg.explorer} onOpen={(id) => go('rps', id)} />
+          <Leaderboard meName={me?.name} explorer={cfg.explorer} onOpen={(id) => go('rps', id)} />
         </main>
       )}
       {screen === 'predict' && cfg && (
@@ -232,7 +232,7 @@ export default function App() {
           <Activity explorer={cfg.explorer} />
           <Wallet player={me} rules={cfg.rules} explorer={cfg.explorer} network={cfg.network} onChange={refresh} />
           <Settings />
-          <Leaderboard explorer={cfg.explorer} onOpen={(id) => go('rps', id)} />
+          <Leaderboard meName={me?.name} explorer={cfg.explorer} onOpen={(id) => go('rps', id)} />
           <Terminal />
         </main>
       )}

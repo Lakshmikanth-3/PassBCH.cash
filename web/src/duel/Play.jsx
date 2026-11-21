@@ -119,6 +119,7 @@ export function DuelView({ id, me, explorer, network, onClose, onChange }) {
         const x = await api('duel', { q: `&id=${id}` });
         if (stop) return;
         setD(x);
+        if (x.status === 'settled' && !(x.aMove && x.bMove)) { setRevealed(true); shown.current = true; } // forfeit / refund: no hands to show, result at once
         if (x.status !== 'settled') wasLive.current = true; // we watched this duel happen: play the show
         if (x.status === 'settled' && x.aMove && x.bMove && !shown.current) {
           shown.current = true; lastX.current = x;
@@ -149,7 +150,8 @@ export function DuelView({ id, me, explorer, network, onClose, onChange }) {
   if (d.status === 'settled' && d.bPlayer && !revealed) verdict = <div className="verdict">The host is calling it… watch the table</div>;
   else if (d.status === 'settled' && d.bPlayer) {
     const meWon = (d.result === 1 && iAmA) || (d.result === 2 && iAmB);
-    verdict = d.result === 0 ? <div className="verdict draw">Draw — stakes returned</div>
+    verdict = d.settleReason === 'reveal timeout' ? <div className={`verdict ${meWon ? 'win' : 'lose'}`}>{meWon ? `Forfeit win: ${d.aName} did not reveal in time. You win ${sats(2 * d.stake)}!` : iAmA ? `You forfeited: no reveal within 2 minutes. You lose ${sats(d.stake)}` : `${d.bName} wins by forfeit (${sats(2 * d.stake)})`}</div>
+      : d.result === 0 ? <div className="verdict draw">Draw — stakes returned</div>
       : (iAmA || iAmB) ? <div className={`verdict ${meWon ? 'win' : 'lose'}`}>{meWon ? `You win ${sats(2 * d.stake)}!` : `You lose ${sats(d.stake)}`}</div>
       : <div className="verdict">{d.result === 1 ? d.aName : d.bName} wins {sats(2 * d.stake)}</div>;
   }
@@ -169,6 +171,8 @@ export function DuelView({ id, me, explorer, network, onClose, onChange }) {
           <div className="row gap"><code className="linkbox">{link}</code><button className="primary" onClick={share}>{copied ? 'Copied ✓' : 'Share'}</button></div>
           <p className="muted small" style={{ margin: '10px 0 4px' }}>Friend coding in a terminal? They paste one line and play there:</p>
           <TermInvite link={link} />
+          <p className="muted small" style={{ margin: '10px 0 4px' }}>Nobody joined? The challenge expires after 10 minutes and your stake is refunded, or cancel it now.</p>
+          <button className="secondary" onClick={async () => { try { await api('cancel', { body: { id } }); onChange?.(); onClose?.(); } catch (e) { setErr(e.message); } }}>Cancel and refund</button>
         </div>
       )}
       {d.status === 'open' && !iAmA && me && (

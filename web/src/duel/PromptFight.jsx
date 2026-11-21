@@ -8,8 +8,8 @@ import { show } from '../three/show.js';
 import { Swords, Agents } from '../icons.jsx';
 
 const EXAMPLES = [
-  'Always try to leave the total so that (target − total) is a multiple of (max step + 1). If you cannot, add 1.',
-  'Count backwards from the target in steps of (max step + 1) and always move onto one of those numbers.',
+  'Plan the last moves first: work out which totals are safe to leave for the opponent, and steer toward them. Reply with a legal number.',
+  'Stay calm and defensive: never leave a total from which the opponent can reach the target in one move. Otherwise add a small number.',
   'Play aggressively: add the maximum allowed unless that lets the opponent reach the target next turn.',
 ];
 

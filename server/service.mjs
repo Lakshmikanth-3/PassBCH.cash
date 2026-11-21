@@ -140,6 +140,20 @@ export async function sweep() {
   return rows.length;
 }
 
+/** The creator cancels their own unjoined duel: the stake goes straight back. */
+export async function cancelDuel(token, id) {
+  return tx(async (k) => {
+    const p = await playerByToken(k, token);
+    const { rows: [d] } = await k.query('select * from duels where id=$1 for update', [id]);
+    if (!d) throw new UserError('no such duel', 404);
+    if (d.a_player !== p.id) throw new UserError('only the creator can cancel');
+    if (d.b_player || d.settled_at) throw new UserError('this duel already started or ended');
+    await k.query('update players set bonus = bonus + $1, cash = cash + $2 where id = $3', [d.a_from_bonus, d.a_from_cash, d.a_player]);
+    await k.query("update duels set settled_at=now(), settle_reason='cancelled, refunded' where id=$1", [id]);
+    return { ok: true, refunded: Number(d.a_from_bonus) + Number(d.a_from_cash) };
+  });
+}
+
 export async function getDuel(id) {
   const c = await db();
   const { rows: [d] } = await c.query(`select d.*, pa.name a_name, pb.name b_name from duels d join players pa on pa.id=d.a_player left join players pb on pb.id=d.b_player where d.id=$1`, [id]);

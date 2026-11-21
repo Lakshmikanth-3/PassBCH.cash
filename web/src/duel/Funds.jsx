@@ -97,12 +97,14 @@ export function Withdraw({ player, rules, explorer, network, onChange }) {
     <div className="card">
       <h2>Withdraw from your vault</h2>
       <p className="muted small">Withdrawable: <b className="green">{sats(player.cash)}</b> · bonus credit is for playing only · platform fee {rules.withdrawFeePct}%</p>
+      {player.cash < rules.minWithdraw && <p className="warnbox">You can't withdraw yet: the minimum is <b>{sats(rules.minWithdraw)}</b> and you have <b>{sats(player.cash)}</b> of withdrawable cash. Free bonus credit is play-only. Add funds (Vault, Add funds) or win cash first.</p>}
       {rule && !rule.ok && <p className="warnbox">Free bonus must be played 2× before withdrawing: play <b>{sats(rule.left)}</b> more.</p>}
       <Tabs tab={tab} setTab={setTab} network={network} />
       {tab === 'bch' && (
         <form onSubmit={withdraw}>
           <input placeholder={network === 'mainnet' ? 'bitcoincash:…' : 'bchtest:… (chipnet address)'} value={addr} onChange={(e) => setAddr(e.target.value)} required />
           <div className="row gap"><input inputMode="decimal" placeholder={`Amount in BCH (min ${rules.minWithdraw / 1e8})`} value={amt} onChange={(e) => setAmt(e.target.value.replace(/[^0-9.]/g, ''))} required /><span className="unit">BCH</span></div>
+          {err && <p className="warnbox" role="alert" style={{ color: 'var(--red)', borderColor: '#e4a29d', background: '#fdecea', fontWeight: 600 }}>{err}</p>}
           <button className="primary big">Withdraw BCH</button>
         </form>
       )}

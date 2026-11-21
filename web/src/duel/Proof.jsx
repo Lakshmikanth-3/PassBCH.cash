@@ -24,7 +24,7 @@ const outcome = (a, b) => (a === b ? 0 : (MOVES.indexOf(a) - MOVES.indexOf(b) + 
 /** Every check runs in this browser from the chain record; the server's copy is only compared, never trusted. */
 async function checks(rec, m) {
   const out = []; const add = (ok, text) => out.push({ ok, text });
-  if (!m) { add(false, 'No game with this id in the PassBCH database'); return out; }
+  if (!m) { out.gone = true; out.push({ ok: null, text: 'Valid on-chain record. The game row is no longer in the PassBCH database (for example a deleted test account), so only the chain data can be shown.' }); return out; }
   add(rec.id === m.id, 'Record id matches the game');
   add(rec.stake === m.stake, `Stake on chain ${sats(rec.stake)} matches`);
   if (rec.kind === 'SDL1') {
@@ -63,6 +63,7 @@ export function Verify({ txid: initial, go }) {
     } catch (e) { setErr(e.message); } finally { setBusy(false); }
   };
   useEffect(() => { if (initial) run(initial); }, [initial]);
+  const gone = !!res?.checks?.gone;
   const allOk = res?.checks.length && res.checks.every((c) => c.ok !== false);
   return (
     <main className="wrap narrow">
@@ -79,7 +80,7 @@ export function Verify({ txid: initial, go }) {
         <div className="card">
           {!res.rec ? <p className="err">This transaction has no PassBCH game record.</p> : (
             <>
-              <div className={`verdict ${allOk ? 'win' : 'lose'}`}>{allOk ? 'Verified ✓' : 'Mismatch — see the failed checks'}</div>
+              <div className={`verdict ${gone ? 'draw' : allOk ? 'win' : 'lose'}`}>{gone ? 'Valid on-chain record; game no longer in the database' : allOk ? 'Verified ✓' : 'Mismatch — see the failed checks'}</div>
               <p className="muted small center">{GAME[res.match?.game] ?? res.rec.kind} · {res.network} · <a href={`${res.explorer}${res.txid}`} target="_blank" rel="noreferrer">open in explorer ↗</a></p>
               {res.match?.game === 'rps' && <p className="center">{res.match.aName} {res.rec.moveA ?? '(no reveal)'} vs {res.rec.moveB} {res.match.bName}</p>}
               {res.match?.game === 'updown' && <p className="center">{res.match.name} bet {res.rec.side.toUpperCase()} · ${res.rec.open} → ${res.rec.close}</p>}

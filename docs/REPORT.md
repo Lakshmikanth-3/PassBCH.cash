@@ -300,7 +300,6 @@ Regulation: real-money games are regulated in many countries (including India). 
 | Up/Down: UP $198.53 → $198.59 | Win 1.9× | [e6ba1ddd…5c23670d](https://chipnet.imaginary.cash/tx/e6ba1ddd9fe346fe0f86eff6366aef66334bec0a91688c9373e20eef5c23670d) |
 | Up/Down: DOWN $198.66 → $198.80 | Lose | [0f2f18da…7617ab55](https://chipnet.imaginary.cash/tx/0f2f18da37cbf56168d0dfa837a7be74f5795b065a7bf3f40e15aa277617ab55) |
 | Prompt Fight: Race to 18, step 1–3 | KANTH wins | [7a7fad7f…5f17d1bce](https://chipnet.imaginary.cash/tx/7a7fad7ffad96b2c73f640628e77c0b9de10216d5a15dcc9f5f15cb5f17d1bce) |
-| Friend duel: scissors beats paper | Creator wins | [37cc34d3…0dd68114](https://chipnet.imaginary.cash/tx/37cc34d35c5badd3f4cafff93dc3d3183ac5439cb0a14b136eac38ea0dd68114) |
 | Withdrawal 5,000 sats → 4,600 after fee | Confirmed | [c5a7bb4b…fb5fb0ee](https://chipnet.imaginary.cash/tx/c5a7bb4bee94602b575a288ee73ddc71a004e18df3186ebfdd27b7ecfb5fb0ee) |
 | House wallet funded | 200,000 sats | [a9475687…6bd92211](https://chipnet.imaginary.cash/tx/a947568787d4b78350d2e6e096b311c3ad4ef91ebe2d74fef415c7306bd92211) |
 
