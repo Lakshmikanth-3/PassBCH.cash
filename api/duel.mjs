@@ -3,11 +3,11 @@ import * as S from '../server/service.mjs';
 import { RULES, sha256 } from '../server/engine.mjs';
 import { db, tx as dbTx } from '../server/db.mjs';
 import * as chain from '../server/chain.mjs';
-import { spot, recentCloses, rates, swapQuote } from '../server/price.mjs';
+import { spot, recentCloses, chartCloses, rates, swapQuote } from '../server/price.mjs';
 import { nextRound, UPDOWN } from '../server/engine.mjs';
 
 // Bump when web/public/duel.mjs changes: old terminal clients update themselves.
-export const CLIENT_VERSION = '2026.11.21-5';
+export const CLIENT_VERSION = '2026.11.22-1';
 
 const json = (res, status, body) => { res.statusCode = status; res.setHeader('content-type', 'application/json'); res.setHeader('cache-control', 'no-store'); res.end(JSON.stringify(body)); };
 const tokenOf = (req) => (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '') || null;
@@ -70,8 +70,8 @@ const routes = {
   /** Coins of a WizardConnect wallet (public addresses only), so the browser can build the deposit for the wallet to sign. */
   async price(req, b, q) {
     const now = Math.floor(Date.now() / 1000);
-    const [p, history] = await Promise.all([timed(spot(), 6000, 'price'), q.get('history') ? recentCloses(12) : []]);
-    return { ...p, now, nextRound: nextRound(now), payoutPct: UPDOWN.payoutPct, history };
+    const [p, history, chart] = await Promise.all([timed(spot(), 6000, 'price'), q.get('history') ? recentCloses(12) : [], q.get('chart') ? chartCloses(Number(q.get('chart')) || 60) : null]);
+    return { ...p, now, nextRound: nextRound(now), payoutPct: UPDOWN.payoutPct, history, ...(chart ? { chart } : {}) };
   },
   async bet(req, b) { return S.placeBet(tokenOf(req), b); },
   async bets(req) { await within(S.settleBets(), 8000); await recordSoon(); return { mine: tokenOf(req) ? await S.myBets(tokenOf(req)) : [], feed: await S.betFeed() }; },
@@ -131,8 +131,31 @@ const routes = {
   },
 };
 
+/** Terminal invite: `irm <site>/duel/<id> | iex` or `curl -sL <site>/duel/<id> | sh` opens the same match in the friend's terminal. */
+function launch(res, q) {
+  const cmd = q.get('cmd') === 'fight' ? 'fight' : 'join';
+  const id = String(q.get('id') ?? '').replace(/[^0-9a-zA-Z_-]/g, '').slice(0, 64);
+  const url = 'https://passbch-cash.vercel.app/duel.mjs';
+  const body = q.get('sh') === 'ps'
+    ? `# PassBCH.cash terminal invite
+$ErrorActionPreference = 'Stop'
+if (-not (Get-Command node -ErrorAction SilentlyContinue)) { Write-Host 'PassBCH.cash needs Node.js 18+ : https://nodejs.org' -ForegroundColor Red; return }
+$f = Join-Path $env:TEMP 'passbch.mjs'
+Invoke-WebRequest -UseBasicParsing "${url}?t=$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())" -Headers @{ 'Cache-Control' = 'no-cache' } -OutFile $f
+node $f ${cmd} ${id}
+`
+    : `#!/bin/sh
+# PassBCH.cash terminal invite
+command -v node >/dev/null 2>&1 || { echo "PassBCH.cash needs Node.js 18+ : https://nodejs.org"; exit 1; }
+f="\${TMPDIR:-/tmp}/passbch.mjs"
+curl -fsSL -H "Cache-Control: no-cache" "${url}?t=$(date +%s)" -o "$f" && node "$f" ${cmd} ${id} </dev/tty
+`;
+  res.statusCode = 200; res.setHeader('Content-Type', 'text/plain; charset=utf-8'); res.setHeader('Cache-Control', 'no-store'); res.end(body);
+}
+
 export default async function handler(req, res) {
   const q = new URL(req.url, 'http://x').searchParams;
+  if (q.get('a') === 'launch') return launch(res, q);
   const fn = routes[q.get('a')];
   if (!fn) return json(res, 404, { error: 'unknown action' });
   try {

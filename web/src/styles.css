@@ -395,3 +395,23 @@ input:focus, textarea.prompt:focus, select:focus { outline: 2px solid var(--gree
 .foot { margin-top: auto; border-radius: 0; padding: 28px 0 40px; }
 main + .foot, .foot { margin-top: auto; } #root > main { width: 100%; }
 #root > main:last-of-type { margin-bottom: 32px; }
+
+/* Up/Down market dashboard: fixed, flat, readable (replaces the rotating 3D screen on this page) */
+.market { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 18px 18px 12px; box-shadow: 0 4px 0 var(--border); }
+.mhead { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.mprice { font-size: clamp(34px, 5vw, 48px); font-weight: 800; letter-spacing: -0.03em; color: var(--ink); line-height: 1.1; margin-top: 2px; }
+.mdir { font-size: 20px; vertical-align: middle; } .mdir.up, .mchg.up { color: #0f9a5f; } .mdir.down, .mchg.down { color: #d6453d; }
+.mchg { font-weight: 700; font-size: 15px; margin-top: 2px; } .mchg .muted { font-weight: 500; }
+.mranges { display: flex; gap: 2px; border-bottom: 1px solid var(--border); }
+.mranges button { background: none; border: 0; border-bottom: 3px solid transparent; padding: 6px 12px; font-weight: 600; color: var(--muted); }
+.mranges button.on { color: var(--green-dk); border-bottom-color: var(--green-dk); }
+.mstatus { margin: 12px 0 4px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; font-size: 14px; }
+.mwrap { position: relative; }
+.mchart { width: 100%; height: clamp(220px, 34vw, 340px); display: block; margin-top: 8px; cursor: crosshair; }
+.mgrid { stroke: #ece7da; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.maxis { fill: #6b746d; font: 12px var(--mono); }
+.mentry { stroke: #a86b00; stroke-dasharray: 6 4; stroke-width: 1.5; vector-effect: non-scaling-stroke; } .mentrylbl { fill: #a86b00; font-weight: 700; }
+.mhover { stroke: #9aa39c; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
+.mtip { position: absolute; top: 10px; right: 70px; background: var(--ink); color: #fff; border-radius: 8px; padding: 4px 10px; font: 13px var(--mono); pointer-events: none; }
+.mempty { height: 260px; display: grid; place-items: center; }
+.mnote { margin: 6px 0 0; }

@@ -1,3 +1,4 @@
+import { TermInvite } from './TermInvite.jsx';
 import LowBalance from './LowBalance.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { api, commitMove, session, MOVES, sats } from './api.js';
@@ -161,6 +162,8 @@ export function DuelView({ id, me, explorer, onClose, onChange }) {
         <div className="share">
           <p>Send this link to a friend. Their bonus covers the stake.</p>
           <div className="row gap"><code className="linkbox">{link}</code><button className="primary" onClick={share}>{copied ? 'Copied ✓' : 'Share'}</button></div>
+          <p className="muted small" style={{ margin: '10px 0 4px' }}>Friend coding in a terminal? They paste one line and play there:</p>
+          <TermInvite link={link} />
         </div>
       )}
       {d.status === 'open' && !iAmA && me && (

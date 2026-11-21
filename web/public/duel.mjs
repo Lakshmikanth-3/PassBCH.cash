@@ -17,7 +17,7 @@ const width = (s) => [...strip(s)].reduce((n, ch) => n + (/[\u{1F300}-\u{1FAFF}\
 const pad = (s, n) => s + ' '.repeat(Math.max(0, n - width(s)));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const sats = (n) => `${(Number(n ?? 0) / 1e8).toFixed(8).replace(/0+$/, '').replace(/\.$/, '')} BCH`;
-export const VERSION = '2026.11.21-5'; // must match CLIENT_VERSION in api/duel.mjs
+export const VERSION = '2026.11.22-1'; // must match CLIENT_VERSION in api/duel.mjs
 let NETWORK = 'chipnet';
 const CUR = { USD: '$', INR: '₹', JPY: '¥', EUR: '€', GBP: '£', AED: 'AED ', SGD: 'S$', IDR: 'Rp ', PHP: '₱', NGN: '₦', BRL: 'R$' };
 let fxCache = null;
@@ -185,7 +185,7 @@ async function rps(rules) {
   const move = await pickMove(); const stake = await pickStake(rules);
   const salt = randomBytes(16).toString('hex'); const commit = createHash('sha256').update(`${move}:${salt}`).digest('hex');
   const { id } = await api('create', { body: { stake, commit, vsBot: c === '1' } });
-  if (c === '2') box('Challenge created', [`Send this link: ${bold(cyan(`${BASE}/duel/${id}`))}`, dim(`or in their terminal: menu [1] → [3] → ${id}`)], cyan);
+  if (c === '2') box('Challenge created', [`Send this link: ${bold(cyan(`${BASE}/duel/${id}`))}`, `Terminal friend (PowerShell): ${bold(lime(`irm ${BASE}/duel/${id} | iex`))}`, `Terminal friend (Mac/Linux): ${bold(lime(`curl -sL ${BASE}/duel/${id} | sh`))}`, dim('The same link opens the browser game for anyone else.')], cyan);
   let spin = 0;
   for (;;) {
     const d = await api('duel', { q: `&id=${id}` });
@@ -291,6 +291,18 @@ async function writePrompt() {
   return t === '1' || t === '2' ? EXAMPLES[Number(t) - 1] : t;
 }
 
+async function pfJoin(id) {
+  const m = await api('pf', { q: `&id=${id}` });
+  if (m.status !== 'open') return console.log(red(`  That fight is ${m.status}.`));
+  box(`${m.aName} challenges your agent for ${sats(m.stake)}`, [dim('Their prompt is hidden until the fight ends.')], mag);
+  const prompt = await writePrompt();
+  console.log(dim('  the agents are fighting…'));
+  await api('pfjoin', { body: { id, prompt } });
+  const done = await api('pf', { q: `&id=${id}` });
+  await fightShow(done);
+  console.log(done.winner === 'b' ? lime(bold(`  You win ${sats(2 * done.stake)}!`)) : red(`  You lose ${sats(done.stake)}`));
+}
+
 async function promptFight(rules) {
   const openF = await api('pfopen').catch(() => []);
   box('Prompt Fight', [`${bold('[1]')} Fight the House Agent   ${bold('[2]')} Challenge a friend (share link)   ${bold('[3]')} Join by link or id`,
@@ -302,24 +314,12 @@ async function promptFight(rules) {
     box('Open fights', openF.slice(0, 9).map((o, i) => `${bold(`[${i + 1}]`)} ${o.name} wants a fight · ${gold(sats(o.stake))}`), lime);
     picked = openF[Number((await ask('  Accept which? ')).trim()) - 1]; if (!picked) return; c = '3';
   }
-  if (c === '3') {
-    const id = picked ? picked.id : (await ask('  Fight link or id: ')).trim().split(/fight[=/]/).pop();
-    const m = await api('pf', { q: `&id=${id}` });
-    if (m.status !== 'open') return console.log(red(`  That fight is ${m.status}.`));
-    box(`${m.aName} challenges your agent for ${sats(m.stake)}`, [dim('Their prompt is hidden until the fight ends.')], mag);
-    const prompt = await writePrompt();
-    console.log(dim('  the agents are fighting…'));
-    await api('pfjoin', { body: { id, prompt } });
-    const done = await api('pf', { q: `&id=${id}` }); const me = done.bPlayer;
-    await fightShow(done);
-    console.log(done.winner === 'b' ? lime(bold(`  You win ${sats(2 * done.stake)}!`)) : red(`  You lose ${sats(done.stake)}`));
-    return;
-  }
+  if (c === '3') return pfJoin(picked ? picked.id : (await ask('  Fight link or id: ')).trim().split(/fight[=/]/).pop());
   if (c !== '1' && c !== '2') return;
   const prompt = await writePrompt(); const stake = await pickStake(rules);
   if (c === '1') console.log(dim('  the agents are fighting…'));
   const { id } = await api('pfcreate', { body: { stake, prompt, vsBot: c === '1' } });
-  if (c === '2') box('Fight created', [`Send this link: ${bold(cyan(`${BASE}/fight/${id}`))}`, dim(`or in their terminal: menu [3] → [3] → ${id}`)], cyan);
+  if (c === '2') box('Fight created', [`Send this link: ${bold(cyan(`${BASE}/fight/${id}`))}`, `Terminal friend (PowerShell): ${bold(lime(`irm ${BASE}/fight/${id} | iex`))}`, `Terminal friend (Mac/Linux): ${bold(lime(`curl -sL ${BASE}/fight/${id} | sh`))}`, dim('The same link opens the browser game for anyone else.')], cyan);
   let spin = 0;
   for (;;) {
     const m = await api('pf', { q: `&id=${id}` });
@@ -476,7 +476,8 @@ async function main() {
   else { console.clear?.(); logo(); }
   console.log(dim(`  network: ${network} · ${BASE} · client ${VERSION}`));
   const [cmd, arg] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
-  if (cmd === 'join' && arg) { await join(arg); return; }
+  if (cmd === 'join' && arg) { try { await join(arg); } catch (e) { console.log(red(`  ✗ ${e.message}`)); } }
+  if (cmd === 'fight' && arg) { try { await pfJoin(arg); } catch (e) { console.log(red(`  ✗ ${e.message}`)); } }
   for (;;) {
     let c;
     try { c = await home(); } catch (e) { if (/unknown player|not signed/.test(e.message)) { cfg = {}; save(cfg); if (!(await welcome())) return; continue; } throw e; }

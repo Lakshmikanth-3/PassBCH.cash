@@ -1,3 +1,4 @@
+import { TermInvite } from './TermInvite.jsx';
 import LowBalance from './LowBalance.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { api, sats } from './api.js';
@@ -72,7 +73,9 @@ export function FightView({ id, me, explorer, onClose, onChange }) {
       <p className="muted">{m.aName} <b className="vs">vs</b> {m.bName ?? 'waiting for a challenger'}</p>
       {m.status === 'open' && mine === 'a' && (
         <div className="share"><p>Send this link to a friend. They write their own prompt and the fight starts instantly.</p>
-          <div className="row gap"><code className="linkbox">{link}</code><button className="primary" onClick={share}>{copied ? 'Copied' : 'Share'}</button></div></div>
+          <div className="row gap"><code className="linkbox">{link}</code><button className="primary" onClick={share}>{copied ? 'Copied' : 'Share'}</button></div>
+          <p className="muted small" style={{ margin: '10px 0 4px' }}>Friend coding in a terminal? They paste one line and play there:</p>
+          <TermInvite link={link} /></div>
       )}
       {m.status === 'open' && mine !== 'a' && me && (
         <div><p>Write the strategy your agent will follow, then fight:</p>

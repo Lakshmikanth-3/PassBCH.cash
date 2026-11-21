@@ -1,7 +1,7 @@
 import LowBalance from './LowBalance.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { api, sats } from './api.js';
-import Stage3D from '../three/Stage3D.jsx';
+import { MarketChart } from './MarketChart.jsx';
 import { show } from '../three/show.js';
 
 const fmt = (p) => (p ? `$${Number(p).toFixed(2)}` : '—');
@@ -17,17 +17,18 @@ export function UpDown({ rules, player, explorer, onChange }) {
   const skew = useRef(0); const last = useRef(null);
   const [pts, setPts] = useState([]);
   const [hist, setHist] = useState([]);
+  const [result, setResult] = useState(null); // last settled bet, shown on the dashboard for 15 s
   useEffect(() => { api('price', { q: '&history=1' }).then((p) => setHist(p.history ?? [])).catch(() => {}); const t = setInterval(() => api('price', { q: '&history=1' }).then((p) => setHist(p.history ?? [])).catch(() => {}), 60000); return () => clearInterval(t); }, []);
 
   useEffect(() => {
     let stop = false;
     const poll = async () => {
-      try { const p = await api('price'); if (stop) return; show({ kind: 'price', price: p.price }); skew.current = p.now - Math.floor(Date.now() / 1000); if (last.current) setDir(Math.sign(p.price - last.current) || 0); last.current = p.price; setPx(p); setPts((a) => [...a.slice(-59), p.price]); } catch { /* keep */ }
+      try { const p = await api('price'); if (stop) return; show({ kind: 'price', price: p.price }); skew.current = p.now - Math.floor(Date.now() / 1000); if (last.current) setDir(Math.sign(p.price - last.current) || 0); last.current = p.price; setPx(p); setPts((a) => [...a.slice(-149), [p.now, p.price]]); } catch { /* keep */ }
       try {
         const b = await api('bets'); if (stop) return;
         setMine((old) => {
           const fresh = b.mine.find((x) => x.outcome && old.some((o) => o.id === x.id && !o.outcome));
-          if (fresh) { onChange?.(); show({ kind: 'udresult', outcome: fresh.outcome, open: Number(fresh.open_price).toFixed(2), close: Number(fresh.close_price).toFixed(2) }); }
+          if (fresh) { onChange?.(); setResult(fresh); setTimeout(() => setResult(null), 15000); show({ kind: 'udresult', outcome: fresh.outcome, open: Number(fresh.open_price).toFixed(2), close: Number(fresh.close_price).toFixed(2) }); }
           return b.mine;
         });
       } catch { /* ignore */ }
@@ -50,16 +51,10 @@ export function UpDown({ rules, player, explorer, onChange }) {
   return (
     <div className="predict gamelayout">
       <div className="mainbox stagecol">
-        <Stage3D game="updown" height="clamp(280px, 42vw, 460px)">
-          <div className="pricehud">
-            <span className="muted small">BCH / USD · live · source: Coinbase last trade</span>
-            <span className={`bigprice ${dir > 0 ? 'up' : dir < 0 ? 'down' : ''}`}>{fmt(px?.price)} {dir > 0 ? '▲' : dir < 0 ? '▼' : ''}</span>
-            {live ? <span className="small">{now < Number(live.round_start) + ROUND ? <>your bet: <b>{live.side === 'up' ? '▲ UP' : '▼ DOWN'}</b> from {fmt(live.open_price)} · <b className="mono">{clock(Number(live.round_start) + ROUND - now)}</b> left · {px && ((live.side === 'up') === (px.price > Number(live.open_price)) ? <b className="green">winning</b> : px.price === Number(live.open_price) ? <b>level</b> : <b className="red">losing</b>)}</> : 'settling…'}</span>
-              : <span className="small">tap UP or DOWN · result in exactly <b>1 minute</b> · same price = stake back</span>}
-            <Spark pts={pts} entry={live ? Number(live.open_price) : null} />
-            {live && <Ring left={Number(live.round_start) + ROUND - now} total={ROUND} />}
-          </div>
-        </Stage3D>
+        <MarketChart price={px?.price} dir={dir} livePts={pts} entry={live ? Number(live.open_price) : null}
+          status={live ? (now < Number(live.round_start) + ROUND
+            ? <>Your bet: <b>{live.side === 'up' ? '▲ UP' : '▼ DOWN'}</b> from {fmt(live.open_price)} · <b className="mono">{clock(Number(live.round_start) + ROUND - now)}</b> left · {px && ((live.side === 'up') === (px.price > Number(live.open_price)) ? <b className="green">winning</b> : px.price === Number(live.open_price) ? <b>level</b> : <b className="red">losing</b>)}</>
+            : 'Settling your bet…') : result ? <b className={result.outcome === 'win' ? 'green' : result.outcome === 'lose' ? 'red' : ''}>{result.outcome === 'win' ? `You won ${sats(result.payout)}` : result.outcome === 'lose' ? 'You lost this round' : 'Same price: stake refunded'} · {fmt(result.open_price)} → {fmt(result.close_price)}</b> : <>Tap UP or DOWN · result in exactly <b>1 minute</b> · same price = stake back</>} />
       </div>
       <div className="col">
       <div className="card">

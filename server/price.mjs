@@ -38,6 +38,15 @@ export async function recentCloses(n = 12) {
   return [];
 }
 
+/** Last `n` finished 1-minute candles as [time, close] (oldest first), for the dashboard chart. Display only. */
+export async function chartCloses(n = 60) {
+  try {
+    const rows = await (await fetch('https://api.exchange.coinbase.com/products/BCH-USD/candles?granularity=60', { signal: timed(4000), headers: { 'user-agent': 'passbch-cash' } })).json();
+    if (Array.isArray(rows)) return rows.slice(0, Math.min(300, n)).reverse().map((r) => [r[0], r[4]]);
+  } catch { /* none */ }
+  return [];
+}
+
 /**
  * BCH/USD price at an exact second: the last public trade at or before `ts` (Coinbase, Kraken fallback).
  * Anyone can re-check it from the exchange's trade history. Returns { price, tradeTime, source } or null.

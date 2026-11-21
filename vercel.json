@@ -35,6 +35,50 @@
   },
   "rewrites": [
     {
+      "source": "/duel/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*PowerShell.*"
+        }
+      ],
+      "destination": "/api/duel?a=launch&sh=ps&cmd=join&id=:id"
+    },
+    {
+      "source": "/duel/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(curl|Wget).*"
+        }
+      ],
+      "destination": "/api/duel?a=launch&sh=sh&cmd=join&id=:id"
+    },
+    {
+      "source": "/fight/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*PowerShell.*"
+        }
+      ],
+      "destination": "/api/duel?a=launch&sh=ps&cmd=fight&id=:id"
+    },
+    {
+      "source": "/fight/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(curl|Wget).*"
+        }
+      ],
+      "destination": "/api/duel?a=launch&sh=sh&cmd=fight&id=:id"
+    },
+    {
       "source": "/",
       "has": [
         {
