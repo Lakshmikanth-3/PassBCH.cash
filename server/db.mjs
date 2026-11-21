@@ -38,6 +38,17 @@ create table if not exists bets (
   created_at timestamptz not null default now(), settled_at timestamptz, record_txid text, record_try_at timestamptz
 );
 create index if not exists bets_round on bets (round_start) where settled_at is null;
+create table if not exists ai_rounds (
+  id text primary key, model text not null, model_idx int not null, task_idx int not null, slug text not null,
+  block_height int not null, block_hash text not null, opened_s bigint not null, bet_close_s bigint not null,
+  status text not null default 'open', pass boolean, passed int, total int, duration_s numeric, transcript_hash text,
+  settled_at timestamptz, record_txid text, record_try_at timestamptz
+);
+create table if not exists ai_bets (
+  id text primary key, round_id text not null references ai_rounds(id), player_id int not null references players(id),
+  side text not null check (side in ('pass','fail')), stake int not null, from_bonus int not null, from_cash int not null,
+  odds_pct int not null, outcome text, payout int, created_at timestamptz not null default now()
+);
 insert into players (token_hash, name, ref_code, cash, is_house) values ('house', 'House Bot', 'HOUSE', 100000000, true) on conflict do nothing;
 `;
 

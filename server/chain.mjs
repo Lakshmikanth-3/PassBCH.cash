@@ -1,7 +1,7 @@
 // House wallet on BCH: writes duel records (OP_RETURN) and pays withdrawals. Chipnet until final submission.
 import { secp256k1, hexToBin, binToHex, hash160, sha256, encodeCashAddress, CashAddressType, utf8ToBin } from '@bitauth/libauth';
 import { ElectrumNetworkProvider, TransactionBuilder, SignatureTemplate } from 'cashscript';
-import { recordBytes, betRecordBytes } from './engine.mjs';
+import { recordBytes, betRecordBytes, aiRecordBytes } from './engine.mjs';
 
 export const NETWORK = process.env.DUEL_NETWORK === 'mainnet' ? 'mainnet' : 'chipnet';
 const PREFIX = NETWORK === 'mainnet' ? 'bitcoincash' : 'bchtest';
@@ -59,3 +59,10 @@ export const payWithdrawal = (to, sats, beforeSend, p) => houseSend({ p, to, sat
 export async function depositUtxos(playerId, p = provider()) { return spendable(p, depositKey(playerId).address); }
 export const recordBet = (b, beforeSend) => houseSend({ beforeSend, opReturn: betRecordBytes({ id: b.id, side: b.side, result: b.result, stake: b.stake,
   roundStart: Number(b.round_start), open: Number(b.open_price), close: Number(b.close_price) }) });
+export const recordAi = (r, beforeSend) => houseSend({ beforeSend, opReturn: aiRecordBytes({ id: r.id, pass: r.pass, passed: r.passed, total: r.total, taskIdx: r.task_idx, modelIdx: r.model_idx, transcriptHash: r.transcript_hash }) });
+
+/** Latest block (height + hash): the AI exercise draw uses a block nobody can predict. */
+export async function tip(p = provider()) {
+  const { height, hex } = await p.performRequest('blockchain.headers.get_tip');
+  return { height, hash: binToHex(sha256.hash(sha256.hash(hexToBin(hex))).reverse()) };
+}

@@ -1,4 +1,4 @@
-// Satoshi Duel game service: every money move happens in one SQL transaction with row locks.
+// PassBCH.cash game service: every money move happens in one SQL transaction with row locks.
 import { randomBytes } from 'node:crypto';
 import * as E from './engine.mjs';
 import { tx, db } from './db.mjs';
@@ -263,3 +263,106 @@ export async function unrecordedBets(limit = 5) {
 }
 export async function setBetRecord(id, txid) { await (await db()).query('update bets set record_txid=$1 where id=$2', [txid, id]); }
 export async function markBetRecordTry(id) { await (await db()).query('update bets set record_try_at=now() where id=$1', [id]); }
+
+// ---------- AI Pass or Fail ----------
+async function modelRecord(c, model) {
+  const { rows: [r] } = await c.query("select count(*) filter (where pass)::int pass, count(*)::int n from ai_rounds where model=$1 and status='done'", [model]);
+  return r;
+}
+
+/** Runner opens the next round; the exercise comes from the latest block hash. */
+export async function aiOpenRound({ tasks, tip }) {
+  return tx(async (c) => {
+    await c.query('lock table ai_rounds in exclusive mode');
+    const busy = (await c.query("select id from ai_rounds where status in ('open','running')")).rows[0];
+    if (busy) return { busy: busy.id };
+    const { rows: [{ n }] } = await c.query('select count(*)::int n from ai_rounds');
+    const modelIdx = n % E.AI.models.length;
+    const id = randomBytes(16).toString('hex');
+    const taskIdx = E.drawTask(id, tip.hash, tasks.length);
+    const t = nowS();
+    await c.query('insert into ai_rounds (id, model, model_idx, task_idx, slug, block_height, block_hash, opened_s, bet_close_s) values ($1,$2,$3,$4,$5,$6,$7,$8,$9)',
+      [id, E.AI.models[modelIdx], modelIdx, taskIdx, tasks[taskIdx], tip.height, tip.hash, t, t + E.AI.betWindowS]);
+    return { id, model: E.AI.models[modelIdx], slug: tasks[taskIdx], taskIdx };
+  });
+}
+
+/** Runner asks for work: a round whose betting has closed becomes 'running'. */
+export async function aiNextJob() {
+  return tx(async (c) => {
+    const { rows: [r] } = await c.query("select * from ai_rounds where status='open' and bet_close_s <= $1 for update", [nowS()]);
+    if (!r) return null;
+    await c.query("update ai_rounds set status='running' where id=$1", [r.id]);
+    return { id: r.id, model: r.model, slug: r.slug };
+  });
+}
+
+export async function aiResult({ id, pass, passed, total, durationS, transcriptHash }) {
+  return tx(async (c) => {
+    const { rows: [r] } = await c.query("select * from ai_rounds where id=$1 and status='running' for update", [id]);
+    if (!r) throw new UserError('round not running', 409);
+    const { rows: bets } = await c.query('select * from ai_bets where round_id=$1 for update', [id]);
+    for (const b of bets) {
+      const s = E.settleAiBet(b.side, !!pass, b.stake, b.odds_pct);
+      await c.query('update players set cash = cash + $1 where id=$2', [s.cash, b.player_id]);
+      if (s.outcome === 'win') await c.query('update players set wins = wins + 1, won_sats = won_sats + $1 where id=$2', [s.cash - b.stake, b.player_id]);
+      else await c.query('update players set losses = losses + 1 where id=$1', [b.player_id]);
+      await c.query('update ai_bets set outcome=$1, payout=$2 where id=$3', [s.outcome, s.cash, b.id]);
+    }
+    await c.query("update ai_rounds set status='done', pass=$1, passed=$2, total=$3, duration_s=$4, transcript_hash=$5, settled_at=now() where id=$6",
+      [!!pass, passed, total, durationS, transcriptHash, id]);
+    return { settled: bets.length };
+  });
+}
+
+/** A round with no result after 15 min is void: every stake goes back. */
+export async function aiSweep() {
+  const c = await db();
+  const { rows } = await c.query("select id from ai_rounds where status in ('open','running') and opened_s < $1", [nowS() - E.AI.voidAfterS]);
+  for (const { id } of rows) {
+    await tx(async (k) => {
+      const { rows: bets } = await k.query('select * from ai_bets where round_id=$1 and outcome is null for update', [id]);
+      for (const b of bets) {
+        await k.query('update players set bonus = bonus + $1, cash = cash + $2 where id=$3', [b.from_bonus, b.from_cash, b.player_id]);
+        await k.query("update ai_bets set outcome='refund', payout=$1 where id=$2", [b.stake, b.id]);
+      }
+      await k.query("update ai_rounds set status='void', settled_at=now() where id=$1", [id]);
+    });
+  }
+}
+
+export async function aiBet(token, { roundId, side, stake }) {
+  stake = Number(stake);
+  if (side !== 'pass' && side !== 'fail') throw new UserError('pick pass or fail');
+  return tx(async (c) => {
+    const p = await playerByToken(c, token, true);
+    const { rows: [r] } = await c.query('select * from ai_rounds where id=$1 for update', [roundId]);
+    if (!r || r.status !== 'open' || nowS() >= Number(r.bet_close_s)) throw new UserError('betting is closed for this round');
+    let split; try { split = E.takeStake({ bonus: Number(p.bonus), cash: Number(p.cash) }, stake); } catch (e) { throw new UserError(e.message); }
+    const o = E.aiOdds(await modelRecord(c, r.model));
+    const odds = side === 'pass' ? o.passPct : o.failPct;
+    const id = randomBytes(16).toString('hex');
+    await c.query('update players set bonus = bonus - $1, cash = cash - $2 where id = $3', [split.fromBonus, split.fromCash, p.id]);
+    await c.query('insert into ai_bets (id, round_id, player_id, side, stake, from_bonus, from_cash, odds_pct) values ($1,$2,$3,$4,$5,$6,$7,$8)', [id, roundId, p.id, side, stake, split.fromBonus, split.fromCash, odds]);
+    return { id, oddsPct: odds };
+  });
+}
+
+export async function aiState(token) {
+  await aiSweep();
+  const c = await db();
+  const { rows: rounds } = await c.query(`select r.*, (select count(*)::int from ai_bets b where b.round_id=r.id) bets, (select coalesce(sum(stake),0)::int from ai_bets b where b.round_id=r.id) pot
+    from ai_rounds r order by opened_s desc limit 12`);
+  const cur = rounds.find((r) => r.status === 'open' || r.status === 'running') ?? null;
+  const records = {};
+  for (const m of E.AI.models) { const rec = await modelRecord(c, m); records[m] = { ...rec, ...E.aiOdds(rec) }; }
+  const lastSeen = (await c.query('select max(opened_s)::bigint t from ai_rounds')).rows[0].t;
+  let mine = [];
+  if (token) { try { const p = await playerByToken(c, token); mine = (await c.query('select b.*, r.slug, r.model, r.status, r.pass from ai_bets b join ai_rounds r on r.id=b.round_id where b.player_id=$1 order by b.created_at desc limit 8', [p.id])).rows; } catch { /* signed out */ } }
+  return { now: nowS(), current: cur, recent: rounds.filter((r) => r !== cur), records, mine, runnerOnline: !!lastSeen && nowS() - Number(lastSeen) < 600 };
+}
+export async function unrecordedAi(limit = 3) {
+  return (await (await db()).query("select * from ai_rounds where status='done' and record_txid is null and (record_try_at is null or record_try_at < now() - interval '30 seconds') order by settled_at limit $1", [limit])).rows;
+}
+export async function setAiRecord(id, txid) { await (await db()).query('update ai_rounds set record_txid=$1 where id=$2', [txid, id]); }
+export async function markAiRecordTry(id) { await (await db()).query('update ai_rounds set record_try_at=now() where id=$1', [id]); }
