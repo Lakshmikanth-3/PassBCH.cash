@@ -8,7 +8,7 @@ export default defineConfig({
   root: here('.'),
   plugins: [react()],
   // libauth (pulled in by WizardConnect) uses top-level await for its WASM crypto.
-  build: { target: 'es2022', outDir: here('dist'), emptyOutDir: true },
+  build: { target: 'es2022', outDir: here('dist'), emptyOutDir: true, rollupOptions: { input: here('app.html') } },
   optimizeDeps: { esbuildOptions: { target: 'es2022' } },
   // Local dev/preview talk to the live API so the UI can be tried without a database.
   server: { proxy: { '/api': { target: 'https://passbch-cash.vercel.app', changeOrigin: true } } },

@@ -65,8 +65,12 @@
       "destination": "/play.sh"
     },
     {
+      "source": "/",
+      "destination": "/app.html"
+    },
+    {
       "source": "/((?!api/|assets/|.*\\..*).*)",
-      "destination": "/index.html"
+      "destination": "/app.html"
     }
   ]
 }
