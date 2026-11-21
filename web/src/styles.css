@@ -160,3 +160,27 @@ table { width: 100%; border-collapse: collapse; font-size: 14px; } th, td { text
 .seg button { background: none; border: 0; color: var(--muted); padding: 9px; border-radius: 9px; font-weight: 700; }
 .seg button.on { background: var(--surface2); color: var(--text); }
 .warnbox { background: #2a1f05; border: 1px solid #5a4512; color: var(--gold); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+
+/* game page: stage stays in view on the left, controls on the right */
+.gamelayout { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(320px, 1fr); gap: 16px; align-items: start; }
+.stagecol { position: sticky; top: 76px; }
+.gamelayout .stage3d { height: clamp(340px, 62vh, 620px); }
+.predict.gamelayout { display: grid; }
+.gcard .gicon { color: var(--c); }
+.gcard .gicon svg { filter: drop-shadow(0 0 10px color-mix(in srgb, var(--c) 70%, transparent)); }
+.move .emoji { color: var(--gold); display: grid; place-items: center; height: 46px; }
+.hand { display: grid; place-items: center; color: var(--gold); min-height: 64px; } .lock { font-family: var(--display); font-size: 40px; color: var(--muted); }
+.chipbtn { display: inline-flex; align-items: center; gap: 6px; }
+.primary svg, .secondary svg, h2 svg, summary svg { vertical-align: -4px; }
+.vsrow svg { vertical-align: -3px; color: var(--gold); }
+textarea.prompt { width: 100%; min-height: 110px; resize: vertical; background: #080920; color: var(--text); border: 1px solid var(--border); border-radius: 12px; padding: 12px; font: 15px/1.5 var(--font); margin: 8px 0 4px; }
+textarea.prompt:focus { outline: 2px solid var(--lime); outline-offset: -1px; }
+.examples { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 16px; }
+.turns { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.turn { display: inline-flex; flex-direction: column; align-items: center; min-width: 40px; padding: 4px 6px; border-radius: 8px; font-family: var(--mono); font-weight: 700; }
+.turn.a { background: #00e5ff22; color: var(--cyan); } .turn.b { background: #ff3df022; color: var(--magenta); }
+.turn small { font-size: 10px; color: var(--muted); font-weight: 400; }
+.prompts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+.prompts > div { background: #080920; border-radius: 10px; padding: 10px; } .prompts p { margin: 4px 0 0; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.prompts b.a { color: var(--cyan); } .prompts b.b { color: var(--magenta); }
+@media (max-width: 900px) { .gamelayout { grid-template-columns: 1fr; } .stagecol { position: static; } .gamelayout .stage3d { height: clamp(280px, 52vh, 460px); } .prompts { grid-template-columns: 1fr; } }

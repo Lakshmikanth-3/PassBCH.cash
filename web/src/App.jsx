@@ -5,11 +5,12 @@ import { api, session, sats } from './duel/api.js';
 import { Signup, NewDuel, DuelView } from './duel/Play.jsx';
 import { Wallet, Leaderboard, Terminal } from './duel/Side.jsx';
 import { UpDown, UpDownFeed } from './duel/UpDown.jsx';
-import { AiGame } from './duel/AiGame.jsx';
+import { NewFight, FightView, FightLobby } from './duel/PromptFight.jsx';
+import { Rock, Chart, Agents, Hourglass, Grid, Wallet as WalletIcon, Logout } from './icons.jsx';
 import Stage3D from './three/Stage3D.jsx';
 
 // Real pages: /  /login  /games  /games/rps  /games/predict  /games/ai  /wallet  /duel/<id>
-const PATHS = { '': '/', login: '/login', games: '/games', rps: '/games/rps', predict: '/games/predict', ai: '/games/ai', wallet: '/wallet' };
+const PATHS = { '': '/', login: '/login', games: '/games', rps: '/games/rps', predict: '/games/predict', pf: '/games/prompt-fight', wallet: '/wallet' };
 const readRoute = () => {
   if (typeof location === 'undefined') return { route: '' };
   const q = new URLSearchParams(location.search);
@@ -17,18 +18,20 @@ const readRoute = () => {
   const path = location.pathname.replace(/\/+$/, '') || '/';
   const m = path.match(/^\/duel\/([0-9a-f]{32})$/);
   if (m) return { route: 'rps', duel: m[1] };
+  const f = path.match(/^\/fight\/([0-9a-f]{32})$/);
+  if (f) return { route: 'pf', fight: f[1] };
   const legacy = location.hash.replace(/^#\/?/, ''); // old #/games links
   if (legacy && PATHS[legacy]) return { route: legacy };
   const route = Object.keys(PATHS).find((k) => PATHS[k] === path);
   return { route: route ?? '' };
 };
-const TITLES = { '': 'PassBCH.cash — play while your AI thinks', login: 'Log in · PassBCH.cash', games: 'Games · PassBCH.cash', rps: 'Rock Paper Scissors · PassBCH.cash', predict: 'Up or Down · PassBCH.cash', ai: 'AI Fight · PassBCH.cash', wallet: 'Wallet · PassBCH.cash' };
+const TITLES = { '': 'PassBCH.cash — play while your AI thinks', login: 'Log in · PassBCH.cash', games: 'Games · PassBCH.cash', rps: 'Rock Paper Scissors · PassBCH.cash', predict: 'Up or Down · PassBCH.cash', pf: 'Prompt Fight · PassBCH.cash', wallet: 'Wallet · PassBCH.cash' };
 
 export const GAMES = [
-  { id: 'rps', icon: '✊', title: 'Rock · Paper · Scissors', line: 'Sit at the table. Beat a friend or the House Bot. Winner takes the pot.', tag: 'PvP · 2 min', color: 'gold' },
-  { id: 'predict', icon: '📈', title: 'Up or Down', line: 'Will BCH close the next minute higher or lower? Two buttons. Pays 1.9×.', tag: 'Prediction · 1 min', color: 'cyan' },
-  { id: 'ai', icon: '🤖', title: 'AI Fight', line: 'An AI agent fights a live coding exam. Bet PASS or FAIL before it starts.', tag: 'AI · ~2 min', color: 'lime' },
-  { id: 'soon', icon: '⏳', title: 'Upcoming BCH games', line: 'Tournaments, lucky draws, team battles and more — coming soon.', tag: 'Coming soon', color: 'magenta', soon: true },
+  { id: 'rps', Icon: Rock, title: 'Rock · Paper · Scissors', line: 'Sit at the table with the host. Beat a friend or the House Bot. Winner takes the pot.', tag: 'PvP · 2 min', color: 'gold' },
+  { id: 'predict', Icon: Chart, title: 'Up or Down', line: 'Will BCH close the next minute higher or lower? Two buttons. Pays 1.9×.', tag: 'Prediction · 1 min', color: 'cyan' },
+  { id: 'pf', Icon: Agents, title: 'Prompt Fight', line: 'Write a strategy prompt. Your AI agent fights another one live. Winner takes the pot.', tag: 'AI vs AI · 30 s', color: 'lime' },
+  { id: 'soon', Icon: Hourglass, title: 'Upcoming BCH games', line: 'Tournaments, lucky draws, team battles and more — coming soon.', tag: 'Coming soon', color: 'magenta', soon: true },
 ];
 
 function TopBar({ me, go, logout }) {
@@ -38,9 +41,9 @@ function TopBar({ me, go, logout }) {
         <button className="brand" onClick={() => go(me ? 'games' : '')}><span className="brand-mark">◆</span> PassBCH<span className="dim">.cash</span></button>
         {me ? (
           <nav className="row gap">
-            <button className="chipbtn" onClick={() => go('games')}>🎮 Games</button>
-            <button className="chipbtn balchip" onClick={() => go('wallet')} title="Bonus + withdrawable">💰 {sats(me.bonus + me.cash)}</button>
-            <button className="chipbtn" onClick={logout} title={`Log out ${me.name}`}>⎋</button>
+            <button className="chipbtn" onClick={() => go('games')}><Grid size={16} /> Games</button>
+            <button className="chipbtn balchip" onClick={() => go('wallet')} title="Bonus + withdrawable"><WalletIcon size={16} /> {sats(me.bonus + me.cash)}</button>
+            <button className="chipbtn" onClick={logout} title={`Log out ${me.name}`} aria-label="Log out"><Logout size={16} /></button>
           </nav>
         ) : <div className="row gap"><button className="chipbtn" onClick={() => go('login')}>Log in</button><button className="primary" onClick={() => go('login')}>Play now</button></div>}
       </div>
@@ -52,7 +55,7 @@ function Landing({ go, me }) {
   return (
     <main className="landing">
       <section className="wrap hero">
-        <p className="kicker">⚡ Bitcoin Cash game show</p>
+        <p className="kicker">Bitcoin Cash game show</p>
         <h1>Play while your <span className="hl">AI thinks</span>.</h1>
         <p className="tag">Claude is cogitating? Jump into a 1-minute round: rock-paper-scissors at a live table, bet on the BCH price, or watch an AI fight its coding exam. Real BCH, every result on chain.</p>
         <div className="row gap center-row">
@@ -63,7 +66,7 @@ function Landing({ go, me }) {
       <section className="wrap"><Stage3D game="rps" height="clamp(300px, 48vw, 520px)" /></section>
       <section className="wrap cards4">
         {GAMES.map((g) => (
-          <div key={g.id} className={`gcard ${g.color} ${g.soon ? 'soon' : ''}`}><div className="gicon">{g.icon}</div><b>{g.title}</b><span className="muted small">{g.tag}</span></div>
+          <div key={g.id} className={`gcard ${g.color} ${g.soon ? 'soon' : ''}`}><div className="gicon"><g.Icon size={36} /></div><b>{g.title}</b><span className="muted small">{g.tag}</span></div>
         ))}
       </section>
       <section id="how" className="wrap how3">
@@ -83,7 +86,7 @@ function GameSelect({ go }) {
       <div className="cards4 big">
         {GAMES.map((g) => (
           <button key={g.id} className={`gcard ${g.color} ${g.soon ? 'soon' : ''}`} disabled={g.soon} onClick={() => !g.soon && go(g.id)}>
-            <div className="gicon">{g.icon}</div>
+            <div className="gicon"><g.Icon size={46} /></div>
             <b>{g.title}</b>
             <p>{g.line}</p>
             <span className="gtag">{g.tag}</span>
@@ -98,7 +101,7 @@ function GameSelect({ go }) {
 export default function App() {
   const [cfg, setCfg] = useState(null);
   const [me, setMe] = useState(null);
-  const [{ route, duel }, setNav] = useState(readRoute);
+  const [{ route, duel, fight }, setNav] = useState(readRoute);
   const [err, setErr] = useState(null);
   const ref = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('ref');
 
@@ -112,13 +115,13 @@ export default function App() {
 
   const go = (r, d) => {
     const keep = new URLSearchParams(location.search).get('ref');
-    const url = (d ? `/duel/${d}` : PATHS[r] ?? '/') + (keep && (r === 'login' || r === '') ? `?ref=${keep}` : '');
+    const url = (d ? (r === 'pf' ? `/fight/${d}` : `/duel/${d}`) : PATHS[r] ?? '/') + (keep && (r === 'login' || r === '') ? `?ref=${keep}` : '');
     try { history.pushState(null, '', url); } catch { /* sandboxed */ }
-    setNav({ route: r, duel: d }); window.scrollTo?.({ top: 0 });
+    setNav(r === 'pf' ? { route: r, fight: d } : { route: r, duel: d }); window.scrollTo?.({ top: 0 });
   };
   const logout = () => { session.clear(); setMe(null); go(''); };
   // Signed-out players go to login for anything but the landing page (a shared duel link still opens).
-  const needLogin = !me && cfg && route && route !== 'login' && !(route === 'rps' && duel);
+  const needLogin = !me && cfg && route && route !== 'login' && !(route === 'rps' && duel) && !(route === 'pf' && fight);
   const screen = needLogin ? 'login' : route === 'login' && me ? 'games' : route;
   useEffect(() => { document.title = TITLES[screen] ?? TITLES['']; }, [screen]);
 
@@ -135,15 +138,15 @@ export default function App() {
       {screen === 'rps' && cfg && (
         <main className="wrap game">
           <button className="back" onClick={() => go('games')}>← All games</button>
-          <Stage3D game="rps" />
-          <div className="grid">
+          <div className="gamelayout">
+            <div className="stagecol"><Stage3D game="rps" /></div>
             <section className="col">
               {duel ? <DuelView id={duel} me={me} explorer={cfg.explorer} onClose={() => go('rps')} onChange={refresh} />
                 : me && <NewDuel rules={cfg.rules} player={me} onCreated={(id) => go('rps', id)} />}
               {!me && duel && <Signup refCode={ref} onDone={refresh} />}
             </section>
-            <aside className="col"><Leaderboard explorer={cfg.explorer} onOpen={(id) => go('rps', id)} /></aside>
           </div>
+          <Leaderboard explorer={cfg.explorer} onOpen={(id) => go('rps', id)} />
         </main>
       )}
       {screen === 'predict' && cfg && me && (
@@ -153,11 +156,18 @@ export default function App() {
           <UpDownFeed explorer={cfg.explorer} />
         </main>
       )}
-      {screen === 'ai' && cfg && me && (
+      {screen === 'pf' && cfg && (
         <main className="wrap game">
           <button className="back" onClick={() => go('games')}>← All games</button>
-          <Stage3D game="ai" />
-          <AiGame rules={cfg.rules} player={me} explorer={cfg.explorer} onChange={refresh} />
+          <div className="gamelayout">
+            <div className="stagecol"><Stage3D game="pf" /></div>
+            <section className="col">
+              {fight ? <FightView id={fight} me={me} explorer={cfg.explorer} onClose={() => go('pf')} onChange={refresh} />
+                : me && <NewFight rules={cfg.rules} player={me} onCreated={(id) => go('pf', id)} />}
+              {!me && fight && <Signup refCode={ref} onDone={refresh} />}
+            </section>
+          </div>
+          {!fight && <FightLobby onOpen={(id) => go('pf', id)} />}
         </main>
       )}
       {screen === 'wallet' && cfg && me && (

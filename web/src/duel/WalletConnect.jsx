@@ -38,7 +38,7 @@ export default function WalletConnect({ network, onDeposited, onAddress }) {
       await api('broadcast', { body: { hex: res.signedTransaction } }).catch(() => {}); // wallet may have broadcast already
       for (let i = 0; i < 10; i++) {
         const r = await api('deposit');
-        if (r.added) { setDone(`Deposited ${sats(r.added)} ✓`); onDeposited?.(); break; }
+        if (r.added) { setDone(`Deposited ${sats(r.added)}`); onDeposited?.(); break; }
         await new Promise((ok) => setTimeout(ok, 1500));
       }
     } catch (e) { setErr(e.message); } finally { setBusy(null); }

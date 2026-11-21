@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import QRCode from 'qrcode';
-import { api, sats, EMOJI } from './api.js';
+import { api, sats } from './api.js';
+import { MoveIcon, Key, Trophy, Terminal as TermIcon } from '../icons.jsx';
 const WalletConnect = lazy(() => import('./WalletConnect.jsx')); // WizardConnect + crypto load only when needed
 
 export function Wallet({ player, rules, explorer, network, onChange }) {
@@ -41,7 +42,7 @@ export function Wallet({ player, rules, explorer, network, onChange }) {
         {dep && <div className="deposit">{qr && <img src={qr} alt="Deposit address QR" width="180" height="180" />}<code>{dep.address}</code><button className="link" onClick={showDeposit}>I sent it — check now</button></div>}
       </details>
       <details>
-        <summary>🔑 Login code (use it on another device or in the terminal)</summary>
+        <summary><Key size={16} /> Login code (use it on another device or in the terminal)</summary>
         <p className="muted small">Anyone with this code controls your balance. Keep it private.</p>
         <div className="row gap"><code className="linkbox">{showCode ? token : '•'.repeat(24)}</code>
           <button className="secondary" type="button" onClick={() => setShowCode((v) => !v)}>{showCode ? 'Hide' : 'Show'}</button>
@@ -75,11 +76,11 @@ export function Leaderboard({ explorer, onOpen }) {
       {open.length > 0 && (
         <div className="card">
           <h2>Open challenges</h2>
-          {open.slice(0, 6).map((o) => <button key={o.id} className="openrow" onClick={() => onOpen(o.id)}><span>⚔️ {o.name}</span><b>{sats(o.stake)}</b></button>)}
+          {open.slice(0, 6).map((o) => <button key={o.id} className="openrow" onClick={() => onOpen(o.id)}><span>{o.name}</span><b>{sats(o.stake)}</b></button>)}
         </div>
       )}
       <div className="card">
-        <div className="row between"><h2>🏆 Leaderboard</h2><span className="muted small">{lb.stats.duels} duels · {sats(lb.stats.volumeSats)} played</span></div>
+        <div className="row between"><h2><Trophy size={20} /> Leaderboard</h2><span className="muted small">{lb.stats.duels} duels · {sats(lb.stats.volumeSats)} played</span></div>
         <table className="lb"><thead><tr><th>#</th><th>Player</th><th>Won</th><th>W-L-D</th></tr></thead>
           <tbody>{lb.top.map((t, i) => <tr key={t.name}><td>{i + 1}</td><td>{t.name}</td><td className="green">+{sats(t.won_sats)}</td><td>{t.wins}-{t.losses}-{t.draws}</td></tr>)}</tbody></table>
       </div>
@@ -88,7 +89,7 @@ export function Leaderboard({ explorer, onOpen }) {
         <ul className="feed">
           {lb.feed.map((f) => (
             <li key={f.id}>
-              <span>{f.a_name} {EMOJI[f.a_move] ?? '⌛'} <span className="muted">vs</span> {EMOJI[f.b_move]} {f.b_name}</span>
+              <span className="vsrow">{f.a_name} {f.a_move ? <MoveIcon move={f.a_move} size={16} /> : null} <span className="muted">vs</span> <MoveIcon move={f.b_move} size={16} /> {f.b_name}</span>
               <span>{f.winner_name ? <b className="green">{f.winner_name} +{sats(2 * f.stake)}</b> : <span className="muted">draw</span>}</span>
               {f.record_txid ? <a href={`${explorer}${f.record_txid}`} target="_blank" rel="noreferrer" title="On-chain record">tx ↗</a> : <span className="muted small">…</span>}
             </li>
@@ -104,7 +105,7 @@ export function Terminal() {
   const [c, setC] = useState(null);
   return (
     <div className="card term">
-      <h2>⌨️ Play from your terminal</h2>
+      <h2><TermIcon size={20} /> Play from your terminal</h2>
       <p className="muted small">Waiting on a build or on Claude? Duel without leaving the terminal. Same account rules, same leaderboard.</p>
       {cmds.map(([k, v]) => (
         <div key={k} className="cmd"><span className="muted small">{k}</span>

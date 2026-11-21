@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { api, commitMove, session, MOVES, EMOJI, sats } from './api.js';
+import { api, commitMove, session, MOVES, sats } from './api.js';
+import { MoveIcon, Agents, Swords } from '../icons.jsx';
 import { show } from '../three/show.js';
 
 export function Signup({ onDone, refCode }) {
@@ -46,7 +47,7 @@ export function MovePicker({ value, onChange }) {
     <div className="moves" role="radiogroup" aria-label="Your move">
       {MOVES.map((m) => (
         <button key={m} type="button" role="radio" aria-checked={value === m} className={`move ${value === m ? 'on' : ''}`} onClick={() => onChange(m)}>
-          <span className="emoji">{EMOJI[m]}</span><span>{m}</span>
+          <span className="emoji"><MoveIcon move={m} size={40} /></span><span>{m}</span>
         </button>
       ))}
     </div>
@@ -76,8 +77,8 @@ export function NewDuel({ rules, player, onCreated }) {
         {rules.stakes.map((s) => <button key={s} type="button" className={`chip ${stake === s ? 'on' : ''}`} disabled={s > total} onClick={() => setStake(s)}>{sats(s)}</button>)}
       </div>
       <div className="row gap">
-        <button className="primary big" disabled={!move || busy || stake > total} onClick={() => start(true)}>🤖 Play the House Bot</button>
-        <button className="secondary big" disabled={!move || busy || stake > total} onClick={() => start(false)}>⚔️ Challenge a friend</button>
+        <button className="primary big" disabled={!move || busy || stake > total} onClick={() => start(true)}><Agents size={20} /> Play the House Bot</button>
+        <button className="secondary big" disabled={!move || busy || stake > total} onClick={() => start(false)}><Swords size={20} /> Challenge a friend</button>
       </div>
       <p className="muted small">Your move is locked as a hash before anyone plays against it. Nobody — not us, not the bot — can see it until you reveal.</p>
       {err && <p className="err">{err}</p>}
@@ -91,6 +92,7 @@ export function DuelView({ id, me, explorer, onClose, onChange }) {
   const [move, setMove] = useState(null); const [copied, setCopied] = useState(false);
   const revealing = useRef(false);
   const shown = useRef(false);
+  const [revealed, setRevealed] = useState(false);
   const mine = session.salt(id);
   const link = `${location.origin}/duel/${id}`;
 
@@ -104,8 +106,13 @@ export function DuelView({ id, me, explorer, onClose, onChange }) {
         if (x.status === 'settled' && x.aMove && x.bMove && !shown.current) {
           // The 3D table always seats "You" on the left: flip the view if you were the joiner.
           shown.current = true;
+          setTimeout(() => setRevealed(true), 5200);
           const flip = x.bPlayer === me?.id;
-          show({ game: 'duel', kind: 'duel', aMove: flip ? x.bMove : x.aMove, bMove: flip ? x.aMove : x.bMove, result: flip ? ({ 1: 2, 2: 1 }[x.result] ?? 0) : x.result });
+          document.querySelector('.stage3d')?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+          show({ game: 'duel', kind: 'duel', aMove: flip ? x.bMove : x.aMove, bMove: flip ? x.aMove : x.bMove, result: flip ? ({ 1: 2, 2: 1 }[x.result] ?? 0) : x.result,
+            names: flip ? [x.bName ?? 'You', x.aName] : [x.aName, x.bName ?? 'Opponent'] });
+        } else if (x.status === 'open' && !shown.current) {
+          show({ kind: 'duel', waiting: x.aPlayer === me?.id ? 'Waiting for your opponent…' : `${x.aName} is waiting for you` });
         }
         if (x.status === 'awaiting_reveal' && mine && x.aPlayer === me?.id && !revealing.current) {
           revealing.current = true;
@@ -125,19 +132,20 @@ export function DuelView({ id, me, explorer, onClose, onChange }) {
     try { if (navigator.share) await navigator.share({ title: 'PassBCH.cash', text: `${d.aName} challenges you to rock-paper-scissors for ${sats(d.stake)}`, url: link }); else { await navigator.clipboard.writeText(link); setCopied(true); } } catch { /* cancelled */ }
   };
   let verdict = null;
-  if (d.status === 'settled' && d.bPlayer) {
+  if (d.status === 'settled' && d.bPlayer && !revealed) verdict = <div className="verdict">The host is calling it… watch the table</div>;
+  else if (d.status === 'settled' && d.bPlayer) {
     const meWon = (d.result === 1 && iAmA) || (d.result === 2 && iAmB);
-    verdict = d.result === 0 ? <div className="verdict draw">🤝 Draw — stakes returned</div>
-      : (iAmA || iAmB) ? <div className={`verdict ${meWon ? 'win' : 'lose'}`}>{meWon ? `🏆 You win ${sats(2 * d.stake)}!` : `💀 You lose ${sats(d.stake)}`}</div>
+    verdict = d.result === 0 ? <div className="verdict draw">Draw — stakes returned</div>
+      : (iAmA || iAmB) ? <div className={`verdict ${meWon ? 'win' : 'lose'}`}>{meWon ? `You win ${sats(2 * d.stake)}!` : `You lose ${sats(d.stake)}`}</div>
       : <div className="verdict">{d.result === 1 ? d.aName : d.bName} wins {sats(2 * d.stake)}</div>;
   }
   return (
     <div className="card duel">
-      <div className="row between"><h2>Duel for {sats(d.stake)}</h2><button className="link" onClick={onClose}>close ✕</button></div>
+      <div className="row between"><h2>Duel for {sats(d.stake)}</h2><button className="link" onClick={onClose}>close</button></div>
       <div className="arena">
-        <div className="fighter"><div className="who">{d.aName}</div><div className={`hand ${d.aMove ? 'shown' : 'hidden'}`}>{d.aMove ? EMOJI[d.aMove] : '🔒'}</div></div>
+        <div className="fighter"><div className="who">{d.aName}</div><div className={`hand ${d.aMove ? 'shown' : 'hidden'}`}>{d.aMove && (revealed || d.status !== 'settled') ? <MoveIcon move={d.aMove} size={56} /> : <span className="lock">?</span>}</div></div>
         <div className="vs">VS</div>
-        <div className="fighter"><div className="who">{d.bName ?? 'waiting…'}</div><div className={`hand ${d.bMove ? 'shown' : 'hidden'}`}>{d.bMove ? EMOJI[d.bMove] : '❔'}</div></div>
+        <div className="fighter"><div className="who">{d.bName ?? 'waiting…'}</div><div className={`hand ${d.bMove ? 'shown' : 'hidden'}`}>{d.bMove && (revealed || d.status !== 'settled') ? <MoveIcon move={d.bMove} size={56} /> : <span className="lock">?</span>}</div></div>
       </div>
       {verdict}
       {d.status === 'open' && iAmA && (

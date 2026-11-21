@@ -35,8 +35,8 @@ export function UpDown({ rules, player, explorer, onChange }) {
   const live = mine.find((b) => !b.outcome);
 
   return (
-    <div className="predict">
-      <div className="mainbox">
+    <div className="predict gamelayout">
+      <div className="mainbox stagecol">
         <Stage3D game="updown" height="clamp(280px, 42vw, 460px)">
           <div className="pricehud">
             <span className="muted small">BCH / USD · live</span>
@@ -45,7 +45,10 @@ export function UpDown({ rules, player, explorer, onChange }) {
           </div>
         </Stage3D>
       </div>
-      <div className="chips center-row">
+      <div className="col">
+      <div className="card">
+      <h2>Pick your stake</h2>
+      <div className="chips">
         {rules.stakes.map((s) => <button key={s} type="button" className={`chip ${stake === s ? 'on' : ''}`} disabled={s > total} onClick={() => setStake(s)}>{sats(s)}</button>)}
       </div>
       <div className="udbtns">
@@ -62,6 +65,7 @@ export function UpDown({ rules, player, explorer, onChange }) {
           </div>
         </div>
       )}
+      </div>
       {live && <p className="center livebet">Your bet: {live.side === 'up' ? '▲ UP' : '▼ DOWN'} {sats(live.stake)} · {now < Number(live.round_start) ? `starts in ${clock(Number(live.round_start) - now)}` : now < Number(live.round_start) + 60 ? `LIVE · ${clock(Number(live.round_start) + 60 - now)} left` : 'settling…'}</p>}
       {mine.length > 0 && (
         <div className="card">
@@ -78,6 +82,7 @@ export function UpDown({ rules, player, explorer, onChange }) {
           </ul>
         </div>
       )}
+      </div>
     </div>
   );
 }
