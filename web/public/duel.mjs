@@ -17,7 +17,7 @@ const width = (s) => [...strip(s)].reduce((n, ch) => n + (/[\u{1F300}-\u{1FAFF}\
 const pad = (s, n) => s + ' '.repeat(Math.max(0, n - width(s)));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const sats = (n) => `${(Number(n ?? 0) / 1e8).toFixed(8).replace(/0+$/, '').replace(/\.$/, '')} BCH`;
-export const VERSION = '2026.11.21-3'; // must match CLIENT_VERSION in api/duel.mjs
+export const VERSION = '2026.11.21-4'; // must match CLIENT_VERSION in api/duel.mjs
 
 // ---------- input (works for people typing and for piped input) ----------
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -58,7 +58,7 @@ function logo() {
   const cols = [cyan, cyan, mag, mag, gold];
   if (W() >= 60) art.forEach((l, i) => console.log('  ' + cols[i](l) + (i === 4 ? dim('  .cash') : '')));
   else console.log('  ' + bold(cyan('◆ PassBCH')) + dim('.cash'));
-  console.log(dim('  play while your AI thinks · real Bitcoin Cash · every result on chain\n'));
+  console.log(dim('  play while your AI thinks · Bitcoin Cash · every result on chain\n'));
 }
 /** Redraw a block of lines in place (animation). */
 let drawn = 0;
