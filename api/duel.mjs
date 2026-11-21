@@ -41,6 +41,7 @@ const routes = {
     return S.createPlayer({ name: b.name, ref: b.ref, ipHash: ip ? sha256(`ip:${process.env.HOUSE_SECRET}:${ip}`) : null });
   },
   async me(req) { await S.sweep(); return S.me(tokenOf(req)); },
+  async login(req, b) { return S.login(b.code); },
   async create(req, b) { return S.createDuel(tokenOf(req), b); },
   async join(req, b) { return S.joinDuel(tokenOf(req), b); },
   async reveal(req, b) { const r = await S.reveal(tokenOf(req), b); await recordSoon(); return r; },

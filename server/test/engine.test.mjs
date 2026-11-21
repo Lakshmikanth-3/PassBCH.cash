@@ -38,9 +38,9 @@ describe('money', () => {
     expect(() => E.takeStake({ bonus: 400, cash: 0 }, 2500)).toThrow(/insufficient/);
     expect(() => E.takeStake({ bonus: 9999, cash: 0 }, 777)).toThrow(/not allowed/);
   });
-  test('winner takes the whole pot as cash; money is conserved', () => {
+  test('winner takes the whole pot in the staked buckets; money is conserved', () => {
     const a = { fromBonus: 1000, fromCash: 0 }, b = { fromBonus: 200, fromCash: 800 };
-    expect(E.settle(2, 1000, a, b)).toEqual([{ side: 'b', bonus: 0, cash: 2000 }]);
+    expect(E.settle(2, 1000, a, b)).toEqual([{ side: 'b', bonus: 1200, cash: 800 }]);
     const d = E.settle(0, 1000, a, b);
     expect(d.reduce((s, c) => s + c.bonus + c.cash, 0)).toBe(2000);
     expect(d[0]).toEqual({ side: 'a', bonus: 1000, cash: 0 });
@@ -128,5 +128,20 @@ describe('AI pass or fail', () => {
   });
   test('on-chain record is 60 bytes', () => {
     expect(E.aiRecordBytes({ id: 'ab'.repeat(16), pass: true, passed: 14, total: 14, taskIdx: 78, modelIdx: 0, transcriptHash: 'cd'.repeat(32) }).length).toBe(60);
+  });
+});
+
+describe('anti-abuse', () => {
+  test('two bonus-only accounts dueling each other produce no withdrawable cash', () => {
+    const a = { fromBonus: 25000, fromCash: 0 }, b = { fromBonus: 25000, fromCash: 0 };
+    for (const r of [1, 2]) expect(E.settle(r, 25000, a, b)[0].cash).toBe(0);
+  });
+  test('beating the House Bot still pays its cash stake', () => {
+    expect(E.settle(1, 5000, { fromBonus: 5000, fromCash: 0 }, { fromBonus: 0, fromCash: 5000 })).toEqual([{ side: 'a', bonus: 5000, cash: 5000 }]);
+  });
+  test('wagering rule: 2x bonus must be staked before withdrawing', () => {
+    expect(E.withdrawAllowed({ wagered: 0, bonusReceived: 25000 })).toEqual({ ok: false, need: 50000, left: 50000 });
+    expect(E.withdrawAllowed({ wagered: 50000, bonusReceived: 25000 }).ok).toBe(true);
+    expect(E.withdrawAllowed({ wagered: 0, bonusReceived: 0 }).ok).toBe(true); // depositors without bonus can always withdraw
   });
 });

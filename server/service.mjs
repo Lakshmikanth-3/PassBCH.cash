@@ -15,7 +15,7 @@ async function playerByToken(c, token, lock = false) {
   return rows[0];
 }
 const pub = (p) => ({ id: p.id, name: p.name, refCode: p.ref_code, bonus: Number(p.bonus), cash: Number(p.cash),
-  wins: p.wins, losses: p.losses, draws: p.draws, wonSats: Number(p.won_sats) });
+  wins: p.wins, losses: p.losses, draws: p.draws, wonSats: Number(p.won_sats), wagered: Number(p.wagered ?? 0) });
 
 export async function createPlayer({ name, ref, ipHash }) {
   const clean = E.cleanName(name);
@@ -46,7 +46,8 @@ export async function me(token) {
   const p = await playerByToken(c, token);
   const { rows } = await c.query(`select id, stake, created_s, joined_s, result, winner, a_player, b_player, vs_bot, settled_at from duels
     where (a_player=$1 or b_player=$1) and settled_at is null order by created_s desc limit 10`, [p.id]);
-  return { player: pub(p), openDuels: rows };
+  const { rows: [{ got }] } = await c.query('select coalesce(sum(sats),0)::bigint got from bonus_grants where player_id=$1', [p.id]);
+  return { player: pub(p), openDuels: rows, withdraw: E.withdrawAllowed({ wagered: Number(p.wagered), bonusReceived: Number(got) }) };
 }
 
 /** Create a duel: the move is sent only as a commitment; the salt stays on the player's device. */
@@ -57,7 +58,7 @@ export async function createDuel(token, { stake, commit, vsBot }) {
     const p = await playerByToken(c, token, true);
     let split; try { split = E.takeStake({ bonus: Number(p.bonus), cash: Number(p.cash) }, stake); } catch (e) { throw new UserError(e.message); }
     const id = randomBytes(16).toString('hex');
-    await c.query('update players set bonus = bonus - $1, cash = cash - $2 where id = $3', [split.fromBonus, split.fromCash, p.id]);
+    await c.query('update players set bonus = bonus - $1, cash = cash - $2, wagered = wagered + $1 + $2 where id = $3', [split.fromBonus, split.fromCash, p.id]);
     await c.query(`insert into duels (id, stake, a_player, a_commit, a_from_bonus, a_from_cash, vs_bot, created_s) values ($1,$2,$3,$4,$5,$6,$7,$8)`,
       [id, stake, p.id, commit, split.fromBonus, split.fromCash, !!vsBot, nowS()]);
     if (vsBot) await joinAs(c, id, 'house');
@@ -79,7 +80,7 @@ async function joinAs(c, id, who, move) {
     if (!E.isMove(move)) throw new UserError('pick rock, paper or scissors');
   }
   let split; try { split = E.takeStake({ bonus: Number(b.bonus), cash: Number(b.cash) }, d.stake); } catch (e) { throw new UserError(e.message); }
-  await c.query('update players set bonus = bonus - $1, cash = cash - $2 where id = $3', [split.fromBonus, split.fromCash, b.id]);
+  await c.query('update players set bonus = bonus - $1, cash = cash - $2, wagered = wagered + $1 + $2 where id = $3', [split.fromBonus, split.fromCash, b.id]);
   await c.query(`update duels set b_player=$1, b_move=$2, b_from_bonus=$3, b_from_cash=$4, joined_s=$5, bot_commit=$6 where id=$7`,
     [b.id, move, split.fromBonus, split.fromCash, nowS(), who === 'house' ? E.botSeedCommit(HOUSE_SECRET(), id) : null, id]);
 }
@@ -169,6 +170,9 @@ export async function requestWithdrawal(token, { address, amount }) {
   if (!/^(bchtest|bitcoincash):[qp][0-9a-z]{40,}$/.test(address ?? '')) throw new UserError('enter a valid BCH address');
   return tx(async (c) => {
     const p = await playerByToken(c, token, true);
+    const { rows: [{ got }] } = await c.query('select coalesce(sum(sats),0)::bigint got from bonus_grants where player_id=$1', [p.id]);
+    const rule = E.withdrawAllowed({ wagered: Number(p.wagered), bonusReceived: Number(got) });
+    if (!rule.ok) throw new UserError(`play ${rule.left.toLocaleString()} more sats first: free bonus must be played ${E.WAGER_MULTIPLE}x before withdrawing`);
     let q; try { q = E.withdrawQuote(Number(p.cash), Number(amount)); } catch (e) { throw new UserError(e.message); }
     await c.query('update players set cash = cash - $1 where id = $2', [q.amount, p.id]);
     const { rows: [w] } = await c.query('insert into withdrawals (player_id, address, amount, fee) values ($1,$2,$3,$4) returning id', [p.id, address, q.amount, q.fee]);
@@ -216,7 +220,7 @@ export async function placeBet(token, { side, stake }) {
     let split; try { split = E.takeStake({ bonus: Number(p.bonus), cash: Number(p.cash) }, stake); } catch (e) { throw new UserError(e.message); }
     const id = randomBytes(16).toString('hex');
     const round = E.nextRound(nowS());
-    await c.query('update players set bonus = bonus - $1, cash = cash - $2 where id = $3', [split.fromBonus, split.fromCash, p.id]);
+    await c.query('update players set bonus = bonus - $1, cash = cash - $2, wagered = wagered + $1 + $2 where id = $3', [split.fromBonus, split.fromCash, p.id]);
     await c.query('insert into bets (id, player_id, side, stake, from_bonus, from_cash, round_start) values ($1,$2,$3,$4,$5,$6,$7)', [id, p.id, side, stake, split.fromBonus, split.fromCash, round]);
     return { id, roundStart: round, roundEnd: E.roundEnds(round) };
   });
@@ -342,7 +346,7 @@ export async function aiBet(token, { roundId, side, stake }) {
     const o = E.aiOdds(await modelRecord(c, r.model));
     const odds = side === 'pass' ? o.passPct : o.failPct;
     const id = randomBytes(16).toString('hex');
-    await c.query('update players set bonus = bonus - $1, cash = cash - $2 where id = $3', [split.fromBonus, split.fromCash, p.id]);
+    await c.query('update players set bonus = bonus - $1, cash = cash - $2, wagered = wagered + $1 + $2 where id = $3', [split.fromBonus, split.fromCash, p.id]);
     await c.query('insert into ai_bets (id, round_id, player_id, side, stake, from_bonus, from_cash, odds_pct) values ($1,$2,$3,$4,$5,$6,$7,$8)', [id, roundId, p.id, side, stake, split.fromBonus, split.fromCash, odds]);
     return { id, oddsPct: odds };
   });
@@ -392,4 +396,12 @@ export async function claimUnrecorded(table, limit = 3) {
 export async function clearRecordTx(table, id) {
   if (!RECORDABLE[table]) throw new Error('bad table');
   await (await db()).query(`update ${table} set record_txid = null where id = $1`, [id]);
+}
+
+/** Log in on another device or terminal with the login code (the account token). */
+export async function login(code) {
+  const c = await db();
+  const p = await playerByToken(c, String(code ?? '').trim());
+  const { rows: [{ got }] } = await c.query('select coalesce(sum(sats),0)::bigint got from bonus_grants where player_id=$1', [p.id]);
+  return { player: pub(p), withdraw: E.withdrawAllowed({ wagered: Number(p.wagered), bonusReceived: Number(got) }) };
 }

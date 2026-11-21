@@ -50,7 +50,16 @@ export function takeStake({ bonus, cash }, stake) {
  */
 export function settle(result, stake, a, b) {
   if (result === 0) return [{ side: 'a', bonus: a.fromBonus, cash: a.fromCash }, { side: 'b', bonus: b.fromBonus, cash: b.fromCash }];
-  return [{ side: result === 1 ? 'a' : 'b', bonus: 0, cash: 2 * stake }];
+  // The winner takes the pot *in the same buckets it was staked in*: won bonus stays bonus (play-only).
+  // So two accounts of one person dueling each other can never turn free bonus into withdrawable cash.
+  return [{ side: result === 1 ? 'a' : 'b', bonus: a.fromBonus + b.fromBonus, cash: a.fromCash + b.fromCash }];
+}
+
+/** Wagering rule: before any withdrawal, a player must have staked at least 2x the bonus they received. */
+export const WAGER_MULTIPLE = 2;
+export function withdrawAllowed({ wagered, bonusReceived }) {
+  const need = WAGER_MULTIPLE * bonusReceived;
+  return { ok: wagered >= need, need, left: Math.max(0, need - wagered) };
 }
 
 /** Withdrawal: only cash (won or deposited) can leave; platform fee is the company's revenue. */
