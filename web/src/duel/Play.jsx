@@ -79,7 +79,7 @@ export function NewDuel({ rules, player, onCreated }) {
       <MovePicker value={move} onChange={setMove} />
       <h2>2. Pick your stake</h2>
       <div className="chips">
-        {rules.stakes.map((s) => <button key={s} type="button" className={`chip ${stake === s ? 'on' : ''}`} disabled={s > total} onClick={() => setStake(s)}>{sats(s)}</button>)}
+        {rules.stakes.map((s) => <button key={s} type="button" className={`chip ${stake === s ? 'on' : ''}`} disabled={s > total} title={s > total ? 'Not enough balance — add funds in the Vault' : undefined} onClick={() => setStake(s)}>{sats(s)}</button>)}
       </div>
       <div className="row gap">
         <button className="primary big" disabled={!move || busy || stake > total} onClick={() => start(true)}><Agents size={20} /> Play the House Bot</button>

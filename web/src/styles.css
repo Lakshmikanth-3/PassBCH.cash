@@ -241,3 +241,13 @@ select { background: #080920; color: var(--text); border: 1px solid var(--border
 .showcase { display: flex; flex-direction: column; gap: 12px; }
 .showcase .seg button svg { vertical-align: -3px; }
 .replaytag { display: inline-block; background: #0a0b1ecc; color: var(--gold); border: 1px solid #5a4512; border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 700; }
+
+/* Up/Down: compact price card that doesn't cover the chart; trend helper */
+.pricehud { padding: 8px 12px; padding-right: 60px; max-width: 300px; }
+.bigprice { font-size: clamp(22px, 3.2vw, 30px); }
+.pricehud .spark { width: 160px; height: 30px; }
+.ring { width: 40px; height: 40px; top: 8px; right: 8px; }
+.trend { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: #080920; border: 1px solid var(--border); border-radius: 12px; padding: 10px; margin-bottom: 14px; }
+.trend > div { display: flex; flex-direction: column; gap: 2px; } .trend b { font-family: var(--mono); font-size: 14px; }
+.trend p { grid-column: 1 / -1; margin: 2px 0 0; }
+@media (max-width: 640px) { .mainbox .stage-overlay { position: static; padding: 8px 0 0; } .pricehud { max-width: none; width: 100%; } .trend { grid-template-columns: 1fr 1fr; } }

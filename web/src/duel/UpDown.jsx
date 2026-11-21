@@ -16,6 +16,8 @@ export function UpDown({ rules, player, explorer, onChange }) {
   const [mine, setMine] = useState([]); const [err, setErr] = useState(null); const [busy, setBusy] = useState(false);
   const skew = useRef(0); const last = useRef(null);
   const [pts, setPts] = useState([]);
+  const [hist, setHist] = useState([]);
+  useEffect(() => { api('price', { q: '&history=1' }).then((p) => setHist(p.history ?? [])).catch(() => {}); const t = setInterval(() => api('price', { q: '&history=1' }).then((p) => setHist(p.history ?? [])).catch(() => {}), 60000); return () => clearInterval(t); }, []);
 
   useEffect(() => {
     let stop = false;
@@ -61,9 +63,10 @@ export function UpDown({ rules, player, explorer, onChange }) {
       </div>
       <div className="col">
       <div className="card">
+      <Trend hist={hist} now={px?.price} />
       <h2>Pick your stake</h2>
       <div className="chips">
-        {rules.stakes.map((s) => <button key={s} type="button" className={`chip ${stake === s ? 'on' : ''}`} disabled={s > total} onClick={() => setStake(s)}>{sats(s)}</button>)}
+        {rules.stakes.map((s) => <button key={s} type="button" className={`chip ${stake === s ? 'on' : ''}`} disabled={s > total} title={s > total ? 'Not enough balance — add funds in the Vault' : undefined} onClick={() => setStake(s)}>{sats(s)}</button>)}
       </div>
       <LowBalance player={player} rules={rules} />
       <div className="udbtns">
@@ -98,6 +101,26 @@ export function UpDown({ rules, player, explorer, onChange }) {
         </div>
       )}
       </div>
+    </div>
+  );
+}
+
+/** Plain-language read of the last minutes to help decide (not advice: the next minute is a coin flip). */
+function Trend({ hist, now }) {
+  if (!hist?.length || !now) return null;
+  const closes = [...hist, now];
+  const pct = (a, b) => ((b - a) / a) * 100;
+  const last5 = closes.slice(-6), last1 = closes.slice(-2);
+  const ch5 = pct(last5[0], last5.at(-1)), ch1 = pct(last1[0], last1.at(-1));
+  let ups = 0; for (let i = 1; i < last5.length; i++) if (last5[i] > last5[i - 1]) ups++;
+  const fmtp = (v) => `${v >= 0 ? '▲ +' : '▼ '}${v.toFixed(2)}%`;
+  const lean = ups >= 4 ? 'mostly up' : ups <= 1 ? 'mostly down' : 'mixed';
+  return (
+    <div className="trend">
+      <div><span className="muted small">Last 5 min</span><b className={ch5 >= 0 ? 'green' : 'red'}>{fmtp(ch5)}</b></div>
+      <div><span className="muted small">Last minute</span><b className={ch1 >= 0 ? 'green' : 'red'}>{fmtp(ch1)}</b></div>
+      <div><span className="muted small">Candles</span><b>{ups} of {last5.length - 1} up · {lean}</b></div>
+      <p className="muted small">The chart shows recent moves to help you read the market. Past minutes don't decide the next one.</p>
     </div>
   );
 }
