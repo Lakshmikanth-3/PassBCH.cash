@@ -1,4 +1,4 @@
-// Satoshi Duel HTTP API (one Vercel function). Routes: /api/duel?a=<action>
+// PassBCH.cash HTTP API (one Vercel function). Routes: /api/duel?a=<action>
 import * as S from '../server/service.mjs';
 import { RULES, sha256 } from '../server/engine.mjs';
 import { db } from '../server/db.mjs';
@@ -26,6 +26,9 @@ async function recordPending() {
     try {
       for (const d of await S.unrecorded(5)) {
         try { await timed(chain.recordDuel(d, (t) => S.setRecordTx(d.id, t)), 6000, 'record'); } catch (e) { await S.markRecordTry(d.id); console.error('record', d.id, e.message); break; }
+      }
+      for (const r of await S.unrecordedAi(3)) {
+        try { await timed(chain.recordAi(r, (t) => S.setAiRecord(r.id, t)), 6000, 'ai record'); } catch (e) { await S.markAiRecordTry(r.id); console.error('ai record', r.id, e.message); break; }
       }
       for (const b of await S.unrecordedBets(5)) {
         try { await timed(chain.recordBet(b, (t) => S.setBetRecord(b.id, t)), 6000, 'bet record'); } catch (e) { await S.markBetRecordTry(b.id); console.error('bet record', b.id, e.message); break; }
@@ -58,6 +61,16 @@ const routes = {
   async price() { const now = Math.floor(Date.now() / 1000); return { ...(await timed(spot(), 6000, 'price')), now, nextRound: nextRound(now), payoutPct: UPDOWN.payoutPct }; },
   async bet(req, b) { return S.placeBet(tokenOf(req), b); },
   async bets(req) { await within(S.settleBets(), 8000); await recordSoon(); return { mine: tokenOf(req) ? await S.myBets(tokenOf(req)) : [], feed: await S.betFeed() }; },
+  async ai(req) { const st = await S.aiState(tokenOf(req)); await recordSoon(); return st; },
+  async aibet(req, b) { return S.aiBet(tokenOf(req), b); },
+  // Runner-only routes (the AI sandbox runs on the operator's machine), protected by a shared secret header.
+  async airunner(req, b) {
+    if (!process.env.AI_RUNNER_KEY || req.headers['x-runner-key'] !== process.env.AI_RUNNER_KEY) throw new S.UserError('forbidden', 403);
+    if (b.op === 'open') return S.aiOpenRound({ tasks: b.tasks, tip: await timed(chain.tip(), 10000, 'tip') });
+    if (b.op === 'next') return { job: await S.aiNextJob() };
+    if (b.op === 'result') return S.aiResult(b);
+    throw new S.UserError('bad op');
+  },
   async walletutxos(req, b) {
     const addrs = Array.isArray(b.addresses) ? b.addresses.slice(0, 40).filter((a) => /^(bchtest|bitcoincash):q[0-9a-z]{40,}$/.test(a)) : [];
     const p = chain.provider();
