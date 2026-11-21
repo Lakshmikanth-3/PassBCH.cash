@@ -129,6 +129,35 @@ async function updown(rules) {
   }
 }
 
+async function aiGame(rules) {
+  let st = await api('ai');
+  const cur = st.current;
+  if (!cur || cur.status !== 'open' || st.now >= Number(cur.bet_close_s)) {
+    console.log(dim(cur ? `\n  ${cur.model.replace('openai/', '')} is coding "${cur.slug}" right now. Next round in ~2 min.` : '\n  No AI round open right now. Try again in a minute.'));
+    return;
+  }
+  const rec = st.records[cur.model];
+  console.log(bold('\n  🤖 AI Pass or Fail') + `  ${bold(cur.model.replace('openai/', ''))} vs ${cyan(`"${cur.slug}"`)} ${dim(`(exercise #${cur.task_idx}, block ${cur.block_height}, record ${rec.pass}/${rec.n})`)}`);
+  console.log(`  PASS pays ${green((rec.passPct / 100).toFixed(2) + 'x')} · FAIL pays ${red((rec.failPct / 100).toFixed(2) + 'x')} · betting closes in ${Number(cur.bet_close_s) - st.now}s`);
+  const side = (await ask('  [p]ass or [f]ail? ')).trim().toLowerCase()[0];
+  if (side !== 'p' && side !== 'f') return;
+  const stake = await pickStake(rules);
+  const b = await api('aibet', { body: { roundId: cur.id, side: side === 'p' ? 'pass' : 'fail', stake } });
+  process.stdout.write(dim(`  ${side === 'p' ? '✅ PASS' : '❌ FAIL'} ${sats(stake)} @ ${(b.oddsPct / 100).toFixed(2)}x · waiting for the AI `));
+  for (;;) {
+    await sleep(5000);
+    st = await api('ai');
+    const r = st.recent.find((x) => x.id === cur.id);
+    if (r && (r.status === 'done' || r.status === 'void')) {
+      const m = st.mine.find((x) => x.id === b.id);
+      console.log(`\n  ${r.status === 'void' ? yellow('Round void — refunded') : r.pass ? green(`AI PASSED ${r.passed}/${r.total}`) : red(`AI FAILED ${r.passed}/${r.total}`)}`);
+      if (m?.outcome === 'win') console.log(green(bold(`  🏆 You win ${sats(m.payout)}!`))); else if (m?.outcome === 'lose') console.log(red(`  💀 You lose ${sats(stake)}`));
+      return;
+    }
+    process.stdout.write(dim('.'));
+  }
+}
+
 async function wallet(rules) {
   const { player } = await api('me');
   console.log(`\n  ${bold(player.name)}  bonus ${yellow(sats(player.bonus))} · withdrawable ${green(sats(player.cash))} · ${player.wins}W ${player.losses}L`);
@@ -152,7 +181,7 @@ async function main() {
   if (cmd === 'join' && arg) { await join(arg); return; }
   for (;;) {
     console.log(bold(`\n  🎲 PassBCH.cash`) + dim(`  ${cfg.name} · ${network}`));
-    const choice = (await ask(`  [1] Play the House Bot  [2] Challenge a friend  [3] Join a duel  [4] Leaderboard  [5] Wallet  [6] Up or Down  [q] Quit\n  > `)).trim();
+    const choice = (await ask(`  [1] Play the House Bot  [2] Challenge a friend  [3] Join a duel  [4] Leaderboard  [5] Wallet  [6] Up or Down  [7] AI Pass/Fail  [q] Quit\n  > `)).trim();
     try {
       if (choice === '1') await play({ vsBot: true, rules });
       else if (choice === '2') await play({ vsBot: false, rules });
@@ -160,6 +189,7 @@ async function main() {
       else if (choice === '4') await board();
       else if (choice === '5') await wallet(rules);
       else if (choice === '6') await updown(rules);
+      else if (choice === '7') await aiGame(rules);
       else if (choice === 'q') break;
     } catch (e) { console.log(red(`  ✗ ${e.message}`)); }
   }
