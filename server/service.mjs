@@ -158,7 +158,12 @@ export async function openDuels() {
 
 export async function leaderboard() {
   const c = await db();
-  const top = (await c.query(`select name, wins, losses, draws, won_sats from players where not is_house and (wins+losses+draws) > 0 order by won_sats desc, wins desc limit 25`)).rows;
+  // Everything below is derived from settled duels only, so the header, W-L-D and the list always agree.
+  const top = (await c.query(`with s as (select * from duels where settled_at is not null and b_player is not null),
+      side as (select a_player pid, case when result = 1 then 'w' when result = 0 then 'd' else 'l' end r, case when result = 1 then stake else 0 end won from s
+               union all select b_player, case when result = 2 then 'w' when result = 0 then 'd' else 'l' end, case when result = 2 then stake else 0 end from s)
+    select p.name, count(*) filter (where r='w')::int wins, count(*) filter (where r='l')::int losses, count(*) filter (where r='d')::int draws, sum(won)::bigint won_sats
+    from side join players p on p.id = side.pid where not p.is_house group by p.name order by won_sats desc, wins desc limit 25`)).rows.map((r) => ({ ...r, won_sats: Number(r.won_sats) }));
   const feed = (await c.query(`select d.id, d.stake, d.result, d.a_move, d.b_move, d.settle_reason, d.record_txid, d.settled_at, pa.name a_name, pb.name b_name, w.name winner_name
     from duels d join players pa on pa.id=d.a_player left join players pb on pb.id=d.b_player left join players w on w.id=d.winner
     where d.settled_at is not null and d.b_player is not null order by d.settled_at desc limit 30`)).rows;
