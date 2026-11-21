@@ -8,8 +8,8 @@ const STAGES = [['rps', 'Rock · Paper · Scissors', Rock], ['updown', 'Up or Do
 
 /** Landing showcase: the three 3D studios behind tabs. Rotates on its own until you pick one. */
 export default function Showcase({ onPlay }) {
-  const [i, setI] = useState(0); const [pinned, setPinned] = useState(false); const replayed = useRef(false);
-  useEffect(() => { if (pinned) return undefined; const t = setInterval(() => setI((x) => (x + 1) % 3), 14000); return () => clearInterval(t); }, [pinned]);
+  const [i, setI] = useState(0); const [pinned, setPinned] = useState(false); const [hover, setHover] = useState(false); const replayed = useRef(false);
+  useEffect(() => { if (pinned || hover) return undefined; const t = setInterval(() => setI((x) => (x + 1) % 3), 20000); return () => clearInterval(t); }, [pinned, hover]);
   const game = STAGES[i][0];
   useEffect(() => {
     if (game !== 'pf') return undefined;
@@ -20,7 +20,7 @@ export default function Showcase({ onPlay }) {
     return () => clearTimeout(t);
   }, [game, i]);
   return (
-    <div className="showcase">
+    <div className="showcase" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
       <div className="seg three">{STAGES.map(([k, l, I], n) => <button key={k} className={n === i ? 'on' : ''} onClick={() => { setI(n); setPinned(true); }}><I size={16} /> {l}</button>)}</div>
       <Stage3D key={game} game={game} height="clamp(300px, 48vw, 520px)">
         {game === 'pf' && <span className="replaytag">Replay of the latest real fight</span>}
