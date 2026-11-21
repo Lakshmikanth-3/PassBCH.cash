@@ -1,7 +1,7 @@
 // PassBCH.cash HTTP API (one Vercel function). Routes: /api/duel?a=<action>
 import * as S from '../server/service.mjs';
 import { RULES, sha256 } from '../server/engine.mjs';
-import { db } from '../server/db.mjs';
+import { db, tx as dbTx } from '../server/db.mjs';
 import * as chain from '../server/chain.mjs';
 import { spot, recentCloses, rates, swapQuote } from '../server/price.mjs';
 import { nextRound, UPDOWN } from '../server/engine.mjs';
@@ -15,6 +15,12 @@ async function body(req) {
   if (req.body && typeof req.body === 'object') return req.body;
   let s = ''; for await (const ch of req) s += ch; try { return JSON.parse(s || '{}'); } catch { return {}; }
 }
+
+/**
+ * One house-wallet send at a time across all server instances: two sends picking the same coin would conflict
+ * and one would silently never confirm. The lock is transaction-scoped, so it is released even if an instance dies.
+ */
+const serialSend = (fn) => dbTx(async (c) => { await c.query('select pg_advisory_xact_lock(4242)'); return fn(); });
 
 const within = (p, ms) => Promise.race([p, new Promise((r) => setTimeout(r, ms))]);
 const timed = (p, ms, what) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(`${what} timed out`)), ms))]);
@@ -30,7 +36,7 @@ async function recordPending() {
   ];
   for (const [table, send] of jobs) {
     for (const row of await S.claimUnrecorded(table, 3)) {
-      try { await timed(send(row), 6000, `${table} record`); } catch (e) {
+      try { await timed(serialSend(() => send(row)), 9000, `${table} record`); } catch (e) {
         if (!/timed out/.test(e.message)) await S.clearRecordTx(table, row.id); // definite failure: retry later; a timeout may still land
         console.error('record', table, row.id, e.message); return;
       }
@@ -114,7 +120,7 @@ const routes = {
     const q = await S.requestWithdrawal(tokenOf(req), b);
     let signed = null;
     try {
-      const txid = await timed(chain.payWithdrawal(q.address, q.send, async (t) => { signed = t; await S.markWithdrawal(q.withdrawalId, { txid: t, status: 'broadcasting' }); }), 15000, 'withdrawal broadcast');
+      const txid = await timed(serialSend(() => chain.payWithdrawal(q.address, q.send, async (t) => { signed = t; await S.markWithdrawal(q.withdrawalId, { txid: t, status: 'broadcasting' }); })), 20000, 'withdrawal broadcast');
       await S.markWithdrawal(q.withdrawalId, { txid, status: 'sent' });
       return { ...q, txid };
     } catch (e) {
