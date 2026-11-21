@@ -90,7 +90,7 @@ export function FightView({ id, me, explorer, onClose, onChange }) {
             <div><b className="a">{m.aName}</b><p>{m.aPrompt}</p></div>
             <div><b className="b">{m.bName}</b><p>{m.bPrompt}</p></div>
           </div>
-          <p className="muted small">{m.recordTxid ? <a href={`${explorer}${m.recordTxid}`} target="_blank" rel="noreferrer">On-chain record ↗</a> : 'Writing on-chain record…'} · rules are enforced by code, not by an AI judge.</p>
+          <p className="muted small">{m.recordTxid ? <><a href={`${explorer}${m.recordTxid}`} target="_blank" rel="noreferrer">On-chain record ↗</a> · <a href={`/verify/${m.recordTxid}`}>Verify ✓</a></> : 'Writing on-chain record…'} · rules are enforced by code, not by an AI judge.</p>
         </>
       )}
       {err && <p className="err">{err}</p>}

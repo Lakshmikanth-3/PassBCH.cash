@@ -7,7 +7,7 @@ const GAME_NAME = { rps: 'Rock · Paper · Scissors', updown: 'Up or Down', pf: 
 const ago = (t) => { const s = Math.max(1, Math.floor((Date.now() - new Date(t).getTime()) / 1000)); return s < 60 ? `${s}s ago` : s < 3600 ? `${Math.floor(s / 60)}m ago` : s < 86400 ? `${Math.floor(s / 3600)}h ago` : `${Math.floor(s / 86400)}d ago`; };
 
 /** Worldwide winners across every game: totals, top winners, biggest and latest wins (each with its on-chain record). */
-export function Winners({ explorer }) {
+export function Winners({ explorer, go }) {
   const [game, setGame] = useState('all'); const [period, setPeriod] = useState('all');
   const [w, setW] = useState(null); const [err, setErr] = useState(null);
   const { rates, ccy } = useFx();
@@ -16,7 +16,8 @@ export function Winners({ explorer }) {
     const load = () => api('winners', { q: `&game=${game}&period=${period}` }).then((x) => !stop && setW(x)).catch((e) => !stop && setErr(e.message));
     load(); const t = setInterval(load, 8000); return () => { stop = true; clearInterval(t); };
   }, [game, period]);
-  const tx = (t) => (t ? <a href={`${explorer}${t}`} target="_blank" rel="noreferrer">tx ↗</a> : <span className="muted small">recording…</span>);
+  const tx = (t) => (t ? <a href={`/verify/${t}`}>Verify ✓</a> : <span className="muted small">recording…</span>);
+  const who = (n) => <a href={`/u/${encodeURIComponent(n)}`}>{n}</a>;
   return (
     <main className="wrap">
       <h2 className="screen-title"><Trophy size={26} /> Worldwide winners</h2>
@@ -39,17 +40,17 @@ export function Winners({ explorer }) {
               <h2>Top winners</h2>
               {w.top.length === 0 ? <p className="muted">No wins in this period yet — be the first.</p> : (
                 <table className="lb"><thead><tr><th>#</th><th>Player</th><th>Wins</th><th>Won</th></tr></thead>
-                  <tbody>{w.top.map((t, i) => <tr key={t.name}><td className={i < 3 ? 'medal m' + i : ''}>{i + 1}</td><td>{t.name}</td><td>{t.wins}</td><td className="green">{sats(t.won)}<div className="muted small">{fiat(t.won, rates, ccy)}</div></td></tr>)}</tbody></table>
+                  <tbody>{w.top.map((t, i) => <tr key={t.name}><td className={i < 3 ? 'medal m' + i : ''}>{i + 1}</td><td>{who(t.name)}</td><td>{t.wins}</td><td className="green">{sats(t.won)}<div className="muted small">{fiat(t.won, rates, ccy)}</div></td></tr>)}</tbody></table>
               )}
             </div>
             <div className="col">
               <div className="card">
                 <h2>Biggest wins</h2>
-                {w.biggest.length === 0 ? <p className="muted">Nothing yet.</p> : <ul className="feed">{w.biggest.map((x, i) => <li key={i}><span><b>{x.name}</b> <span className="muted small">{GAME_NAME[x.game]}</span></span><b className="green">{sats(x.amount)}</b>{tx(x.tx)}</li>)}</ul>}
+                {w.biggest.length === 0 ? <p className="muted">Nothing yet.</p> : <ul className="feed">{w.biggest.map((x, i) => <li key={i}><span><b>{who(x.name)}</b> <span className="muted small">{GAME_NAME[x.game]}</span></span><b className="green">{sats(x.amount)}</b>{tx(x.tx)}</li>)}</ul>}
               </div>
               <div className="card">
                 <h2><span className="live" /> Latest wins</h2>
-                {w.latest.length === 0 ? <p className="muted">Nothing yet.</p> : <ul className="feed">{w.latest.map((x, i) => <li key={i}><span><b>{x.name}</b> <span className="muted small">{GAME_NAME[x.game]} · {ago(x.at)}</span></span><b className="green">{sats(x.amount)}</b>{tx(x.tx)}</li>)}</ul>}
+                {w.latest.length === 0 ? <p className="muted">Nothing yet.</p> : <ul className="feed">{w.latest.map((x, i) => <li key={i}><span><b>{who(x.name)}</b> <span className="muted small">{GAME_NAME[x.game]} · {ago(x.at)}</span></span><b className="green">{sats(x.amount)}</b>{tx(x.tx)}</li>)}</ul>}
               </div>
             </div>
           </div>

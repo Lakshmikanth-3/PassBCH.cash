@@ -172,7 +172,7 @@ export function DuelView({ id, me, explorer, onClose, onChange }) {
         <p className="muted small">
           {d.settleReason === 'reveal timeout' ? 'Creator did not reveal in time → forfeit. ' : ''}
           Commitment <code>{d.aCommit.slice(0, 16)}…</code> = sha256(move:salt).{' '}
-          {d.recordTxid ? <a href={`${explorer}${d.recordTxid}`} target="_blank" rel="noreferrer">On-chain record ↗</a> : 'Writing on-chain record…'}
+          {d.recordTxid ? <><a href={`${explorer}${d.recordTxid}`} target="_blank" rel="noreferrer">On-chain record ↗</a> · <a href={`/verify/${d.recordTxid}`}>Verify ✓</a></> : 'Writing on-chain record…'}
         </p>
       )}
       {err && <p className="err">{err}</p>}

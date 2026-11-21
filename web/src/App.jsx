@@ -6,6 +6,7 @@ import { Signup, NewDuel, DuelView } from './duel/Play.jsx';
 import { Wallet, Leaderboard, Terminal } from './duel/Side.jsx';
 import { Vault, AddFunds, Withdraw } from './duel/Funds.jsx';
 import { Winners, WinnersStrip } from './duel/Winners.jsx';
+import { Verify, Profile, Rules } from './duel/Proof.jsx';
 import { Trophy } from './icons.jsx';
 import { useFx, fiat } from './duel/money.js';
 import { UpDown, UpDownFeed } from './duel/UpDown.jsx';
@@ -14,7 +15,7 @@ import { Rock, Chart, Agents, Hourglass, Grid, Wallet as WalletIcon, Logout } fr
 import Stage3D from './three/Stage3D.jsx';
 
 // Real pages: /  /login  /games  /games/rps  /games/predict  /games/ai  /wallet  /duel/<id>
-const PATHS = { '': '/', login: '/login', games: '/games', rps: '/games/rps', predict: '/games/predict', pf: '/games/prompt-fight', wallet: '/wallet', add: '/wallet/add', withdraw: '/wallet/withdraw', winners: '/winners' };
+const PATHS = { '': '/', login: '/login', games: '/games', rps: '/games/rps', predict: '/games/predict', pf: '/games/prompt-fight', wallet: '/wallet', add: '/wallet/add', withdraw: '/wallet/withdraw', winners: '/winners', verify: '/verify', rules: '/rules' };
 const readRoute = () => {
   if (typeof location === 'undefined') return { route: '' };
   const q = new URLSearchParams(location.search);
@@ -24,12 +25,16 @@ const readRoute = () => {
   if (m) return { route: 'rps', duel: m[1] };
   const f = path.match(/^\/fight\/([0-9a-f]{32})$/);
   if (f) return { route: 'pf', fight: f[1] };
+  const v = path.match(/^\/verify\/([0-9a-f]{64})$/);
+  if (v) return { route: 'verify', tx: v[1] };
+  const u = path.match(/^\/u\/([^/]+)$/);
+  if (u) return { route: 'profile', who: decodeURIComponent(u[1]) };
   const legacy = location.hash.replace(/^#\/?/, ''); // old #/games links
   if (legacy && PATHS[legacy]) return { route: legacy };
   const route = Object.keys(PATHS).find((k) => PATHS[k] === path);
   return { route: route ?? (path === '/' ? '' : 'notfound') };
 };
-const TITLES = { '': 'PassBCH.cash — play while your AI thinks', login: 'Log in · PassBCH.cash', games: 'Games · PassBCH.cash', rps: 'Rock Paper Scissors · PassBCH.cash', predict: 'Up or Down · PassBCH.cash', pf: 'Prompt Fight · PassBCH.cash', wallet: 'Vault · PassBCH.cash', add: 'Add funds · PassBCH.cash', withdraw: 'Withdraw · PassBCH.cash', winners: 'Worldwide winners · PassBCH.cash', notfound: 'Page not found · PassBCH.cash' };
+const TITLES = { '': 'PassBCH.cash — play while your AI thinks', login: 'Log in · PassBCH.cash', games: 'Games · PassBCH.cash', rps: 'Rock Paper Scissors · PassBCH.cash', predict: 'Up or Down · PassBCH.cash', pf: 'Prompt Fight · PassBCH.cash', wallet: 'Vault · PassBCH.cash', add: 'Add funds · PassBCH.cash', withdraw: 'Withdraw · PassBCH.cash', winners: 'Worldwide winners · PassBCH.cash', verify: 'Verify a result · PassBCH.cash', rules: 'Rules & fairness · PassBCH.cash', profile: 'Player · PassBCH.cash', notfound: 'Page not found · PassBCH.cash' };
 
 export const GAMES = [
   { id: 'rps', Icon: Rock, title: 'Rock · Paper · Scissors', line: 'Sit at the table with the host. Beat a friend or the House Bot. Winner takes the pot.', tag: 'PvP · 2 min', color: 'gold' },
@@ -108,7 +113,7 @@ function GameSelect({ go }) {
 export default function App() {
   const [cfg, setCfg] = useState(null);
   const [me, setMe] = useState(null);
-  const [{ route, duel, fight }, setNav] = useState(readRoute);
+  const [{ route, duel, fight, tx, who }, setNav] = useState(readRoute);
   const [err, setErr] = useState(null);
   const [hydrated, setHydrated] = useState(() => !session.get()?.token);
   const ref = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('ref');
@@ -119,13 +124,17 @@ export default function App() {
   }, []);
   useEffect(() => { api('config').then((c) => { window.__pbTestnet = c.network !== 'mainnet'; setCfg(c); }).catch((e) => setErr(e.message)); refresh().finally(() => setHydrated(true)); }, [refresh]);
   useEffect(() => { const t = setInterval(refresh, 6000); return () => clearInterval(t); }, [refresh]);
+  useEffect(() => {
+    const onClick = (e) => { const a = e.target.closest?.('a[href^="/"]'); if (!a || a.target || e.metaKey || e.ctrlKey) return; e.preventDefault(); history.pushState(null, '', a.getAttribute('href')); setNav(readRoute()); window.scrollTo?.({ top: 0 }); };
+    document.addEventListener('click', onClick); return () => document.removeEventListener('click', onClick);
+  }, []);
   useEffect(() => { const f = () => setNav(readRoute()); window.addEventListener('hashchange', f); window.addEventListener('popstate', f); return () => { window.removeEventListener('hashchange', f); window.removeEventListener('popstate', f); }; }, []);
 
   const go = (r, d) => {
     const keep = new URLSearchParams(location.search).get('ref');
-    const url = (d ? (r === 'pf' ? `/fight/${d}` : `/duel/${d}`) : PATHS[r] ?? '/') + (keep && (r === 'login' || r === '') ? `?ref=${keep}` : '');
+    const url = (d ? (r === 'pf' ? `/fight/${d}` : r === 'verify' ? `/verify/${d}` : r === 'profile' ? `/u/${encodeURIComponent(d)}` : `/duel/${d}`) : PATHS[r] ?? '/') + (keep && (r === 'login' || r === '') ? `?ref=${keep}` : '');
     try { history.pushState(null, '', url); } catch { /* sandboxed */ }
-    setNav(r === 'pf' ? { route: r, fight: d } : { route: r, duel: d }); window.scrollTo?.({ top: 0 });
+    setNav(r === 'pf' ? { route: r, fight: d } : r === 'verify' ? { route: r, tx: d } : r === 'profile' ? { route: r, who: d } : { route: r, duel: d }); window.scrollTo?.({ top: 0 });
   };
   const logout = () => { session.clear(); setMe(null); go(''); };
   // Signed-out players go to login for anything but the landing page (a shared duel link still opens).
@@ -194,12 +203,15 @@ export default function App() {
       {screen === 'withdraw' && cfg && me && (
         <main className="wrap narrow"><button className="back" onClick={() => go('wallet')}>← Vault</button><Withdraw player={me} rules={cfg.rules} explorer={cfg.explorer} network={cfg.network} onChange={refresh} /></main>
       )}
-      {screen === 'winners' && cfg && <Winners explorer={cfg.explorer} />}
+      {screen === 'winners' && cfg && <Winners explorer={cfg.explorer} go={go} />}
+      {screen === 'verify' && <Verify txid={tx} go={go} />}
+      {screen === 'profile' && <Profile name={who} go={go} explorer={cfg?.explorer} />}
+      {screen === 'rules' && <Rules rules={cfg?.rules} />}
       {screen === 'notfound' && (
         <main className="wrap narrow"><div className="card center"><h2>Page not found</h2><p className="muted">This address doesn't exist on PassBCH.cash.</p>
           <div className="row gap center-row"><button className="primary" onClick={() => go('')}>Home</button><button className="secondary" onClick={() => go('games')}>Games</button></div></div></main>
       )}
-      <footer className="wrap foot">PassBCH.cash · built from scratch for BCH BLAZE 2026 · <a href={CONFIG.repoUrl}>source</a> · {cfg?.network ?? 'chipnet'}</footer>
+      <footer className="wrap foot">PassBCH.cash · built from scratch for BCH BLAZE 2026 · <a href="/rules">Rules, fairness &amp; FAQ</a> · <a href="/verify">Verify a result</a> · <a href="/winners">Winners</a> · <a href={CONFIG.repoUrl}>source</a> · {cfg?.network ?? 'chipnet'} · 18+</footer>
     </>
   );
 }
