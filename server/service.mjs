@@ -476,3 +476,30 @@ export async function pfOpen() {
   return (await (await db()).query("select m.id, m.stake, m.created_s, p.name from pf_matches m join players p on p.id=m.a_player where m.status='open' order by m.created_s desc limit 20")).rows;
 }
 export async function setPfRecord(id, txid) { await (await db()).query('update pf_matches set record_txid=$1 where id=$2', [txid, id]); }
+
+// ---------- Worldwide winners (all games) ----------
+const GAME_SQL = {
+  rps: `select 'rps' game, w.name, d.stake * 2 amount, d.record_txid tx, d.settled_at at from duels d join players w on w.id = d.winner where d.winner is not null and not w.is_house`,
+  updown: `select 'updown' game, p.name, b.payout amount, b.record_txid tx, b.settled_at at from bets b join players p on p.id = b.player_id where b.outcome = 'win'`,
+  pf: `select 'pf' game, w.name, m.stake * 2 amount, m.record_txid tx, m.settled_at at from pf_matches m join players w on w.id = m.winner_id where m.status = 'done' and not w.is_house`,
+};
+/** Public winners board: totals, top winners and the biggest / latest wins, by game and period. */
+export async function winners({ game = 'all', period = 'all' } = {}) {
+  const c = await db();
+  const games = game in GAME_SQL ? [game] : Object.keys(GAME_SQL);
+  const since = period === 'today' ? "now() - interval '1 day'" : period === 'week' ? "now() - interval '7 days'" : "'epoch'::timestamptz";
+  const wins = `(${games.map((g) => GAME_SQL[g]).join(' union all ')}) w where w.at >= ${since}`;
+  const [{ rows: top }, { rows: biggest }, { rows: latest }, { rows: [t] }, { rows: [played] }] = await Promise.all([
+    c.query(`select name, count(*)::int wins, sum(amount)::bigint won from ${wins} group by name order by won desc, wins desc limit 20`),
+    c.query(`select * from ${wins} order by amount desc, at desc limit 12`),
+    c.query(`select * from ${wins} order by at desc limit 20`),
+    c.query(`select count(*)::int wins, coalesce(sum(amount),0)::bigint paid, count(distinct name)::int winners from ${wins}`),
+    c.query(`select
+      (select count(*) from duels where settled_at is not null and b_player is not null and settled_at >= ${since})::int duels,
+      (select count(*) from bets where settled_at is not null and settled_at >= ${since})::int bets,
+      (select count(*) from pf_matches where status = 'done' and settled_at >= ${since})::int fights,
+      (select count(*) from players where not is_house)::int players`),
+  ]);
+  const num = (r) => ({ ...r, won: r.won != null ? Number(r.won) : undefined, amount: r.amount != null ? Number(r.amount) : undefined });
+  return { top: top.map(num), biggest: biggest.map(num), latest: latest.map(num), totals: { ...t, paid: Number(t.paid), ...played } };
+}

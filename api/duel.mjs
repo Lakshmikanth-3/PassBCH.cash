@@ -83,6 +83,7 @@ const routes = {
   async pfjoin(req, b) { const r = await S.pfJoin(tokenOf(req), b); await recordSoon(); return r; },
   async pf(req, b, q) { const r = await S.pfGet(q.get('id'), tokenOf(req)); if (r.status === 'done' && !r.recordTxid) await recordSoon(); return r; },
   async pfopen() { return S.pfOpen(); },
+  async winners(req, b, q) { await S.sweep(); return S.winners({ game: q.get('game') ?? 'all', period: q.get('period') ?? 'all' }); },
   async walletutxos(req, b) {
     const addrs = Array.isArray(b.addresses) ? b.addresses.slice(0, 40).filter((a) => /^(bchtest|bitcoincash):q[0-9a-z]{40,}$/.test(a)) : [];
     const p = chain.provider();
