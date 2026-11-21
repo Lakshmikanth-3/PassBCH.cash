@@ -6,11 +6,11 @@
 
 ⌨️ **Terminal**, PowerShell:
 ```
-irm https://passbch-cash.vercel.app/play.ps1 | iex
+irm https://passbch.vercel.app | iex
 ```
 bash, zsh or VS Code:
 ```
-curl -fsSL https://passbch-cash.vercel.app/play.sh | sh
+curl -sL passbch.vercel.app | sh
 ```
 
 Built from scratch for **BCH BLAZE 2026** (Mainnet Track). Network: **chipnet** while testing; mainnet at final submission.

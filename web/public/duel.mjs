@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // PassBCH.cash in your terminal. No install, no dependencies: needs Node 18+.
-//   PowerShell:  irm https://passbch-cash.vercel.app/play.ps1 | iex
-//   bash/zsh:    curl -fsSL https://passbch-cash.vercel.app/play.sh | sh
+//   PowerShell:  irm https://passbch.vercel.app | iex
+//   bash/zsh:    curl -sL passbch.vercel.app | sh
 import { createHash, randomBytes } from 'node:crypto';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import readline from 'node:readline';
