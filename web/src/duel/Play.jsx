@@ -125,12 +125,13 @@ export function DuelView({ id, me, explorer, onClose, onChange }) {
           await api('reveal', { body: { id, ...mine } }).catch((e) => setErr(e.message));
           onChange?.();
         }
-      } catch (e) { setErr(e.message); }
+      } catch (e) { setErr(e.message); if (/no such duel/.test(e.message)) stop = true; }
     };
-    tick(); const t = setInterval(tick, 1500);
+    tick(); const t = setInterval(() => { if (!stop) tick(); }, 1500);
     return () => { stop = true; clearInterval(t); };
   }, [id, me?.id]);
 
+  if (!d && /no such duel/.test(err ?? '')) return <div className="card"><h2>This duel doesn't exist</h2><p className="muted">The link may be mistyped or the duel was removed.</p><button className="primary" onClick={onClose}>Start a new duel</button></div>;
   if (!d) return <div className="card"><p className="muted">Loading duel…</p>{err && <p className="err">{err}</p>}</div>;
   const iAmA = d.aPlayer === me?.id, iAmB = d.bPlayer === me?.id;
   const join = async () => { try { await api('join', { body: { id, move } }); onChange?.(); } catch (e) { setErr(e.message); } };

@@ -56,9 +56,10 @@ export function FightView({ id, me, explorer, onClose, onChange }) {
         show({ kind: 'pf', turns: x.turns, target: x.target, maxStep: x.maxStep, winner: x.winner, aName: x.aName, bName: x.bName });
         onChange?.();
       } else if (x.status === 'open') show({ kind: 'pf', waiting: x.aPlayer === me?.id ? 'Waiting for a challenger…' : `${x.aName} is waiting for you` });
-    } catch (e) { setErr(e.message); }
+    } catch (e) { setErr(e.message); if (/no such match/.test(e.message)) shown.current = true; }
   };
   useEffect(() => { load(); const t = setInterval(() => { if (!shown.current) load(); }, 2500); return () => clearInterval(t); }, [id]);
+  if (!m && /no such match/.test(err ?? '')) return <div className="card"><h2>This fight doesn't exist</h2><p className="muted">The link may be mistyped or the fight was removed.</p><button className="primary" onClick={onClose}>Start a new fight</button></div>;
   if (!m) return <div className="card"><p className="muted">Loading fight…</p>{err && <p className="err">{err}</p>}</div>;
   const mine = m.aPlayer === me?.id ? 'a' : m.bPlayer === me?.id ? 'b' : null;
   const join = async () => { setBusy(true); setErr(null); try { await api('pfjoin', { body: { id, prompt } }); await load(); } catch (e) { setErr(e.message); } finally { setBusy(false); } };

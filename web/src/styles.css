@@ -193,3 +193,15 @@ select { background: #080920; color: var(--text); border: 1px solid var(--border
 .quote { display: flex; flex-direction: column; gap: 2px; background: #080920; border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin: 4px 0 14px; }
 .quote b { font-family: var(--mono); font-size: 22px; color: var(--lime); }
 .vault .bal span.small:last-child { font-size: 12px; }
+
+.winstrip { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 16px; color: var(--text); text-align: left; border-color: #5a4512; }
+.winstrip b { color: var(--gold); } .winstrip svg { vertical-align: -4px; color: var(--gold); }
+.winstrip:hover { border-color: var(--gold); }
+.stats4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
+.stat { display: flex; flex-direction: column; gap: 2px; } .stat b { font-family: var(--display); font-size: 24px; color: var(--gold); }
+.filters { margin: 12px 0; } .seg.four { grid-template-columns: repeat(4, auto); } .seg.slim button { padding: 7px 12px; }
+.medal { font-weight: 800; } .medal.m0 { color: var(--gold); } .medal.m1 { color: #d7dcf0; } .medal.m2 { color: #e0915a; }
+.screen-title svg { vertical-align: -4px; color: var(--gold); }
+.cards4 .gcard p { margin: 0; }
+@media (max-width: 900px) { .stats4 { grid-template-columns: 1fr 1fr; } .seg.four { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 640px) { .hide-sm { display: none !important; } }

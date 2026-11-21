@@ -148,10 +148,10 @@ function buildPerson({ shirt, skin, hair, name, accent, host = false }) {
   const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.011, 6, 16, Math.PI), std(0x8a2a3a)); mouth.rotation.z = Math.PI; mouth.position.set(0, -0.075, 0.195); head.add(mouth);
   for (const x of [-0.2, 0.2]) { const ear = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 10), std(skin)); ear.scale.set(0.5, 1, 0.8); ear.position.set(x, 0, 0); head.add(ear); }
   const shoulder = new THREE.Group(); shoulder.position.set(0.26, 1.36, 0.02); g.add(shoulder);
-  const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.085, 0.42, 4, 12), std(shirt, { roughness: 0.7 })); upper.rotation.x = Math.PI / 2.6; upper.position.set(-0.02, -0.12, 0.2); upper.castShadow = true; shoulder.add(upper);
-  const fore = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.34, 4, 12), std(skin)); fore.rotation.x = Math.PI / 2.1; fore.position.set(-0.05, -0.24, 0.55); fore.castShadow = true; shoulder.add(fore);
-  const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.085, 0.022, 6, 18), glow(accent, 1.3)); cuff.position.set(-0.04, -0.2, 0.42); shoulder.add(cuff);
-  const hand = buildHand(skin); hand.rotation.set(0, -Math.PI / 2, 0); hand.position.set(-0.07, -0.26, 0.82); hand.scale.setScalar(0.92); shoulder.add(hand);
+  const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.085, 0.42, 4, 12), std(shirt, { roughness: 0.7 })); upper.rotation.x = Math.PI / 2.3; upper.position.set(-0.02, -0.08, 0.22); upper.castShadow = true; shoulder.add(upper);
+  const fore = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.4, 4, 12), std(skin)); fore.rotation.x = Math.PI / 2.05; fore.position.set(-0.05, -0.15, 0.62); fore.castShadow = true; shoulder.add(fore);
+  const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.085, 0.022, 6, 18), glow(accent, 1.3)); cuff.position.set(-0.04, -0.13, 0.45); shoulder.add(cuff);
+  const hand = buildHand(skin); hand.rotation.set(0, -Math.PI / 2, 0); hand.position.set(-0.07, -0.13, 0.95); hand.scale.setScalar(1.35); shoulder.add(hand);
   const other = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.42, 4, 10), std(shirt, { roughness: 0.7 })); other.position.set(-0.31, 1.1, 0.05); other.rotation.z = 0.15; g.add(other);
   if (host) { shoulder.visible = false; const bow = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.025, 6, 12), glow(THEME.gold, 1.4)); bow.position.set(0, 1.47, 0.2); g.add(bow); }
   const tag = label(name, { size: 44, border: hex(accent), scale: 0.8 }); tag.position.y = 2.25; g.add(tag);
