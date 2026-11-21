@@ -1,83 +1,88 @@
-# Satoshi Duel ✊✋✌️📈
+# PassBCH.cash 🤖📈✊
 
-**Two quick games for real Bitcoin Cash:** rock-paper-scissors against a friend or the House Bot, and **Up or Down** on the next minute of the BCH price. Free sats to start, and every result is written on chain.
+**Play while your AI thinks.** Every developer stares at Claude Code saying *"Cogitating…"*. PassBCH.cash turns that wait into three quick games played for real Bitcoin Cash, and every result is written on chain.
 
-▶ **Play:** https://satoshi-duel.vercel.app
+▶ **One link for everything:** https://passbch-cash.vercel.app
 
 ⌨️ **Terminal**, PowerShell:
 ```
-irm https://satoshi-duel.vercel.app/play.ps1 | iex
+irm https://passbch-cash.vercel.app/play.ps1 | iex
 ```
 bash, zsh or VS Code:
 ```
-curl -fsSL https://satoshi-duel.vercel.app/play.sh | sh
+curl -fsSL https://passbch-cash.vercel.app/play.sh | sh
 ```
 
 Built from scratch for **BCH BLAZE 2026** (Mainnet Track). Network: **chipnet** while testing; mainnet at final submission.
 
 ---
 
-## 1 minute: what it is
-1. Pick a name and get **25,000 free sats** (≈5¢). If a friend invited you, you both get 25,000 more.
-2. **✊ Duel:** pick a move and a stake, then play the **House Bot** or send a **challenge link** to a friend. The winner takes the pot.
-3. **📈 Up or Down:** tap **▲ UP** or **▼ DOWN** for the next 1-minute BCH/USD candle. A right call pays **1.9×**.
-4. The **live leaderboard** shows who played whom, who won and how much, with a link to every on-chain record.
-5. Deposit with **WizardConnect** (one approval in your wallet) or with any wallet by QR. Withdraw winnings any time; the platform fee is 5%.
+## 1 minute: the three games
+| Game | You predict | Settled by |
+|---|---|---|
+| 🤖 **AI Pass or Fail** | Will an AI coding agent pass a live exam? | Real unit tests run in a sealed sandbox. A BCH block hash picks the exercise. |
+| 📈 **Up or Down** | Will BCH/USD close the next minute up or down? | The public Coinbase 1-minute candle |
+| ✊ **Duel** | Beat a friend or the House Bot at rock-paper-scissors | Commit-reveal: your move is hashed until you reveal |
+
+**To start playing:**
+- Pick a name and get **25,000 free sats** (≈5¢).
+- Invite a friend: you both get 25,000 more.
+- Deposit with **WizardConnect** or by QR, and withdraw winnings any time. The platform fee is 5%.
+
+**🤖 The "woah" moment: the Claude Code panel.** While Claude is thinking, your status bar shows the live AI exam and an invitation to play:
+```
+🤖 gpt-oss-120b vs "book-store" ● BETTING 1:05 · PASS 1.42x | FAIL 3.16x  │ 📈 BCH $192.16
+✻ Claude thinking 0:42 · play now → passbch-cash.vercel.app
+```
+Set it up with `node panel/panel.mjs install` and `node panel/panel.mjs feed`.
 
 ## 5 minutes: why it's fair
-| Risk | How it's handled |
+| Game | Rule |
 |---|---|
-| Opponent sees your move | You send only `sha256(move:salt)`. The salt stays on your device until you reveal. |
-| You change your move after seeing theirs | The reveal must match the commitment, or it's rejected. |
-| The creator refuses to reveal when losing | There's a 2-minute reveal deadline, after which the opponent wins. |
-| The House Bot cheats | Its move is fixed per duel by a secret seed before you reveal. |
-| The Up/Down price is rigged | Bets close before the minute starts. The **public Coinbase BCH-USD 1-minute candle** settles the round (Kraken is the fallback), and anyone can look it up. |
-| Hidden results | Every duel (`SDL1…`) and every bet (`SUD1…`) is written to BCH in an `OP_RETURN` record. |
-| Bonus farming | 100 bonuses platform-wide and 3 per network address. Bonus credit is play-only; it becomes withdrawable only by winning. |
-| A withdrawal paid twice | The txid is saved before broadcast, and a slow broadcast is never refunded. |
+| 🤖 AI | The exercise is `sha256(roundId ‖ latest BCH block hash) mod 141`, drawn from public Exercism tasks. Betting closes before the AI starts. The AI gets 1 try plus 1 retry, in Docker with no network. A round with no result in 15 minutes is void and refunded. The odds come from each AI's public record. |
+| 📈 Up/Down | Bets close before the minute starts. The public Coinbase BCH-USD candle settles the round (Kraken is the fallback). A win pays 1.9×; an unchanged price refunds the bet. |
+| ✊ Duel | You send only `sha256(move:salt)`. Reveals must match the commitment. If you don't reveal within 2 minutes, you lose. The bot's move is fixed by a secret seed per duel. |
+| All | Every result is written to BCH as an `OP_RETURN` record: `SAI1` (AI round), `SUD1` (Up/Down bet), `SDL1` (duel). |
 
-**Trust model:** balances are custodial. The platform holds the pot, the way a card room does. The chain serves as the public scoreboard and the payment rail, not as an escrow.
+**Trust model:** balances are custodial. The platform holds the pot, the way a card room does. The chain serves as the public scoreboard and payment rail. Bonuses are capped at 100 platform-wide and 3 per network address, and bonus credit is play-only.
 
 ## 30 minutes: how it's built
 ```
-api/duel.mjs          one Vercel serverless function (all routes)
-server/engine.mjs     game rules: duel, Up/Down, bonus, referral, fees (pure, tested)
-server/service.mjs    balances, duels, bets in Postgres transactions
-server/db.mjs         schema (Neon Postgres)
-server/chain.mjs      house wallet: on-chain records and withdrawals (CashScript + libauth, Electrum)
-server/price.mjs      BCH/USD candles (Coinbase, Kraken fallback)
-server/test/          game-rule tests
-web/src/              React app: duel, Up/Down, wallet, leaderboard
-web/src/duel/wizard.js + WalletConnect.jsx   WizardConnect deposit
-web/public/duel.mjs   terminal client (no dependencies) + play.ps1 / play.sh
-scripts/e2e.mjs       full flow against a live API on chipnet
-docs/MAINNET.md       mainnet switch checklist
+api/duel.mjs        one Vercel serverless function (all routes)
+server/             rules (engine.mjs), Postgres service, house wallet (chain.mjs), price feed + tests
+ai/                 AI exam: Docker sandbox harness (Python + Groq), 141-task list, round runner
+panel/panel.mjs     Claude Code status line + hooks ("play while your AI thinks")
+web/                React app (3 game tabs, wallet, leaderboard) + terminal client (public/duel.mjs)
+scripts/e2e.mjs     full flow against the live API on chipnet
+docs/MAINNET.md     mainnet switch checklist
 ```
+**Stack:** Vite + React, Vercel, Neon Postgres, CashScript + libauth, Electrum (Fulcrum), WizardConnect, Docker, Groq (gpt-oss-20b / 120b).
 
 ## 1 hour: run and test it
 ```bash
 npm ci
-npm test              # 27 tests: game rules, Up/Down, WizardConnect deposit, banner
+npm test                                            # 37 tests: rules, AI/UpDown/Duel, WizardConnect deposit, panel, banner
 npm run build
-BASE=https://satoshi-duel.vercel.app npm run e2e   # signup, referral, bot + friend duel, cheat attempt, on-chain record, withdrawal
+BASE=https://passbch-cash.vercel.app npm run e2e    # signup, referral, duels, cheat attempt, on-chain record, withdrawal
+AI_RUNNER_KEY=... npm run ai-runner                 # runs AI rounds (needs Docker + GROQ_KEY in .ENV)
 ```
-To run the API locally, set `DATABASE_URL`, `HOUSE_SK` and `HOUSE_SECRET`, then run `npm run api`.
 
 ## Proof (chipnet)
 | What | Transaction |
 |---|---|
-| Friend duel recorded on chain | [0654235d…6fc54](https://chipnet.imaginary.cash/tx/0654235de2ff2ca8e1f06a6dd0af7989ed18f045b422386d68d9bdd2bdb6fc54) |
-| Up/Down bet recorded on chain ($190.24 → $190.12, DOWN) | [c927a6e0…05ac6](https://chipnet.imaginary.cash/tx/c927a6e002cb05db41ccffff24e419ac7f30ac70bed61495b297c62051905ac6) |
+| AI round: gpt-oss-120b, "book-store" (drawn from block 341080), **PASS 20/20** | [9616cb60…4963c](https://chipnet.imaginary.cash/tx/9616cb605fb7c06bd9890a64e7426d210b2e6ba3cf47564aff1c62a6bfb4963c) |
+| Up/Down bet: $190.24 → $190.12, DOWN | [c927a6e0…05ac6](https://chipnet.imaginary.cash/tx/c927a6e002cb05db41ccffff24e419ac7f30ac70bed61495b297c62051905ac6) |
+| Friend duel record | [0654235d…6fc54](https://chipnet.imaginary.cash/tx/0654235de2ff2ca8e1f06a6dd0af7989ed18f045b422386d68d9bdd2bdb6fc54) |
 | Withdrawal (5% fee) | [c5a7bb4b…fb0ee](https://chipnet.imaginary.cash/tx/c5a7bb4bee94602b575a288ee73ddc71a004e18df3186ebfdd27b7ecfb5fb0ee) |
 
 ## Business
-- **Revenue:** a 5% fee on withdrawals, plus a 5% edge on Up/Down wins (pays 1.9×, not 2×).
+- **Revenue:** a 5% withdrawal fee, plus a 5% edge on Up/Down and AI odds.
 - **Marketing budget:** the free bonuses, capped.
-- **Next:** tournaments, streamer challenge links, a Telegram bot, PUSD stakes.
+- **Next:** verified AI leaderboards that agent makers pay to be listed on, tournaments, streamer links, a Telegram bot, PUSD stakes.
 
 ## Eligibility (BLAZE)
 - **Deck:** _link pending_
 - **Repo:** this repo
 - **EMBER2026:** `bitcoincash:zrcvv9gjvgeeh6gesa2t3q0z40n3uzxwhua3m6rsyf`
-- **No pre-hackathon code.** The first commit is from 17 Nov 2026. An earlier BLAZE experiment in this repo (PassRate.cash) was removed and is still in git history.
+- **No pre-hackathon code.** The first commit is from 17 Nov 2026.
 - **Wallet connection:** WizardConnect.
