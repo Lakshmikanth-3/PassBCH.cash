@@ -3,6 +3,8 @@ import * as S from '../server/service.mjs';
 import { RULES, sha256 } from '../server/engine.mjs';
 import { db } from '../server/db.mjs';
 import * as chain from '../server/chain.mjs';
+import { spot } from '../server/price.mjs';
+import { nextRound, UPDOWN } from '../server/engine.mjs';
 
 const json = (res, status, body) => { res.statusCode = status; res.setHeader('content-type', 'application/json'); res.setHeader('cache-control', 'no-store'); res.end(JSON.stringify(body)); };
 const tokenOf = (req) => (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '') || null;
@@ -25,12 +27,15 @@ async function recordPending() {
       for (const d of await S.unrecorded(5)) {
         try { await timed(chain.recordDuel(d, (t) => S.setRecordTx(d.id, t)), 6000, 'record'); } catch (e) { await S.markRecordTry(d.id); console.error('record', d.id, e.message); break; }
       }
+      for (const b of await S.unrecordedBets(5)) {
+        try { await timed(chain.recordBet(b, (t) => S.setBetRecord(b.id, t)), 6000, 'bet record'); } catch (e) { await S.markBetRecordTry(b.id); console.error('bet record', b.id, e.message); break; }
+      }
     } finally { await c.query('select pg_advisory_unlock(42)'); }
   } finally { c.release(); }
 }
 
 const routes = {
-  async config() { return { rules: RULES, network: chain.NETWORK, explorer: chain.EXPLORER }; },
+  async config() { return { rules: { ...RULES, updownPayoutPct: UPDOWN.payoutPct }, network: chain.NETWORK, explorer: chain.EXPLORER }; },
   async signup(req, b) {
     const ip = String(req.headers['x-forwarded-for'] ?? '').split(',')[0].trim();
     return S.createPlayer({ name: b.name, ref: b.ref, ipHash: ip ? sha256(`ip:${process.env.HOUSE_SECRET}:${ip}`) : null });
@@ -50,6 +55,9 @@ const routes = {
     return { address, added };
   },
   /** Coins of a WizardConnect wallet (public addresses only), so the browser can build the deposit for the wallet to sign. */
+  async price() { const now = Math.floor(Date.now() / 1000); return { ...(await timed(spot(), 6000, 'price')), now, nextRound: nextRound(now), payoutPct: UPDOWN.payoutPct }; },
+  async bet(req, b) { return S.placeBet(tokenOf(req), b); },
+  async bets(req) { await within(S.settleBets(), 8000); await recordSoon(); return { mine: tokenOf(req) ? await S.myBets(tokenOf(req)) : [], feed: await S.betFeed() }; },
   async walletutxos(req, b) {
     const addrs = Array.isArray(b.addresses) ? b.addresses.slice(0, 40).filter((a) => /^(bchtest|bitcoincash):q[0-9a-z]{40,}$/.test(a)) : [];
     const p = chain.provider();
