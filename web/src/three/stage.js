@@ -102,7 +102,7 @@ function confetti(scene) {
 
 // ---------- realistic jointed hand ----------
 // Built along +X (fingers point +X, palm faces -Y). Each finger has 3 phalanges that curl joint by joint.
-const ARM_BASE = 0.32; // resting shoulder angle: arm reaches forward and slightly down onto the table
+const ARM_BASE = 0.12; // resting shoulder angle: arm reaches forward and slightly down onto the table
 const POSES = { rock: [1, 1, 1, 1, 1], paper: [0, 0, 0, 0, 0], scissors: [1, 0, 0, 1, 1] }; // [thumb, index, middle, ring, pinky]
 function buildHand(skinHex) {
   const skin = std(skinHex, { roughness: 0.62 }); const nail = std(0xf6d9d2, { roughness: 0.3 });
@@ -171,8 +171,8 @@ function buildPerson({ shirt, skin, hair, name, accent, host = false }) {
   const fore = new THREE.Mesh(new THREE.CapsuleGeometry(0.072, FORE - 0.07, 6, 14), std(shirt, { roughness: 0.7 })); fore.rotation.x = Math.PI / 2; fore.position.z = FORE / 2; fore.castShadow = true; elbow.add(fore);
   const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.074, 0.02, 8, 20), glow(accent, 1.4)); cuff.position.z = FORE - 0.02; elbow.add(cuff);
   const wristJ = new THREE.Group(); wristJ.position.z = FORE; elbow.add(wristJ);
-  const hand = buildHand(skin); hand.rotation.set(0, -Math.PI / 2, 0); hand.scale.setScalar(1.05);
-  hand.position.z = 0.24 * 1.05; // the hand's own wrist sits at x = -0.24 in hand space: align it with the forearm end
+  const hand = buildHand(skin); hand.rotation.set(0, -Math.PI / 2, 0); hand.scale.setScalar(1.3);
+  hand.position.z = 0.24 * 1.3; // the hand's own wrist sits at x = -0.24 in hand space: align it with the forearm end
   wristJ.add(hand);
   const other = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.42, 4, 10), std(shirt, { roughness: 0.7 })); other.position.set(-0.31, 1.1, 0.05); other.rotation.z = 0.15; g.add(other);
   if (host) { shoulder.visible = false; const bow = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.025, 6, 12), glow(THEME.gold, 1.4)); bow.position.set(0, 1.47, 0.2); g.add(bow); }
@@ -257,6 +257,11 @@ function rpsScene() {
   const opp = seat(55, buildPerson({ shirt: 0xe23a9a, skin: 0x9a6342, hair: 0x15100c, name: 'Opponent', accent: THEME.magenta }));
   const host = buildHost(); host.position.set(0, 0, -2.2); scene.add(host);
   const sign = label('Pick your move to start', { size: 56, border: '#ffc23d', scale: 1.05 }); sign.position.set(0, 3.05, 0); scene.add(sign);
+  // Big move signs over each hand at the reveal, so nobody has to read finger shapes.
+  const MOVE_TXT = { rock: 'ROCK', paper: 'PAPER', scissors: 'SCISSORS' };
+  const youSign = label('ROCK', { size: 64, border: '#00e5ff', scale: 1.0 }); youSign.visible = false; scene.add(youSign);
+  const oppSign = label('ROCK', { size: 64, border: '#ff3df0', scale: 1.0 }); oppSign.visible = false; scene.add(oppSign);
+  const placeSign = (sp, person) => { const v = new THREE.Vector3(); person.userData.hand.getWorldPosition(v); sp.position.set(v.x * 0.85, v.y + 0.62, v.z * 0.85); };
   const spot = new THREE.SpotLight(0xfff2c0, 0, 9, 0.38, 0.5, 1); spot.position.set(0, 6, 0); scene.add(spot); scene.add(spot.target);
   const fx = confetti(scene);
   scene.updateMatrixWorld(true);
@@ -288,6 +293,8 @@ function rpsScene() {
         if (st.t > 1.1 && beat !== st.beat && beat < 3) { st.beat = beat; sign.userData.set(['Rock…', 'Paper…', 'Scissors…'][beat], { border: '#ffc23d' }); }
         if (st.t > 1.1 + 1.35) {
           st.phase = 'reveal'; st.t = 0; st.beat = -1;
+          youSign.userData.set(MOVE_TXT[st.a], { border: '#00e5ff' }); oppSign.userData.set(MOVE_TXT[st.b], { border: '#ff3df0' });
+          youSign.visible = oppSign.visible = true;
           you.userData.hand.userData.target = POSES[st.a]; you.userData.hand.userData.spread = st.a === 'scissors' ? 1 : 0;
           opp.userData.hand.userData.target = POSES[st.b]; opp.userData.hand.userData.spread = st.b === 'scissors' ? 1 : 0;
           st.win = st.res ?? (st.a === st.b ? 0 : (MOVES.indexOf(st.a) - MOVES.indexOf(st.b) + 3) % 3 === 1 ? 1 : 2);
@@ -300,7 +307,8 @@ function rpsScene() {
         [you, opp].forEach((p) => { p.userData.shoulder.rotation.x = lerp(p.userData.shoulder.rotation.x, ARM_BASE, dt * 8); });
         if (st.t > 1.3 && !st.burst) { st.burst = true; if (st.win) { const w = st.win === 1 ? you : opp; spot.intensity = 45; spot.target.position.copy(w.position); spot.position.set(w.position.x * 0.4, 6, w.position.z * 0.4); fx.burst(new THREE.Vector3(w.position.x, 2.3, w.position.z)); } }
         const w = st.win === 1 ? you : st.win === 2 ? opp : null; if (w) w.userData.head.position.y = 1.76 + Math.abs(Math.sin(st.t * 6)) * 0.05;
-        if (st.t > 9) { st.phase = 'idle'; spot.intensity = 0; you.userData.head.position.y = opp.userData.head.position.y = 1.76; }
+        placeSign(youSign, you); placeSign(oppSign, opp);
+        if (st.t > 9) { st.phase = 'idle'; youSign.visible = oppSign.visible = false; spot.intensity = 0; you.userData.head.position.y = opp.userData.head.position.y = 1.76; }
       }
       poseHand(you.userData.hand, dt); poseHand(opp.userData.hand, dt);
       fx.update(dt);
@@ -377,49 +385,73 @@ function pfScene() {
 
 function updownScene() {
   const scene = new THREE.Scene(); const set = studio(scene, THEME.cyan, SKY_GREEN);
+  set.tiles.visible = false; // the busy LED wall made the chart hard to read
   const g = new THREE.Group(); scene.add(g);
-  const base = new THREE.Mesh(new THREE.BoxGeometry(6.4, 0.14, 2.2), std(0xffffff, { roughness: 0.3 })); base.position.y = 0.07; base.receiveShadow = true; g.add(base);
-  const grid = new THREE.GridHelper(6, 12, 0x6a72d8, 0xb8bff5); grid.position.y = 0.15; g.add(grid);
-  const candles = Array.from({ length: 14 }, (_, i) => {
-    const c = new THREE.Group(); c.position.set(-2.8 + i * 0.42, 0.15, 0);
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1, 0.24), glow(THEME.lime, 0.7)); body.castShadow = true; c.add(body);
-    const wick = new THREE.Mesh(new THREE.BoxGeometry(0.03, 1, 0.03), std(0x3a3f7a)); c.add(wick);
+  // Solid chart board: dark panel, horizontal grid lines, price labels on the right
+  const BOARD = { w: 6.6, h: 3.0, y: 1.75, x0: -3.0, x1: 2.6, lo: 0.55, hi: 3.0 };
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(BOARD.w + 0.4, BOARD.h + 0.5, 0.12), std(0x0e1035, { roughness: 0.6 })); panel.position.set(0, BOARD.y, -0.55); panel.receiveShadow = true; g.add(panel);
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(BOARD.w + 0.5, BOARD.h + 0.6, 0.08), glow(THEME.cyan, 0.7)); frame.position.set(0, BOARD.y, -0.62); g.add(frame);
+  for (let i = 0; i <= 4; i++) { const y = BOARD.lo + ((BOARD.hi - BOARD.lo) * i) / 4; const line = new THREE.Mesh(new THREE.BoxGeometry(BOARD.x1 - BOARD.x0 + 0.4, 0.012, 0.01), new THREE.MeshBasicMaterial({ color: 0x3a3f8a })); line.position.set((BOARD.x0 + BOARD.x1) / 2, y, -0.48); g.add(line); }
+  const base = new THREE.Mesh(new THREE.BoxGeometry(BOARD.w + 0.4, 0.14, 1.4), std(0xffffff, { roughness: 0.3 })); base.position.set(0, 0.07, -0.1); base.receiveShadow = true; g.add(base);
+  const hiLbl = label('$—', { size: 44, border: '#2bd16f', scale: 0.7 }); hiLbl.position.set(BOARD.x1 + 0.75, BOARD.hi, -0.4); g.add(hiLbl);
+  const loLbl = label('$—', { size: 44, border: '#ff4d6d', scale: 0.7 }); loLbl.position.set(BOARD.x1 + 0.75, BOARD.lo, -0.4); g.add(loLbl);
+  const lastLbl = label('$—', { size: 54, border: '#ffc23d', scale: 0.85 }); g.add(lastLbl);
+  const lastLine = new THREE.Mesh(new THREE.BoxGeometry(BOARD.x1 - BOARD.x0 + 0.4, 0.02, 0.01), new THREE.MeshBasicMaterial({ color: THEME.gold })); lastLine.position.z = -0.46; g.add(lastLine);
+  const entryLine = new THREE.Mesh(new THREE.BoxGeometry(BOARD.x1 - BOARD.x0 + 0.4, 0.03, 0.01), new THREE.MeshBasicMaterial({ color: 0xffffff })); entryLine.position.z = -0.44; entryLine.visible = false; g.add(entryLine);
+  const entryLbl = label('your entry', { size: 40, border: '#ffffff', scale: 0.6 }); entryLbl.visible = false; g.add(entryLbl);
+  const N = 14;
+  const candles = Array.from({ length: N }, (_, i) => {
+    const c = new THREE.Group(); c.position.set(BOARD.x0 + (i * (BOARD.x1 - BOARD.x0)) / (N - 1), 0, -0.3);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.26, 1, 0.18), new THREE.MeshStandardMaterial({ color: 0x2bd16f, emissive: 0x2bd16f, emissiveIntensity: 0.35, roughness: 0.4 })); body.castShadow = true; c.add(body);
+    const wick = new THREE.Mesh(new THREE.BoxGeometry(0.035, 1, 0.035), new THREE.MeshBasicMaterial({ color: 0xc9cde6 })); c.add(wick);
     c.userData = { body, wick }; g.add(c); return c;
   });
   const arrow = new THREE.Group(); const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.9, 24), glow(THEME.lime, 1.4)); arrow.add(shaft);
-  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.36, 0.6, 32), glow(THEME.lime, 1.6)); tip.position.y = 0.72; arrow.add(tip); arrow.position.set(3.7, 2.2, 0); scene.add(arrow);
-  const presenter = buildHost(); presenter.position.set(-4.0, 0, 0.6); presenter.rotation.y = 0.55; presenter.userData.tag.userData.set('Market host', { border: '#00e5ff' }); scene.add(presenter);
-  const banner = label('Call it: UP or DOWN in 60 seconds', { size: 54, border: '#00e5ff', scale: 1.05 }); banner.position.set(0, 3.45, 0); scene.add(banner);
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.36, 0.6, 32), glow(THEME.lime, 1.6)); tip.position.y = 0.72; arrow.add(tip); arrow.position.set(4.3, 2.0, 0.2); scene.add(arrow);
+  const presenter = buildHost(); presenter.position.set(-4.6, 0, 0.9); presenter.rotation.y = 0.6; presenter.userData.tag.userData.set('Market host', { border: '#00e5ff' }); scene.add(presenter);
+  const banner = label('Call it: UP or DOWN in 60 seconds', { size: 54, border: '#00e5ff', scale: 1.05 }); banner.position.set(0, 3.75, 0); scene.add(banner);
   const fx = confetti(scene);
-  const shots = { WIDE: { pos: [0, 2.7, 7.2], look: [0, 1.5, 0], orbit: true }, CHART: { pos: [1.2, 2.0, 4.2], look: [0.6, 1.4, 0] }, HOST: { pos: [-2.6, 2.1, 2.6], look: [-4.0, 1.9, 0.6] } };
-  const st = { hist: [], price: null, dir: 0, cheer: 0 };
+  const shots = { WIDE: { pos: [0, 2.2, 7.6], look: [0, 1.7, 0], orbit: true }, CHART: { pos: [0.6, 1.9, 4.6], look: [0.4, 1.7, -0.3] }, HOST: { pos: [-2.9, 2.1, 3.0], look: [-4.6, 1.9, 0.9] } };
+  const st = { hist: [], price: null, dir: 0, cheer: 0, entry: null, lastHi: '', lastLo: '', lastP: '' };
+  const fmt = (v) => `$${v.toFixed(2)}`;
   return {
     scene, shots, set, idle: 'WIDE',
     onEvent(d, dir) {
-      if (d.kind === 'udbet') { banner.userData.set(`${d.side === 'up' ? 'UP' : 'DOWN'} from $${Number(d.entry).toFixed(2)} · 60 s on the clock`, { border: d.side === 'up' ? '#2bd16f' : '#ff4d6d' }); dir.sequence([['CHART', 4], ['WIDE', Infinity]]); return; }
+      if (d.kind === 'udbet') { st.entry = Number(d.entry); banner.userData.set(`${d.side === 'up' ? 'UP' : 'DOWN'} from $${Number(d.entry).toFixed(2)} · 60 s on the clock`, { border: d.side === 'up' ? '#2bd16f' : '#ff4d6d' }); dir.sequence([['CHART', 4], ['WIDE', Infinity]]); return; }
       if (d.kind === 'udresult') {
-        const win = d.outcome === 'win';
-        banner.userData.set(d.outcome === 'refund' ? `Same price — stake back` : win ? `You called it! $${d.open} → $${d.close}` : `Not this time · $${d.open} → $${d.close}`, { border: win ? '#b6ff3b' : d.outcome === 'refund' ? '#ffc23d' : '#ff4d6d' });
+        const win = d.outcome === 'win'; st.entry = null;
+        banner.userData.set(d.outcome === 'refund' ? 'Same price — stake back' : win ? `You called it! $${d.open} → $${d.close}` : `Not this time · $${d.open} → $${d.close}`, { border: win ? '#b6ff3b' : d.outcome === 'refund' ? '#ffc23d' : '#ff4d6d' });
         if (win) fx.burst(new THREE.Vector3(0, 2.6, 0.5));
         st.cheer = win ? 4 : 0; dir.sequence([['HOST', 2.5], ['CHART', 2.5], ['WIDE', Infinity]]); return;
       }
       if (d.kind !== 'price') return;
       if (d.history?.length) st.hist = [...d.history];
-      if (d.price) { if (st.price) st.dir = Math.sign(d.price - st.price) || st.dir; st.price = d.price; st.hist.push(d.price); if (st.hist.length > 15) st.hist.shift(); }
+      if (d.price) { if (st.price) st.dir = Math.sign(d.price - st.price) || st.dir; st.price = d.price; st.hist.push(d.price); if (st.hist.length > N + 1) st.hist.shift(); }
     },
     update(dt, time) {
-      const h = st.hist.length ? st.hist : [1]; const lo = Math.min(...h), hi = Math.max(...h), span = Math.max(0.05, hi - lo);
+      const h = st.hist.length ? st.hist : [1];
+      const all = st.entry ? [...h, st.entry] : h;
+      const lo = Math.min(...all), hi = Math.max(...all), span = Math.max(0.05, hi - lo);
+      const Y = (v) => BOARD.lo + ((v - lo) / span) * (BOARD.hi - BOARD.lo);
       candles.forEach((c, i) => {
-        const a = h[i] ?? h[h.length - 1], b = h[i + 1] ?? a; const live = i === Math.min(h.length - 2, 13);
-        const y0 = 0.3 + ((a - lo) / span) * 2.2, y1 = 0.3 + ((b - lo) / span) * 2.2 + (live ? Math.sin(time * 6) * 0.04 : 0);
-        const top = Math.max(y0, y1), bot = Math.min(y0, y1), hh = Math.max(0.06, top - bot);
+        const a = h[i] ?? h[h.length - 1], b = h[i + 1] ?? a;
+        const y0 = Y(a), y1 = Y(b); const top = Math.max(y0, y1), bot = Math.min(y0, y1), hh = Math.max(0.05, top - bot);
         c.userData.body.scale.y = lerp(c.userData.body.scale.y, hh, dt * 6); c.userData.body.position.y = lerp(c.userData.body.position.y, bot + hh / 2, dt * 6);
-        c.userData.wick.scale.y = hh + 0.3; c.userData.wick.position.y = c.userData.body.position.y;
+        c.userData.wick.scale.y = hh + 0.16; c.userData.wick.position.y = c.userData.body.position.y;
         const col = b >= a ? 0x2bd16f : THEME.red; c.userData.body.material.color.setHex(col); c.userData.body.material.emissive.setHex(col);
         c.visible = i < Math.max(1, h.length - 1);
       });
+      if (h.length > 1) {
+        const hiS = fmt(hi), loS = fmt(lo), pS = fmt(h[h.length - 1]);
+        if (hiS !== st.lastHi) { st.lastHi = hiS; hiLbl.userData.set(`high ${hiS}`, { border: '#2bd16f' }); }
+        if (loS !== st.lastLo) { st.lastLo = loS; loLbl.userData.set(`low ${loS}`, { border: '#ff4d6d' }); }
+        if (pS !== st.lastP) { st.lastP = pS; lastLbl.userData.set(`now ${pS}`, { border: '#ffc23d' }); }
+        const yNow = Y(h[h.length - 1]); lastLine.position.set((BOARD.x0 + BOARD.x1) / 2, yNow, -0.46); lastLbl.position.set(BOARD.x0 - 0.85, yNow, -0.4);
+      }
+      entryLine.visible = entryLbl.visible = !!st.entry;
+      if (st.entry) { const ye = Y(st.entry); entryLine.position.set((BOARD.x0 + BOARD.x1) / 2, ye, -0.44); entryLbl.position.set((BOARD.x0 + BOARD.x1) / 2, ye + 0.18, -0.4); }
       const up = st.dir >= 0, col = up ? 0x2bd16f : THEME.red;
-      arrow.rotation.z = lerp(arrow.rotation.z, up ? 0 : Math.PI, dt * 6); arrow.position.y = 2.2 + Math.sin(time * 3) * 0.15; arrow.rotation.y += dt * 1.4;
+      arrow.rotation.z = lerp(arrow.rotation.z, up ? 0 : Math.PI, dt * 6); arrow.position.y = 2.0 + Math.sin(time * 3) * 0.12; arrow.rotation.y += dt * 1.4;
       for (const m of [shaft, tip]) { m.material.color.setHex(col); m.material.emissive.setHex(col); }
       presenter.userData.head.rotation.y = Math.sin(time * 0.8) * 0.2;
       st.cheer = Math.max(0, st.cheer - dt);
