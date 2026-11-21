@@ -1,5 +1,5 @@
 // End-to-end against the real API + DB + chipnet: signup with referral, bot duel, friend duel, timeout, leaderboard, withdraw.
-import { commitMove, newSalt, outcome } from './lib/engine.mjs';
+import { commitMove, newSalt, outcome } from '../server/engine.mjs';
 const BASE = process.env.BASE ?? 'http://localhost:8787';
 const call = async (a, { token, body, q = '' } = {}) => {
   const r = await fetch(`${BASE}/api/duel?a=${a}${q}`, { method: body ? 'POST' : 'GET', headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) }, body: body ? JSON.stringify(body) : undefined });

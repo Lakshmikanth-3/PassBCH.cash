@@ -1,6 +1,6 @@
 // House wallet on BCH: writes duel records (OP_RETURN) and pays withdrawals. Chipnet until final submission.
 import { secp256k1, hexToBin, binToHex, hash160, sha256, encodeCashAddress, CashAddressType, utf8ToBin } from '@bitauth/libauth';
-import { ElectrumNetworkProvider, TransactionBuilder, SignatureTemplate } from '@passrate/shared/tickettx';
+import { ElectrumNetworkProvider, TransactionBuilder, SignatureTemplate } from 'cashscript';
 import { recordBytes } from './engine.mjs';
 
 export const NETWORK = process.env.DUEL_NETWORK === 'mainnet' ? 'mainnet' : 'chipnet';

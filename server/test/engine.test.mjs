@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import * as E from '../lib/engine.mjs';
+import * as E from '../engine.mjs';
 
 describe('rock paper scissors', () => {
   test('all 9 outcomes', () => {

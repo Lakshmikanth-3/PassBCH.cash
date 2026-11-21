@@ -1,8 +1,8 @@
 // Satoshi Duel HTTP API (one Vercel function). Routes: /api/duel?a=<action>
-import * as S from '../duel/lib/service.mjs';
-import { RULES, sha256 } from '../duel/lib/engine.mjs';
-import { db } from '../duel/lib/db.mjs';
-import * as chain from '../duel/lib/chain.mjs';
+import * as S from '../server/service.mjs';
+import { RULES, sha256 } from '../server/engine.mjs';
+import { db } from '../server/db.mjs';
+import * as chain from '../server/chain.mjs';
 
 const json = (res, status, body) => { res.statusCode = status; res.setHeader('content-type', 'application/json'); res.setHeader('cache-control', 'no-store'); res.end(JSON.stringify(body)); };
 const tokenOf = (req) => (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '') || null;
