@@ -83,7 +83,12 @@ export function DuelView({ id, me, explorer, onClose, onChange }) {
         const x = await api('duel', { q: `&id=${id}` });
         if (stop) return;
         setD(x);
-        if (x.status === 'settled' && x.aMove && x.bMove && !shown.current) { shown.current = true; show({ game: 'duel', kind: 'duel', aMove: x.aMove, bMove: x.bMove, result: x.result }); }
+        if (x.status === 'settled' && x.aMove && x.bMove && !shown.current) {
+          // The 3D table always seats "You" on the left: flip the view if you were the joiner.
+          shown.current = true;
+          const flip = x.bPlayer === me?.id;
+          show({ game: 'duel', kind: 'duel', aMove: flip ? x.bMove : x.aMove, bMove: flip ? x.aMove : x.bMove, result: flip ? ({ 1: 2, 2: 1 }[x.result] ?? 0) : x.result });
+        }
         if (x.status === 'awaiting_reveal' && mine && x.aPlayer === me?.id && !revealing.current) {
           revealing.current = true;
           await api('reveal', { body: { id, ...mine } }).catch((e) => setErr(e.message));
