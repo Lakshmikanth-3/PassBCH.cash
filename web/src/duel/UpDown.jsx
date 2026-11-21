@@ -21,7 +21,14 @@ export function UpDown({ rules, player, explorer, onChange }) {
     let stop = false;
     const poll = async () => {
       try { const p = await api('price'); if (stop) return; show({ kind: 'price', price: p.price }); skew.current = p.now - Math.floor(Date.now() / 1000); if (last.current) setDir(Math.sign(p.price - last.current) || 0); last.current = p.price; setPx(p); setPts((a) => [...a.slice(-59), p.price]); } catch { /* keep */ }
-      try { const b = await api('bets'); if (!stop) setMine((old) => { if (b.mine.some((x, i) => x.outcome && !old[i]?.outcome)) onChange?.(); return b.mine; }); } catch { /* ignore */ }
+      try {
+        const b = await api('bets'); if (stop) return;
+        setMine((old) => {
+          const fresh = b.mine.find((x) => x.outcome && old.some((o) => o.id === x.id && !o.outcome));
+          if (fresh) { onChange?.(); show({ kind: 'udresult', outcome: fresh.outcome, open: Number(fresh.open_price).toFixed(2), close: Number(fresh.close_price).toFixed(2) }); }
+          return b.mine;
+        });
+      } catch { /* ignore */ }
     };
     poll(); const a = setInterval(poll, 2000);
     const t = setInterval(() => setNow(Math.floor(Date.now() / 1000) + skew.current), 250);
@@ -32,7 +39,7 @@ export function UpDown({ rules, player, explorer, onChange }) {
   const total = player.bonus + player.cash;
   const confirm = async () => {
     setBusy(true); setErr(null);
-    try { await api('bet', { body: { side: pending, stake } }); setPending(null); onChange?.(); setMine((await api('bets')).mine); }
+    try { const b = await api('bet', { body: { side: pending, stake } }); show({ kind: 'udbet', side: pending, entry: b.entryPrice }); setPending(null); onChange?.(); setMine((await api('bets')).mine); }
     catch (e) { setErr(e.message); } finally { setBusy(false); }
   };
   const live = mine.find((b) => !b.outcome);

@@ -83,6 +83,7 @@ const routes = {
   async pfjoin(req, b) { const r = await S.pfJoin(tokenOf(req), b); await recordSoon(); return r; },
   async pf(req, b, q) { const r = await S.pfGet(q.get('id'), tokenOf(req)); if (r.status === 'done' && !r.recordTxid) await recordSoon(); return r; },
   async pfopen() { return S.pfOpen(); },
+  async pflatest() { return S.pfLatest(); },
   async player(req, b, q) { return S.player(q.get('name')); },
   async activity(req) { return S.activity(tokenOf(req)); },
   /** Raw transaction + the DB view of the game it records. The browser decodes and recomputes everything itself. */

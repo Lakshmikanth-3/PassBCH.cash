@@ -237,3 +237,7 @@ select { background: #080920; color: var(--text); border: 1px solid var(--border
 .foot a { margin: 0 2px; }
 .toggle { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; } .toggle input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--cyan); }
 .checks li.info span { color: var(--gold); } .checks li.info { color: var(--muted); }
+
+.showcase { display: flex; flex-direction: column; gap: 12px; }
+.showcase .seg button svg { vertical-align: -3px; }
+.replaytag { display: inline-block; background: #0a0b1ecc; color: var(--gold); border: 1px solid #5a4512; border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 700; }

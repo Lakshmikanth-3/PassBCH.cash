@@ -566,3 +566,8 @@ export async function activity(token) {
   const games = (await player(p.name).catch(() => ({ history: [] }))).history;
   return { money: rows.map((r) => ({ ...r, amount: Number(r.amount) })), games };
 }
+
+export async function pfLatest() {
+  const { rows: [m] } = await (await db()).query("select id from pf_matches where status='done' order by settled_at desc limit 1");
+  return m ? pfGet(m.id) : null;
+}

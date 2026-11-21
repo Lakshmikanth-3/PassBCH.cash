@@ -13,6 +13,7 @@ import { UpDown, UpDownFeed } from './duel/UpDown.jsx';
 import { NewFight, FightView, FightLobby } from './duel/PromptFight.jsx';
 import { Rock, Chart, Agents, Hourglass, Grid, Wallet as WalletIcon, Logout } from './icons.jsx';
 import Stage3D from './three/Stage3D.jsx';
+import Showcase from './three/Showcase.jsx';
 
 // Real pages: /  /login  /games  /games/rps  /games/predict  /games/ai  /wallet  /duel/<id>
 const PATHS = { '': '/', login: '/login', games: '/games', rps: '/games/rps', predict: '/games/predict', pf: '/games/prompt-fight', wallet: '/wallet', add: '/wallet/add', withdraw: '/wallet/withdraw', winners: '/winners', verify: '/verify', rules: '/rules' };
@@ -75,7 +76,7 @@ function Landing({ go, me }) {
         </div>
       </section>
       <section className="wrap"><WinnersStrip onOpen={() => go('winners')} /></section>
-      <section className="wrap"><Stage3D game="rps" height="clamp(300px, 48vw, 520px)" /></section>
+      <section className="wrap"><Showcase onPlay={(g) => go(g === 'updown' ? 'predict' : g)} /></section>
       <section className="wrap cards4">
         {GAMES.map((g) => (
           <button key={g.id} className={`gcard ${g.color} ${g.soon ? 'soon' : ''}`} disabled={g.soon} onClick={() => !g.soon && go(g.id)}><div className="gicon"><g.Icon size={36} /></div><b>{g.title}</b><p>{g.line}</p><span className="gtag">{g.tag}</span></button>
