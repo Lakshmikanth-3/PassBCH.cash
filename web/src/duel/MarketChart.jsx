@@ -47,7 +47,8 @@ export function MarketChart({ price, dir, livePts, entry, status }) {
   const W = 720, H = 300, L = 8, R = 78, T = 18, B = 30;
   const ys = series.map((s) => s[1]).concat(entry ? [entry] : []);
   let lo = Math.min(...ys), hi = Math.max(...ys);
-  const pad = Math.max((hi - lo) * 0.35, hi * 0.0006); // line stays in the middle, clear of the edges and labels lo -= pad; hi += pad; // never a flat line: at least ±0.04 %
+  const pad = Math.max((hi - lo) * 0.35, hi * 0.0006);
+  lo -= pad; hi += pad; // the line stays in the middle band, clear of the edges and labels; never a flat line
   const t0 = series[0][0], t1 = series.at(-1)[0];
   const x = (t) => L + ((t - t0) / Math.max(1, t1 - t0)) * (W - L - R);
   const y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
