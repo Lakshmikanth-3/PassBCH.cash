@@ -321,3 +321,77 @@ input:focus, textarea.prompt:focus { outline: 2px solid rgba(122, 167, 255, 0.5)
 .pricehud .muted.small { font-size: 11px; }
 .pricehud .small { font-size: 11px; line-height: 1.3; }
 .bigprice { font-size: 20px; }
+
+/* =====================================================================
+   Light "studio paper" theme (from the reference video): cream page,
+   dark ink, BCH green primary with a pressed-edge shadow, white cards,
+   dark footer band. Same fonts. Overlays on the 3D canvas stay dark.
+   ===================================================================== */
+:root {
+  --bg: #f3efe4; --bg2: #ebe6d8; --surface: #ffffff; --surface2: #f7f4ec; --border: #ddd6c4; --text: #17211b; --muted: #5f6a62;
+  --cyan: #0a8f63; --accent: #0a8f63; --lime: #13915f; --red: #d6453d; --gold: #a86b00; --magenta: #7c4dcc;
+  --ink: #17211b; --green: #0ac18e; --green-dk: #087a55; --mark: #d4ff5c;
+}
+body { background: var(--bg); color: var(--text); }
+a { color: var(--green-dk); } a:hover { text-decoration: underline; }
+h1 { color: var(--ink); letter-spacing: -0.035em; font-weight: 800; }
+.hl { background: var(--mark); color: var(--ink); padding: 0 .12em; border-radius: 6px; }
+.kicker { color: var(--green-dk); }
+.topbar { background: rgba(243, 239, 228, 0.94); border-bottom: 1px solid var(--border); }
+.brand { color: var(--ink); } .brand-mark { color: var(--green); }
+.banner { background: var(--ink); color: #e9efe9; border-bottom: 0; } .banner .ember { color: #e9efe9; border-color: #3a463e; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 1px 0 var(--border); }
+/* chunky buttons with a pressed edge, like the reference */
+.primary { background: var(--green-dk); color: #fff; border: 0; border-radius: 12px; box-shadow: 0 4px 0 #05533a; }
+.primary:hover:not(:disabled) { background: #0a8a60; }
+.primary:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #05533a; }
+.secondary { background: #fff; color: var(--ink); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 4px 0 var(--border); }
+.secondary:hover:not(:disabled) { background: var(--surface2); border-color: #c9c1ab; }
+.secondary:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--border); }
+.chipbtn { background: #fff; color: var(--ink); border-color: var(--border); }
+.chipbtn:hover { background: var(--surface2); } .chipbtn.balchip { color: var(--ink); }
+.link { color: var(--green-dk); } .back { color: var(--muted); } .back:hover { color: var(--ink); }
+.primary:disabled, .secondary:disabled, .upbtn:disabled, .downbtn:disabled { background: #e4dfd1 !important; color: #9a9f97 !important; border-color: #e4dfd1 !important; box-shadow: none !important; }
+/* game cards */
+.gcard { background: #fff; color: var(--ink); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 4px 0 var(--border); }
+.gcard:not(.soon):hover { background: #fff; border-color: #c9c1ab; transform: translateY(-2px); box-shadow: 0 6px 0 #c9c1ab; }
+.gcard.cyan { --c: #0a8f63; } .gcard.gold { --c: #b27300; } .gcard.lime { --c: #4f8a00; } .gcard.magenta { --c: #7c4dcc; }
+.gplay { background: var(--ink); color: #fff; border: 0; border-radius: 10px; }
+.gcard.soon { background: var(--surface2); } .gcard.soon .gplay { background: transparent; color: var(--muted); border: 1px dashed #c9c1ab; }
+.step .num { background: var(--mark); color: var(--ink); font-family: var(--mono); }
+/* surfaces that were dark wells */
+.move, .chip, .verdict, .linkbox, .aimatch, .aiwait, .bal > div, .openrow, .codebtn, .seg, .trend, .prompts > div, .quote, .raw,
+input, select, textarea.prompt { background: var(--surface2); color: var(--ink); border-color: var(--border); }
+.move.on, .chip.on { background: #e6f7ef; border-color: var(--green-dk); color: var(--ink); }
+.move .emoji, .hand { color: var(--ink); }
+.seg button { color: var(--muted); } .seg button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 0 var(--border); }
+.codebtn { color: var(--green-dk); } .raw { color: var(--ink); }
+input:focus, textarea.prompt:focus, select:focus { outline: 2px solid var(--green); }
+.openrow:hover { border-color: var(--green-dk); } .openrow .accept { background: var(--green-dk); color: #fff; }
+.warnbox { background: #fff6dc; border-color: #ecd28a; color: #7a5200; }
+.wcbtn { background: var(--ink); color: #fff; border: 0; }
+.invite { background: #fbffe9; border: 1px dashed #b9d36a; } .invite b { color: var(--ink); }
+.winstrip { background: #fff; } .winstrip b, .winstrip svg { color: var(--green-dk); }
+.turn.a { background: #e3f5ec; color: var(--green-dk); } .turn.b { background: #efe7fb; color: var(--magenta); }
+.prompts b.a { color: var(--green-dk); } .prompts b.b { color: var(--magenta); }
+.stat b { color: var(--ink); } .medal.m1 { color: #7d8691; } .medal.m2 { color: #b0622e; }
+.skeleton { background: linear-gradient(90deg, #ebe6d8, #f7f4ec, #ebe6d8); background-size: 200% 100%; }
+.confirm { background: rgba(23, 33, 27, 0.45); }
+.confirm .card { border-color: var(--border); }
+/* Up / Down buttons keep their meaning, chunky edge */
+.upbtn { background: #14b874; color: #fff; box-shadow: 0 5px 0 #0b7a4c; }
+.downbtn { background: #e4544b; color: #fff; box-shadow: 0 5px 0 #a3302a; }
+.upbtn:active:not(:disabled), .downbtn:active:not(:disabled) { transform: translateY(4px); box-shadow: none; }
+/* the 3D frame stays dark (scene unchanged); its overlays stay dark too */
+.stage3d { background: #0b0c14; border: 0; border-radius: 16px; box-shadow: 0 4px 0 var(--border); }
+.onair, .pricehud, .replaytag { color: #eef0ee; }
+.pricehud .muted, .onair .muted { color: #b5bcb6; }
+/* footer: dark band like the reference */
+.foot { background: var(--ink); color: #b9c2bb; border-top: 0; border-radius: 16px 16px 0 0; padding: 28px 20px 40px; }
+.foot a { color: #fff; }
+.pricehud .bigprice.up, .pricehud .green { color: #4ade80; } .pricehud .bigprice.down, .pricehud .red { color: #f87171; }
+/* footer: full-width dark band pinned to the bottom of short pages */
+#root { min-height: 100vh; display: flex; flex-direction: column; }
+.foot { margin-top: auto; border-radius: 0; padding: 28px 0 40px; }
+main + .foot, .foot { margin-top: auto; } #root > main { width: 100%; }
+#root > main:last-of-type { margin-bottom: 32px; }

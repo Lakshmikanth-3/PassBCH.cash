@@ -214,7 +214,7 @@ export default function App() {
         <main className="wrap narrow"><div className="card center"><h2>Page not found</h2><p className="muted">This address doesn't exist on PassBCH.cash.</p>
           <div className="row gap center-row"><button className="primary" onClick={() => go('')}>Home</button><button className="secondary" onClick={() => go('games')}>Games</button></div></div></main>
       )}
-      <footer className="wrap foot">PassBCH.cash · built from scratch for BCH BLAZE 2026 · <a href="/rules">Rules, fairness &amp; FAQ</a> · <a href="/verify">Verify a result</a> · <a href="/winners">Winners</a> · <a href={CONFIG.repoUrl}>source</a> · {cfg?.network ?? 'chipnet'} · 18+</footer>
+      <footer className="foot"><div className="wrap">PassBCH.cash · built from scratch for BCH BLAZE 2026 · <a href="/rules">Rules, fairness &amp; FAQ</a> · <a href="/verify">Verify a result</a> · <a href="/winners">Winners</a> · <a href={CONFIG.repoUrl}>source</a> · {cfg?.network ?? 'chipnet'} · 18+</div></footer>
     </>
   );
 }
