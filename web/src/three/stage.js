@@ -64,9 +64,11 @@ function studio(scene, accent, sky) {
   const camColors = [THEME.cyan, THEME.magenta, THEME.gold];
   [[-4.4, 3.4, -0.9], [4.4, 3.4, 0.9], [-2.6, -4.6, 2.6]].forEach(([x, z, ry], n) => {
     const tint = camColors[n % 3];
-    const rig = new THREE.Group(); rig.position.set(x, 0, z); rig.rotation.y = ry + Math.PI; scene.add(rig);
+    const rig = new THREE.Group(); rig.position.set(x, 0, z); scene.add(rig);
+    rig.lookAt(0, 0, 0); // the lens (+Z) faces the table, ring or chart in the middle of the studio
     for (let k = 0; k < 3; k++) { const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 1.5), std(0xd8dcf5, { metalness: 0.6, roughness: 0.3 })); leg.position.set(Math.sin(k * 2.1) * 0.25, 0.7, Math.cos(k * 2.1) * 0.25); leg.rotation.z = Math.sin(k * 2.1) * 0.25; leg.rotation.x = -Math.cos(k * 2.1) * 0.25; rig.add(leg); }
     const head = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.12, 16), std(0x2a2d55, { metalness: 0.7 })); head.position.y = 1.42; rig.add(head);
+    const tiltGrp = new THREE.Group(); tiltGrp.position.y = 1.62; tiltGrp.rotation.x = 0.12; rig.add(tiltGrp);
     const body = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.32, 0.62), std(tint, { metalness: 0.35, roughness: 0.35 })); body.position.y = 1.62; rig.add(body);
     const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.37, 0.05, 0.63), std(0xffffff, { roughness: 0.3 })); stripe.position.y = 1.62; rig.add(stripe);
     const hood = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.26, 0.12), std(0x1b1e3f)); hood.position.set(0, 1.62, 0.37); rig.add(hood);
@@ -100,6 +102,7 @@ function confetti(scene) {
 
 // ---------- realistic jointed hand ----------
 // Built along +X (fingers point +X, palm faces -Y). Each finger has 3 phalanges that curl joint by joint.
+const ARM_BASE = 0.32; // resting shoulder angle: arm reaches forward and slightly down onto the table
 const POSES = { rock: [1, 1, 1, 1, 1], paper: [0, 0, 0, 0, 0], scissors: [1, 0, 0, 1, 1] }; // [thumb, index, middle, ring, pinky]
 function buildHand(skinHex) {
   const skin = std(skinHex, { roughness: 0.62 }); const nail = std(0xf6d9d2, { roughness: 0.3 });
@@ -157,11 +160,20 @@ function buildPerson({ shirt, skin, hair, name, accent, host = false }) {
   const nose = new THREE.Mesh(new THREE.SphereGeometry(0.025, 10, 10), std(skin)); nose.position.set(0, -0.01, 0.215); head.add(nose);
   const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.011, 6, 16, Math.PI), std(0x8a2a3a)); mouth.rotation.z = Math.PI; mouth.position.set(0, -0.075, 0.195); head.add(mouth);
   for (const x of [-0.2, 0.2]) { const ear = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 10), std(skin)); ear.scale.set(0.5, 1, 0.8); ear.position.set(x, 0, 0); head.add(ear); }
-  const shoulder = new THREE.Group(); shoulder.position.set(0.26, 1.36, 0.02); g.add(shoulder);
-  const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.085, 0.42, 4, 12), std(shirt, { roughness: 0.7 })); upper.rotation.x = Math.PI / 2.3; upper.position.set(-0.02, -0.08, 0.22); upper.castShadow = true; shoulder.add(upper);
-  const fore = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.36, 4, 14), std(shirt, { roughness: 0.7 })); fore.rotation.x = Math.PI / 2.05; fore.position.set(-0.05, -0.14, 0.6); fore.castShadow = true; shoulder.add(fore);
-  const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.02, 8, 20), glow(accent, 1.4)); cuff.position.set(-0.06, -0.135, 0.8); shoulder.add(cuff);
-  const hand = buildHand(skin); hand.rotation.set(0, -Math.PI / 2, 0); hand.position.set(-0.07, -0.13, 0.98); hand.scale.setScalar(1.1); shoulder.add(hand);
+  // A real joint chain: every segment starts exactly where the previous one ends, so nothing floats apart.
+  const UPPER = 0.36, FORE = 0.32;
+  const shoulder = new THREE.Group(); shoulder.position.set(0.25, 1.36, 0.0); shoulder.rotation.x = ARM_BASE; g.add(shoulder);
+  const joint = (r, color) => new THREE.Mesh(new THREE.SphereGeometry(r, 16, 12), std(color, { roughness: 0.7 }));
+  shoulder.add(joint(0.09, shirt));
+  const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, UPPER - 0.08, 6, 14), std(shirt, { roughness: 0.7 })); upper.rotation.x = Math.PI / 2; upper.position.z = UPPER / 2; upper.castShadow = true; shoulder.add(upper);
+  const elbow = new THREE.Group(); elbow.position.z = UPPER; elbow.rotation.x = 0.22; shoulder.add(elbow);
+  elbow.add(joint(0.078, shirt));
+  const fore = new THREE.Mesh(new THREE.CapsuleGeometry(0.072, FORE - 0.07, 6, 14), std(shirt, { roughness: 0.7 })); fore.rotation.x = Math.PI / 2; fore.position.z = FORE / 2; fore.castShadow = true; elbow.add(fore);
+  const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.074, 0.02, 8, 20), glow(accent, 1.4)); cuff.position.z = FORE - 0.02; elbow.add(cuff);
+  const wristJ = new THREE.Group(); wristJ.position.z = FORE; elbow.add(wristJ);
+  const hand = buildHand(skin); hand.rotation.set(0, -Math.PI / 2, 0); hand.scale.setScalar(1.05);
+  hand.position.z = 0.24 * 1.05; // the hand's own wrist sits at x = -0.24 in hand space: align it with the forearm end
+  wristJ.add(hand);
   const other = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.42, 4, 10), std(shirt, { roughness: 0.7 })); other.position.set(-0.31, 1.1, 0.05); other.rotation.z = 0.15; g.add(other);
   if (host) { shoulder.visible = false; const bow = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.025, 6, 12), glow(THEME.gold, 1.4)); bow.position.set(0, 1.47, 0.2); g.add(bow); }
   const tag = label(name, { size: 44, border: hex(accent), scale: 0.8 }); tag.position.y = 2.25; g.add(tag);
@@ -269,10 +281,10 @@ function rpsScene() {
       st.t += dt;
       [you, opp, host].forEach((p, i) => { p.userData.head.rotation.y = Math.sin(time * 0.7 + i * 2) * 0.12; });
       host.userData.micArm.rotation.x = lerp(host.userData.micArm.rotation.x, st.phase === 'shake' ? -0.35 + Math.sin(time * 8) * 0.12 : st.phase === 'reveal' ? -0.6 : Math.sin(time * 1.3) * 0.06, dt * 5);
-      if (st.phase === 'idle') [you, opp].forEach((p) => { p.userData.hand.userData.target = POSES.rock; p.userData.hand.userData.spread = 0; p.userData.shoulder.rotation.x = lerp(p.userData.shoulder.rotation.x, 0, dt * 4); });
+      if (st.phase === 'idle') [you, opp].forEach((p) => { p.userData.hand.userData.target = POSES.rock; p.userData.hand.userData.spread = 0; p.userData.shoulder.rotation.x = lerp(p.userData.shoulder.rotation.x, ARM_BASE, dt * 4); });
       if (st.phase === 'shake') {
         const k = Math.max(0, st.t - 1.1) / 0.45; const beat = Math.floor(k);
-        [you, opp].forEach((p) => { p.userData.shoulder.rotation.x = -Math.abs(Math.sin(k * Math.PI)) * 0.45; p.userData.hand.userData.target = POSES.rock; });
+        [you, opp].forEach((p) => { p.userData.shoulder.rotation.x = ARM_BASE - Math.abs(Math.sin(k * Math.PI)) * 0.5; p.userData.hand.userData.target = POSES.rock; });
         if (st.t > 1.1 && beat !== st.beat && beat < 3) { st.beat = beat; sign.userData.set(['Rock…', 'Paper…', 'Scissors…'][beat], { border: '#ffc23d' }); }
         if (st.t > 1.1 + 1.35) {
           st.phase = 'reveal'; st.t = 0; st.beat = -1;
@@ -285,7 +297,7 @@ function rpsScene() {
         }
       }
       if (st.phase === 'reveal') {
-        [you, opp].forEach((p) => { p.userData.shoulder.rotation.x = lerp(p.userData.shoulder.rotation.x, 0, dt * 8); });
+        [you, opp].forEach((p) => { p.userData.shoulder.rotation.x = lerp(p.userData.shoulder.rotation.x, ARM_BASE, dt * 8); });
         if (st.t > 1.3 && !st.burst) { st.burst = true; if (st.win) { const w = st.win === 1 ? you : opp; spot.intensity = 45; spot.target.position.copy(w.position); spot.position.set(w.position.x * 0.4, 6, w.position.z * 0.4); fx.burst(new THREE.Vector3(w.position.x, 2.3, w.position.z)); } }
         const w = st.win === 1 ? you : st.win === 2 ? opp : null; if (w) w.userData.head.position.y = 1.76 + Math.abs(Math.sin(st.t * 6)) * 0.05;
         if (st.t > 9) { st.phase = 'idle'; spot.intensity = 0; you.userData.head.position.y = opp.userData.head.position.y = 1.76; }
