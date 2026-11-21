@@ -6,6 +6,4 @@ keys/
 *.wif
 *.pem
 node_modules/
-test-reports/
-docs/hackathon/
-PRD.md
+web/dist/

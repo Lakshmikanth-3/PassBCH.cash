@@ -1,9 +1,33 @@
 {
-  "name": "passrate-cash",
+  "name": "satoshi-duel",
+  "version": "1.0.0",
   "private": true,
-  "workspaces": ["packages/shared", "packages/operator", "packages/web", "packages/feasibility", "packages/panel"],
+  "type": "module",
+  "description": "Rock-paper-scissors and Up/Down for real Bitcoin Cash. Built for BCH BLAZE 2026.",
   "scripts": {
-    "test": "npm test -w @passrate/shared && npm test -w @passrate/operator && npm test -w @passrate/web && npm test -w @passrate/feasibility && npm test -w @passrate/panel",
-    "build": "npm run build -w @passrate/web"
+    "dev": "vite --config web/vite.config.js",
+    "build": "vite build --config web/vite.config.js",
+    "api": "node server/dev-server.mjs",
+    "test": "vitest run --config web/vite.config.js",
+    "e2e": "node scripts/e2e.mjs"
+  },
+  "dependencies": {
+    "@bitauth/libauth": "3.0.0",
+    "@wizardconnect/core": "0.2.10",
+    "@wizardconnect/dapp": "0.2.7",
+    "@wizardconnect/react": "0.2.6",
+    "cashscript": "0.11.5",
+    "pg": "8.13.1",
+    "qrcode": "1.5.4",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "6.6.3",
+    "@testing-library/react": "16.1.0",
+    "@vitejs/plugin-react": "4.3.4",
+    "jsdom": "25.0.1",
+    "vite": "5.4.11",
+    "vitest": "2.1.8"
   }
 }
