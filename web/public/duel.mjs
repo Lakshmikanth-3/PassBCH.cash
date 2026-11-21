@@ -109,6 +109,26 @@ async function board() {
   feed.slice(0, 8).forEach((f) => console.log(`  ${f.a_name} ${EMOJI[f.a_move] ?? '⌛'} vs ${EMOJI[f.b_move]} ${f.b_name} → ${f.winner_name ? green(f.winner_name + ' won ' + sats(2 * f.stake)) : yellow('draw')} ${dim(f.record_txid ? 'tx ' + f.record_txid.slice(0, 10) + '…' : '')}`));
 }
 
+async function updown(rules) {
+  const p = await api('price');
+  console.log(bold('\n  📈 Up or Down') + `  BCH/USD ${bold('$' + p.price.toFixed(2))}  ${dim(`next round in ${p.nextRound - p.now}s · win pays 1.9x`)}`);
+  const side = (await ask('  [u]p or [d]own? ')).trim().toLowerCase()[0];
+  if (side !== 'u' && side !== 'd') return;
+  const stake = await pickStake(rules);
+  const b = await api('bet', { body: { side: side === 'u' ? 'up' : 'down', stake } });
+  process.stdout.write(dim(`  ${side === 'u' ? '▲ UP' : '▼ DOWN'} ${sats(stake)} on the minute starting ${new Date(b.roundStart * 1000).toLocaleTimeString()} `));
+  for (;;) {
+    await sleep(5000);
+    const m = (await api('bets')).mine.find((x) => x.id === b.id);
+    if (m?.outcome) {
+      console.log(`\n  $${Number(m.open_price).toFixed(2)} → $${Number(m.close_price).toFixed(2)}  ${m.result.toUpperCase()}`);
+      console.log(m.outcome === 'win' ? green(bold(`  🏆 You win ${sats(m.payout)}!`)) : m.outcome === 'lose' ? red(`  💀 You lose ${sats(stake)}`) : yellow('  🤝 Flat — refunded'));
+      return;
+    }
+    process.stdout.write(dim('.'));
+  }
+}
+
 async function wallet(rules) {
   const { player } = await api('me');
   console.log(`\n  ${bold(player.name)}  bonus ${yellow(sats(player.bonus))} · withdrawable ${green(sats(player.cash))} · ${player.wins}W ${player.losses}L`);
@@ -132,13 +152,14 @@ async function main() {
   if (cmd === 'join' && arg) { await join(arg); return; }
   for (;;) {
     console.log(bold(`\n  🎲 SATOSHI DUEL`) + dim(`  ${cfg.name} · ${network}`));
-    const choice = (await ask(`  [1] Play the House Bot  [2] Challenge a friend  [3] Join a duel  [4] Leaderboard  [5] Wallet  [q] Quit\n  > `)).trim();
+    const choice = (await ask(`  [1] Play the House Bot  [2] Challenge a friend  [3] Join a duel  [4] Leaderboard  [5] Wallet  [6] Up or Down  [q] Quit\n  > `)).trim();
     try {
       if (choice === '1') await play({ vsBot: true, rules });
       else if (choice === '2') await play({ vsBot: false, rules });
       else if (choice === '3') await join((await ask('  Duel link or id: ')).trim().split('duel=').pop());
       else if (choice === '4') await board();
       else if (choice === '5') await wallet(rules);
+      else if (choice === '6') await updown(rules);
       else if (choice === 'q') break;
     } catch (e) { console.log(red(`  ✗ ${e.message}`)); }
   }
