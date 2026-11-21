@@ -228,7 +228,7 @@ Every row is a real transaction. Click to open it in the chipnet explorer, or pa
 | Up/Down: DOWN from $198.66 → $198.80 | NARAYANAN | Lose | [0f2f18da…7617ab55](https://chipnet.imaginary.cash/tx/0f2f18da37cbf56168d0dfa837a7be74f5795b065a7bf3f40e15aa277617ab55) |
 | Prompt Fight: Race to 18, step 1–3 | KANTH vs House Agent | KANTH wins | [7a7fad7f…5f17d1bce](https://chipnet.imaginary.cash/tx/7a7fad7ffad96b2c73f640628e77c0b9de10216d5a15dcc9f5f15cb5f17d1bce) |
 | Friend duel: scissors beats paper (end-to-end script) | test players | Creator wins | [37cc34d3…0dd68114](https://chipnet.imaginary.cash/tx/37cc34d35c5badd3f4cafff93dc3d3183ac5439cb0a14b136eac38ea0dd68114) |
-| Withdrawal: 0.0001 BCH → 0.000095 after the 5% fee | test player | Sent | [ad779558…11b14be2](https://chipnet.imaginary.cash/tx/ad7795584977005dda83f30c719019ba4fd9cb6833bd4c7bd4ce136a11b14be2) |
+| Withdrawal: 5,000 sats → 4,600 sent after the fee (end-to-end script) | test player | Confirmed | [c5a7bb4b…fb5fb0ee](https://chipnet.imaginary.cash/tx/c5a7bb4bee94602b575a288ee73ddc71a004e18df3186ebfdd27b7ecfb5fb0ee) |
 | House wallet funded | operator | 200,000 sats | [a9475687…6bd92211](https://chipnet.imaginary.cash/tx/a947568787d4b78350d2e6e096b311c3ad4ef91ebe2d74fef415c7306bd92211) |
 
 ![Verify page: Prompt Fight verified with 5 checks recomputed in the browser](docs/images/verify.png)
@@ -304,6 +304,7 @@ Free credit: 0.00025 BCH per new player (up to 3 per network, 100 in total).
 | Results can't be silently edited | `OP_RETURN` + browser Verify | Not retroactive for rows recorded before the salt was stored (shown as information) |
 | Bonus can't be laundered by self-duels | Same-bucket settlement + 2× wagering + 3 per network | VPNs could get round the network limit |
 | Withdrawals are idempotent | Txid stored before broadcast | A slow broadcast is reported, not refunded |
+| House-wallet sends never collide | One send at a time (transaction-scoped database lock) | Added after a withdrawal raced a result record and never confirmed |
 | Recording can't deadlock | Atomic row claims with 30 s retry | Replaced an earlier advisory lock that could stay held |
 | Balances are honest | **Trusted operator** | Not enforced by the chain |
 
