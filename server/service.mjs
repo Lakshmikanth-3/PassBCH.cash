@@ -553,3 +553,16 @@ export async function player(name) {
   stats.verified = history.filter((h) => h.tx).length;
   return { name: p.name, since: p.created_at, stats, history: history.map((h) => ({ ...h, paid: Number(h.paid) })) };
 }
+
+/** The signed-in player's own money movements, newest first. */
+export async function activity(token) {
+  const c = await db();
+  const p = await playerByToken(c, token);
+  const { rows } = await c.query(`
+    select 'deposit' kind, sats amount, txid tx, created_at at, null::text note from deposits where player_id = $1
+    union all select 'withdrawal', -amount, txid, created_at, status || ' · fee ' || fee from withdrawals where player_id = $1
+    union all select 'bonus', sats, null, created_at, reason from bonus_grants where player_id = $1
+    order by at desc limit 50`, [p.id]);
+  const games = (await player(p.name).catch(() => ({ history: [] }))).history;
+  return { money: rows.map((r) => ({ ...r, amount: Number(r.amount) })), games };
+}

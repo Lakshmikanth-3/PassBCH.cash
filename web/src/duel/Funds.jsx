@@ -128,3 +128,42 @@ export function Vault({ player, go }) {
     </div>
   );
 }
+
+const GAME = { rps: 'Rock · Paper · Scissors', updown: 'Up or Down', pf: 'Prompt Fight' };
+/** Your deposits, withdrawals, bonuses and games, each with its proof link. */
+export function Activity({ explorer }) {
+  const [a, setA] = useState(null); const [tab, setTab] = useState('games');
+  useEffect(() => { api('activity').then(setA).catch(() => setA({ money: [], games: [] })); }, []);
+  if (!a) return <div className="card"><p className="muted">Loading history…</p></div>;
+  const rows = tab === 'games' ? a.games : a.money;
+  const csv = () => {
+    const lines = tab === 'games' ? [['time', 'game', 'stake_sats', 'outcome', 'paid_sats', 'txid'], ...a.games.map((g) => [g.at, g.game, g.stake, g.outcome, g.paid, g.tx ?? ''])]
+      : [['time', 'kind', 'amount_sats', 'note', 'txid'], ...a.money.map((m) => [m.at, m.kind, m.amount, m.note ?? '', m.tx ?? ''])];
+    const url = URL.createObjectURL(new Blob([lines.map((l) => l.join(',')).join('\n')], { type: 'text/csv' }));
+    const el = document.createElement('a'); el.href = url; el.download = `passbch-${tab}.csv`; el.click(); URL.revokeObjectURL(url);
+  };
+  return (
+    <div className="card">
+      <div className="row between"><h2>History</h2><button className="link" onClick={csv} disabled={!rows.length}>Export CSV</button></div>
+      <div className="seg"><button className={tab === 'games' ? 'on' : ''} onClick={() => setTab('games')}>Games</button><button className={tab === 'money' ? 'on' : ''} onClick={() => setTab('money')}>Deposits · withdrawals · bonus</button></div>
+      {rows.length === 0 ? <p className="muted small">Nothing here yet.</p> : (
+        <ul className="feed">{tab === 'games'
+          ? a.games.map((g) => <li key={g.game + g.id}><span>{GAME[g.game]} <span className="muted small">{new Date(g.at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span></span><b className={g.outcome === 'win' ? 'green' : g.outcome === 'lose' ? 'red' : ''}>{g.outcome === 'win' ? `+${sats(g.paid - g.stake)}` : g.outcome === 'lose' ? `-${sats(g.stake)}` : 'refund'}</b>{g.tx ? <a href={`/verify/${g.tx}`}>Verify ✓</a> : <span className="muted small">…</span>}</li>)
+          : a.money.map((m, i) => <li key={i}><span>{m.kind} <span className="muted small">{new Date(m.at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}{m.note ? ` · ${m.note}` : ''}</span></span><b className={m.amount >= 0 ? 'green' : 'red'}>{m.amount >= 0 ? '+' : ''}{sats(m.amount)}</b>{m.tx ? <a href={`${explorer}${m.tx}`} target="_blank" rel="noreferrer">tx ↗</a> : <span />}</li>)}
+        </ul>)}
+    </div>
+  );
+}
+
+/** Settings stored on this device: low-power mode turns the 3D stages off. */
+export function Settings() {
+  const read = (k) => { try { return localStorage.getItem(k) === '1'; } catch { return false; } };
+  const [low, setLow] = useState(() => read('pb.lowpower'));
+  const toggle = () => { const v = !low; setLow(v); try { localStorage.setItem('pb.lowpower', v ? '1' : '0'); } catch { /* blocked */ } window.dispatchEvent(new Event('pb:lowpower')); };
+  return (
+    <div className="card">
+      <h2>Settings</h2>
+      <label className="toggle"><input type="checkbox" checked={low} onChange={toggle} /> <span><b>Low-power mode</b> <span className="muted small">— turn off the 3D stages (saves battery on phones). Games work the same.</span></span></label>
+    </div>
+  );
+}

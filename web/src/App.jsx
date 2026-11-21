@@ -4,7 +4,7 @@ import { CONFIG } from './config.js';
 import { api, session, sats } from './duel/api.js';
 import { Signup, NewDuel, DuelView } from './duel/Play.jsx';
 import { Wallet, Leaderboard, Terminal } from './duel/Side.jsx';
-import { Vault, AddFunds, Withdraw } from './duel/Funds.jsx';
+import { Vault, AddFunds, Withdraw, Activity, Settings } from './duel/Funds.jsx';
 import { Winners, WinnersStrip } from './duel/Winners.jsx';
 import { Verify, Profile, Rules } from './duel/Proof.jsx';
 import { Trophy } from './icons.jsx';
@@ -192,7 +192,9 @@ export default function App() {
         <main className="wrap narrow">
           <button className="back" onClick={() => go('games')}>← All games</button>
           <Vault player={me} go={go} />
+          <Activity explorer={cfg.explorer} />
           <Wallet player={me} rules={cfg.rules} explorer={cfg.explorer} network={cfg.network} onChange={refresh} />
+          <Settings />
           <Leaderboard explorer={cfg.explorer} onOpen={(id) => go('rps', id)} />
           <Terminal />
         </main>

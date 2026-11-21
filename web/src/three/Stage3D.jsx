@@ -7,8 +7,11 @@ export default function Stage3D({ game, height, children }) {
   const canvas = useRef(null);
   const [shot, setShot] = useState('');
   const [failed, setFailed] = useState(false);
+  const [low, setLow] = useState(() => { try { return localStorage.getItem('pb.lowpower') === '1'; } catch { return false; } });
+  useEffect(() => { const f = () => { try { setLow(localStorage.getItem('pb.lowpower') === '1'); } catch { /* blocked */ } }; window.addEventListener('pb:lowpower', f); return () => window.removeEventListener('pb:lowpower', f); }, []);
   useEffect(() => {
     let alive = true, stage = null;
+    if (low) return () => {};
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     import('./stage.js').then(({ createStage }) => {
       if (!alive || !canvas.current) return;
@@ -18,7 +21,7 @@ export default function Stage3D({ game, height, children }) {
       setFailed(true);
     });
     return () => { alive = false; stage?.dispose(); };
-  }, [game]);
+  }, [game, low]);
   // Feed live data so the stage is alive even before you play.
   useEffect(() => {
     let stop = false, seeded = false;
@@ -32,7 +35,8 @@ export default function Stage3D({ game, height, children }) {
   }, [game]);
   return (
     <div className="stage3d" style={height ? { height } : undefined}>
-      {!failed && <canvas ref={canvas} role="img" aria-label={`3D ${game} stage`} />}
+      {!failed && !low && <canvas ref={canvas} role="img" aria-label={`3D ${game} stage`} />}
+      {low && <div className="stage-fallback">Low-power mode: 3D is off (turn it on in Vault → Settings)</div>}
       {failed && <div className="stage-fallback">3D view not available on this device</div>}
       <div className="onair"><span className="dot" /> LIVE{shot && <span className="cam">{shot}</span>}</div>
       {children && <div className="stage-overlay">{children}</div>}
