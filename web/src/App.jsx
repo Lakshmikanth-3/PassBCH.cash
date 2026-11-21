@@ -1,3 +1,4 @@
+import { MarketChart } from './duel/MarketChart.jsx';
 import React, { useCallback, useEffect, useState } from 'react';
 import Banner from './components/Banner.jsx';
 import { CONFIG } from './config.js';
@@ -171,7 +172,7 @@ export default function App() {
         <main className="wrap game">
           <button className="back" onClick={() => go('games')}>← All games</button>
           {me ? <UpDown rules={cfg.rules} player={me} explorer={cfg.explorer} onChange={refresh} />
-            : <div className="gamelayout"><div className="stagecol"><Stage3D game="updown" /></div><Signup refCode={ref} onDone={refresh} /></div>}
+            : <div className="gamelayout"><div className="stagecol"><MarketChart livePts={[]} status="Pick a name to call UP or DOWN on the next minute." /></div><Signup refCode={ref} onDone={refresh} /></div>}
           <UpDownFeed explorer={cfg.explorer} />
         </main>
       )}
