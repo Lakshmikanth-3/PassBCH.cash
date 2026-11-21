@@ -14,7 +14,7 @@ describe('BLAZE banner (eligibility)', () => {
     render(<Banner config={CONFIG} />);
     expect(screen.getByRole('link', { name: 'Repo' })).toHaveAttribute('href', CONFIG.repoUrl);
     expect(screen.getByRole('link', { name: 'Demo' })).toHaveAttribute('href', CONFIG.demoUrl);
-    expect(screen.getByText(/Built from scratch starting 17 Nov 2026/)).toBeInTheDocument();
+    expect(screen.getByText(/All code written during BLAZE, from 17 Nov 2026/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'first commit' })).toHaveAttribute('href', `${CONFIG.repoUrl}/commit/${CONFIG.firstCommit}`);
   });
   test('EMBER2026 address is CashTokens format (z-prefix), never q', () => {
