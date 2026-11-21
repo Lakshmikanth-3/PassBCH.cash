@@ -103,11 +103,11 @@ async function welcome() {
 async function home() {
   const { player } = await api('me');
   console.log('');
-  box(`🎮 ${player.name}   ${gold('💰 ' + sats(player.bonus + player.cash))}  ${dim(`(bonus ${sats(player.bonus)} · withdrawable ${sats(player.cash)})`)}`, [
-    `${bold(gold('[1]'))} ✊ ${bold('Rock · Paper · Scissors')}   ${dim('table with a host · vs House Bot or a friend')}`,
-    `${bold(cyan('[2]'))} 📈 ${bold('Up or Down')}               ${dim('next minute of BCH · pays 1.9×')}`,
-    `${bold(lime('[3]'))} 🤖 ${bold('AI Fight')}                 ${dim('bet PASS / FAIL on a live AI coding exam')}`,
-    `${bold(mag('[4]'))} ⏳ ${dim('Upcoming BCH games — coming soon')}`,
+  box(`${player.name}   ${gold(sats(player.bonus + player.cash))}  ${dim(`(bonus ${sats(player.bonus)} · withdrawable ${sats(player.cash)})`)}`, [
+    `${bold(gold('[1]'))} ${bold('Rock · Paper · Scissors')}      ${dim('table with a host · vs House Bot or a friend')}`,
+    `${bold(cyan('[2]'))} ${bold('Up or Down')}                  ${dim('next minute of BCH · pays 1.9×')}`,
+    `${bold(lime('[3]'))} ${bold('Prompt Fight')}             ${dim('write a strategy prompt · your AI agent fights live')}`,
+    `${bold(mag('[4]'))} ${dim('Upcoming BCH games — coming soon')}`,
     '',
     `${bold('[w]')} Wallet & login code   ${bold('[l]')} Leaderboard   ${bold('[o]')} Log out   ${bold('[q]')} Quit`,
   ]);
@@ -144,7 +144,7 @@ async function tableShow(meName, them, myMove, theirMove, result) {
 }
 
 async function rps(rules) {
-  box('✊ Rock · Paper · Scissors', [`${bold('[1]')} Play the House Bot   ${bold('[2]')} Challenge a friend (share link)   ${bold('[3]')} Join a friend's duel`, dim('Your move is locked as a hash before anyone plays. Not revealing in 2 min = you lose.')], gold);
+  box('Rock · Paper · Scissors', [`${bold('[1]')} Play the House Bot   ${bold('[2]')} Challenge a friend (share link)   ${bold('[3]')} Join a friend's duel`, dim('Your move is locked as a hash before anyone plays. Not revealing in 2 min = you lose.')], gold);
   const c = (await ask('  > ')).trim();
   if (c === '3') return join((await ask('  Duel link or id: ')).trim().split(/duel[=/]/).pop());
   if (c !== '1' && c !== '2') return;
@@ -185,7 +185,7 @@ const spark = (xs) => { const lo = Math.min(...xs), hi = Math.max(...xs), s = Ma
 async function updown(rules) {
   const p = await api('price', { q: '&history=1' });
   const hist = [...(p.history ?? []), p.price];
-  box('📈 Up or Down · BCH/USD', [
+  box('Up or Down · BCH/USD', [
     `${bold(white('$' + p.price.toFixed(2)))}   ${spark(hist)}   ${dim('last 12 min')}`,
     `next round starts in ${bold(gold(`${p.nextRound - p.now}s`))} · a right call pays ${lime('1.9×')} · unchanged = refund`,
     dim('Settled by the public Coinbase BCH-USD 1-minute candle.'),
@@ -216,49 +216,71 @@ async function updown(rules) {
 const BOT = { idle: [' [o_o] ', ' /|_|\\ ', '  / \\  '], punch: [' [o_o] ', ' /|_|==●', '  / \\  '], hit: [' [x_x] ', ' \\|_|/ ', '  / \\  '], win: [' \\[^_^]/', '   |_|  ', '  / \\  '], down: ['        ', '        ', ' _[x_x]_'] };
 const flipBot = (rows) => rows.map((r) => [...r].reverse().join('').replace(/[\\/[\]()]/g, (c) => ({ '\\': '/', '/': '\\', '[': ']', ']': '[' }[c] ?? c)));
 
-async function aiFight(rules) {
-  let st = await api('ai');
-  const cur = st.current;
-  if (!cur) { box('🤖 AI Fight', [dim('No exam is live right now. A new round opens about every 2 minutes while the exam machine is online.')], lime); return; }
-  const rec = st.records[cur.model]; const model = cur.model.replace('openai/', '');
-  const open = cur.status === 'open' && st.now < Number(cur.bet_close_s);
-  box(`🤖 AI Fight · ${model} vs "${cur.slug}"`, [
-    `exercise #${cur.task_idx} drawn from BCH block ${cur.block_height} · AI record ${rec.pass}/${rec.n}`,
-    open ? `PASS pays ${lime((rec.passPct / 100).toFixed(2) + '×')} · FAIL pays ${red((rec.failPct / 100).toFixed(2) + '×')} · bets close in ${gold(`${Number(cur.bet_close_s) - st.now}s`)}` : `${gold('⚔')} the fight is on — betting closed`,
-  ], lime);
-  let bet = null;
-  if (open) {
-    const side = (await ask(`  ${lime(bold('[p] ✅ PASS'))}   ${red(bold('[f] ❌ FAIL'))}   ${dim('[Enter] just watch')}: `)).trim().toLowerCase()[0];
-    if (side === 'p' || side === 'f') {
-      const stake = await pickStake(rules);
-      if ((await ask(`  Confirm ${side === 'p' ? 'PASS' : 'FAIL'} for ${gold(sats(stake))}? ${dim('[y/N]')} `)).trim().toLowerCase() === 'y') bet = await api('aibet', { body: { roundId: cur.id, side: side === 'p' ? 'pass' : 'fail', stake } });
-    }
+const EXAMPLES = [
+  'Always leave the total so that (target - total) is a multiple of (max step + 1). If you cannot, add 1.',
+  'Count backwards from the target in steps of (max step + 1) and always land on one of those numbers.',
+];
+
+/** Replay a finished fight as a live ring-side show: a counter, punches, then the winner. */
+async function fightShow(m) {
+  const A = (m.aName ?? 'Agent A').slice(0, 12), B = (m.bName ?? 'Agent B').slice(0, 12);
+  box(`Prompt Fight · Race to ${m.target} · add 1 to ${m.maxStep}`, [`${cyan(A)} vs ${mag(B)} · ${(m.first === 'a' ? A : B)} moves first`], lime);
+  for (const t of m.turns) {
+    const att = t.side === 'a' ? BOT.punch : BOT.idle, def = t.side === 'a' ? flipBot(BOT.hit) : flipBot(BOT.punch);
+    const L = t.side === 'a' ? att : BOT.hit, R = t.side === 'a' ? def : flipBot(BOT.punch);
+    const bar = '█'.repeat(Math.round((t.total / m.target) * 24)).padEnd(24, '░');
+    frame(['', `  ${onAir(t.side === 'a' ? 'CAM A' : 'CAM B')}   ${bold(`${t.total} / ${m.target}`)}  ${gold(bar)}`,
+      ...L.map((l, k) => `      ${cyan(pad(l, 12))}  ${t.side === 'a' ? cyan(bold(`+${t.add}`)) : '  '}  ${t.side === 'b' ? mag(bold(`+${t.add}`)) : '  '}  ${mag(R[k])}`),
+      `      ${cyan(pad(A, 12))}          ${mag(B)}`]);
+    await sleep(TTY ? 650 : 1);
   }
-  for (let t = 0; ; t++) {
-    st = await api('ai');
-    const r = st.recent.find((x) => x.id === cur.id);
-    if (r && (r.status === 'done' || r.status === 'void')) {
-      const A = r.pass ? BOT.win : BOT.down, B = flipBot(r.pass ? BOT.down : BOT.win);
-      frame(['', `  ${onAir(r.pass ? 'CAM AI' : 'CAM TESTS')}`, ...A.map((l, k) => `      ${cyan(pad(l, 12))}      ${mag(B[k])}`), `      ${cyan(pad('AI agent', 12))}      ${mag('unit tests')}`, '',
-        r.status === 'void' ? gold('  round void — stakes refunded') : r.pass ? lime(bold(`  ✅ AI PASSED ${r.passed}/${r.total} — the AI wins`)) : red(bold(`  ❌ AI FAILED ${r.passed}/${r.total} — the tests win`))]);
-      endFrame();
-      const m = bet && st.mine.find((x) => x.id === bet.id);
-      if (m?.outcome === 'win') console.log(lime(bold(`  🏆 You win ${sats(m.payout)}!`))); else if (m?.outcome === 'lose') console.log(red('  💀 You lose your stake'));
-      if (r.record_txid) console.log(dim(`  on-chain record: ${r.record_txid}`));
-      return;
-    }
-    for (let k = 0; k < 8; k++) {
-      const a = (t * 8 + k) % 4; const A = a === 1 ? BOT.punch : a === 3 ? BOT.hit : BOT.idle; const B = flipBot(a === 3 ? BOT.punch : a === 1 ? BOT.hit : BOT.idle);
-      frame(['', `  ${onAir(['CAM 1 · RINGSIDE', 'CAM 2 · AI', 'CAM 3 · TESTS', 'CAM 4 · OVERHEAD'][Math.floor((t * 8 + k) / 6) % 4])}   ${dim(`${model} is coding "${cur.slug}"…`)}`,
-        ...A.map((l, i) => `      ${cyan(pad(l, 12))}      ${mag(B[i])}`), `      ${cyan(pad('AI agent', 12))}      ${mag('unit tests')}`]);
-      await sleep(TTY ? 500 : 1);
-    }
+  const W = m.winner === 'a' ? BOT.win : BOT.down, Lr = flipBot(m.winner === 'a' ? BOT.down : BOT.win);
+  frame(['', `  ${onAir(m.winner === 'a' ? 'CAM A' : 'CAM B')}   ${bold(`${m.target} / ${m.target}`)}  ${gold('█'.repeat(24))}`,
+    ...W.map((l, k) => `      ${cyan(pad(l, 12))}          ${mag(Lr[k])}`), `      ${cyan(pad(A, 12))}          ${mag(B)}`, '',
+    lime(bold(`  ${m.winner === 'a' ? A : B} wins the pot!`))]);
+  endFrame();
+  box('Prompts (revealed after the fight)', [`${cyan(A)}: ${dim(m.aPrompt ?? '')}`, `${mag(B)}: ${dim(m.bPrompt ?? '')}`], gold);
+}
+
+async function writePrompt() {
+  console.log(dim('  Your agent plays Race to N: agents take turns adding 1..k to a shared total; exactly N wins.'));
+  console.log(dim(`  Examples: [1] ${EXAMPLES[0]}\n            [2] ${EXAMPLES[1]}`));
+  const t = (await ask('  Your strategy prompt (or 1 / 2 for an example): ')).trim();
+  return t === '1' || t === '2' ? EXAMPLES[Number(t) - 1] : t;
+}
+
+async function promptFight(rules) {
+  box('Prompt Fight', [`${bold('[1]')} Fight the House Agent   ${bold('[2]')} Challenge a friend (share link)   ${bold('[3]')} Join a friend's fight`, dim('Rules are enforced by code. Your prompt stays hidden until the fight ends.')], lime);
+  const c = (await ask('  > ')).trim();
+  if (c === '3') {
+    const id = (await ask('  Fight link or id: ')).trim().split(/fight[=/]/).pop();
+    const m = await api('pf', { q: `&id=${id}` });
+    if (m.status !== 'open') return console.log(red(`  That fight is ${m.status}.`));
+    box(`${m.aName} challenges your agent for ${sats(m.stake)}`, [dim('Their prompt is hidden until the fight ends.')], mag);
+    const prompt = await writePrompt();
+    console.log(dim('  the agents are fighting…'));
+    await api('pfjoin', { body: { id, prompt } });
+    const done = await api('pf', { q: `&id=${id}` }); const me = done.bPlayer;
+    await fightShow(done);
+    console.log(done.winner === 'b' ? lime(bold(`  You win ${sats(2 * done.stake)}!`)) : red(`  You lose ${sats(done.stake)}`));
+    return;
+  }
+  if (c !== '1' && c !== '2') return;
+  const prompt = await writePrompt(); const stake = await pickStake(rules);
+  if (c === '1') console.log(dim('  the agents are fighting…'));
+  const { id } = await api('pfcreate', { body: { stake, prompt, vsBot: c === '1' } });
+  if (c === '2') box('Fight created', [`Send this link: ${bold(cyan(`${BASE}/fight/${id}`))}`, dim(`or in their terminal: menu [3] → [3] → ${id}`)], cyan);
+  let spin = 0;
+  for (;;) {
+    const m = await api('pf', { q: `&id=${id}` });
+    if (m.status === 'done') { endFrame(); await fightShow(m); console.log(m.winner === 'a' ? lime(bold(`  You win ${sats(2 * m.stake)}!`)) : red(`  You lose ${sats(m.stake)}`)); if (m.recordTxid) console.log(dim(`  on-chain record: ${m.recordTxid}`)); return; }
+    frame([`  ${dim(m.status === 'open' ? 'waiting for a challenger' : 'the agents are fighting')} ${'⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'[spin++ % 10]}`]); await sleep(2000);
   }
 }
 
 async function board() {
   const { top, feed, stats } = await api('leaderboard');
-  box(`🏆 Leaderboard · ${stats.duels} duels · ${sats(stats.volumeSats)} played`, [
+  box(`Leaderboard · ${stats.duels} duels · ${sats(stats.volumeSats)} played`, [
     ...top.slice(0, 10).map((t, i) => `${pad(`${['🥇', '🥈', '🥉'][i] ?? ` ${i + 1}.`} ${t.name}`, 26)} ${lime(pad(`+${sats(t.won_sats)}`, 18))} ${t.wins}W ${t.losses}L ${t.draws}D`),
     ...(top.length ? [] : [dim('No games yet — be the first!')]),
     '', bold('Live duels'),
@@ -268,14 +290,14 @@ async function board() {
 
 async function wallet(rules) {
   const { player, withdraw } = await api('me');
-  box(`💰 Wallet · ${player.name}`, [
+  box(`Wallet · ${player.name}`, [
     `bonus ${gold(sats(player.bonus))} (play only)   withdrawable ${lime(sats(player.cash))}   record ${player.wins}W ${player.losses}L`,
     withdraw && !withdraw.ok ? gold(`withdrawals unlock after you play ${sats(withdraw.left)} more (bonus must be played 2×)`) : lime('withdrawals unlocked'),
     `invite friends: ${cyan(`${BASE}/?ref=${player.refCode}`)} ${dim('(you both get 25,000)')}`,
     '', `${bold('[d]')} deposit   ${bold('[w]')} withdraw   ${bold('[c]')} show login code   ${dim('[Enter] back')}`,
   ], gold);
   const a = (await ask('  > ')).trim().toLowerCase();
-  if (a === 'c') box('🔑 Login code', [white(cfg.token), dim('Use it on the website (Log in) or another terminal. Keep it private.')], mag);
+  if (a === 'c') box('Login code', [white(cfg.token), dim('Use it on the website (Log in) or another terminal. Keep it private.')], mag);
   if (a === 'd') { const d = await api('deposit'); box('Deposit', [`send BCH to ${bold(d.address)}`, d.added ? lime(`credited ${sats(d.added)}`) : dim('open the wallet again after sending to credit it')], cyan); }
   if (a === 'w') {
     const address = (await ask('  Your BCH address: ')).trim();
@@ -298,8 +320,8 @@ async function main() {
     try {
       if (c === '1') await rps(rules);
       else if (c === '2') await updown(rules);
-      else if (c === '3') await aiFight(rules);
-      else if (c === '4') box('⏳ Upcoming BCH games', ['Tournaments · lucky draws · team battles · more', dim('Coming soon — stay tuned!')], mag);
+      else if (c === '3') await promptFight(rules);
+      else if (c === '4') box('Upcoming BCH games', ['Tournaments · lucky draws · team battles · more', dim('Coming soon — stay tuned!')], mag);
       else if (c === 'w') await wallet(rules);
       else if (c === 'l') await board();
       else if (c === 'o') { cfg = {}; save(cfg); console.log(dim('  logged out')); if (!(await welcome())) return; }
