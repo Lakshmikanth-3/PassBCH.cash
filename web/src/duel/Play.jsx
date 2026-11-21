@@ -90,7 +90,6 @@ export function NewDuel({ rules, player, onCreated }) {
       {!move && <p className="hint">Pick a move first.</p>}
       <p className="rulesline">Win = the whole pot · draw = stakes back · 5% fee only when you withdraw · free bonus must be played 2× before withdrawing · <a href="/rules">Rules</a></p>
       <p className="muted small">Your move is locked as a hash before anyone plays against it. Nobody — not us, not the bot — can see it until you reveal.</p>
-      {d.status === 'settled' && d.bPlayer && revealed && <VerifiedCard txid={d.recordTxid} explorer={explorer} network={network} />}
       {err && <p className="err">{err}</p>}
     </div>
   );
@@ -184,6 +183,7 @@ export function DuelView({ id, me, explorer, network, onClose, onChange }) {
           
         </p>
       )}
+      {d.status === 'settled' && d.bPlayer && revealed && <VerifiedCard txid={d.recordTxid} explorer={explorer} network={network} />}
       {err && <p className="err">{err}</p>}
     </div>
   );
