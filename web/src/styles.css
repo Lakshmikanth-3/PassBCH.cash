@@ -424,3 +424,8 @@ main + .foot, .foot { margin-top: auto; } #root > main { width: 100%; }
 .verifiedcard .codebtn { margin-top: 4px; }
 .guestnote { background: #fff6dc; border: 1px solid #ecd28a; border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; }
 .guestnote code { word-break: break-all; }
+
+.onair:not(.live) .dot { background: #8b8fa3; box-shadow: none; animation: none; }
+.onair.live .dot { animation: blink 1.2s infinite; }
+
+.solvency { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; font-size: 14px; margin: 10px 0; } .solvency.bad { border-color: #e4a29d; }

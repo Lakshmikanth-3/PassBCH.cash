@@ -20,7 +20,7 @@ export function NewFight({ rules, player, onCreated }) {
   const total = player.bonus + player.cash;
   const start = async (vsBot) => {
     setBusy(vsBot ? 'Your agent is fighting…' : 'Creating…'); setErr(null);
-    try { const { id } = await api('pfcreate', { body: { stake, prompt, vsBot } }); onCreated(id); }
+    try { const { id } = await api('pfcreate', { body: { stake, prompt, vsBot } }); try { sessionStorage.setItem(`pf.fresh.${id}`, '1'); } catch { /* blocked */ } onCreated(id); }
     catch (e) { setErr(e.message); } finally { setBusy(null); }
   };
   return (
@@ -48,17 +48,19 @@ export function NewFight({ rules, player, onCreated }) {
 export function FightView({ id, me, explorer, network, onClose, onChange }) {
   const [m, setM] = useState(null); const [err, setErr] = useState(null);
   const [prompt, setPrompt] = useState(''); const [busy, setBusy] = useState(false); const [copied, setCopied] = useState(false);
-  const shown = useRef(false); const m0 = useRef(null);
+  const shown = useRef(false); const m0 = useRef(null); const wasLive = useRef(false); const lastM = useRef(null);
+  const replay = (x) => { document.querySelector('.stage3d')?.scrollIntoView?.({ behavior: 'smooth', block: 'center' }); show({ kind: 'pf', turns: x.turns, target: x.target, maxStep: x.maxStep, winner: x.winner, aName: x.aName, bName: x.bName }); };
   const [revealed, setRevealed] = useState(false);
   const link = `${location.origin}/fight/${id}`;
   const load = async () => {
     try {
       const x = await api('pf', { q: `&id=${id}` }); setM(x); m0.current = x;
+      if (x.status !== 'done') wasLive.current = true;
       if (x.status === 'done' && !shown.current) {
-        shown.current = true;
-        setTimeout(() => setRevealed(true), 1600 + Math.max(0.6, Math.min(1.3, 24 / Math.max(1, x.turns.length))) * x.turns.length * 1000 + 600);
-        document.querySelector('.stage3d')?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
-        show({ kind: 'pf', turns: x.turns, target: x.target, maxStep: x.maxStep, winner: x.winner, aName: x.aName, bName: x.bName });
+        shown.current = true; lastM.current = x;
+        let fresh = wasLive.current; try { if (sessionStorage.getItem(`pf.fresh.${id}`)) { fresh = true; sessionStorage.removeItem(`pf.fresh.${id}`); } } catch { /* blocked */ }
+        if (fresh) { setTimeout(() => setRevealed(true), 1600 + Math.max(0.6, Math.min(1.3, 24 / Math.max(1, x.turns.length))) * x.turns.length * 1000 + 600); replay(x); }
+        else setRevealed(true); // finished earlier (reload / old link): result at once, with a Replay button
         onChange?.();
       } else if (x.status === 'open') show({ kind: 'pf', waiting: x.aPlayer === me?.id ? 'Waiting for a challenger…' : `${x.aName} is waiting for you` });
     } catch (e) { setErr(e.message); if (/no such match/.test(e.message)) shown.current = true; }
@@ -67,7 +69,7 @@ export function FightView({ id, me, explorer, network, onClose, onChange }) {
   if (!m && /no such match/.test(err ?? '')) return <div className="card"><h2>This fight doesn't exist</h2><p className="muted">The link may be mistyped or the fight was removed.</p><button className="primary" onClick={onClose}>Start a new fight</button></div>;
   if (!m) return <div className="card"><p className="muted">Loading fight…</p>{err && <p className="err">{err}</p>}</div>;
   const mine = m.aPlayer === me?.id ? 'a' : m.bPlayer === me?.id ? 'b' : null;
-  const join = async () => { setBusy(true); setErr(null); try { await api('pfjoin', { body: { id, prompt } }); await load(); } catch (e) { setErr(e.message); } finally { setBusy(false); } };
+  const join = async () => { setBusy(true); setErr(null); try { await api('pfjoin', { body: { id, prompt } }); try { sessionStorage.setItem(`pf.fresh.${id}`, '1'); } catch { /* blocked */ } await load(); } catch (e) { setErr(e.message); } finally { setBusy(false); } };
   const share = async () => { try { if (navigator.share) await navigator.share({ title: 'Prompt Fight', text: `${m.aName} challenges your AI agent for ${sats(m.stake)}`, url: link }); else { await navigator.clipboard.writeText(link); setCopied(true); } } catch { /* cancelled */ } };
   return (
     <div className="card">
@@ -86,6 +88,7 @@ export function FightView({ id, me, explorer, network, onClose, onChange }) {
       )}
       {m.status === 'fighting' && <p className="center coding">The agents are fighting…</p>}
       {m.status === 'done' && !revealed && <p className="center coding">Watch the fight on the stage…</p>}
+      {m.status === 'done' && revealed && <button className="secondary" style={{ marginBottom: 10 }} onClick={() => replay(lastM.current ?? m)}>Replay the fight</button>}
       {m.status === 'done' && revealed && (
         <>
           <div className={`verdict ${mine ? (m.winner === mine ? 'win' : 'lose') : ''}`}>{mine ? (m.winner === mine ? `You win ${sats(2 * m.stake)}!` : `You lose ${sats(m.stake)}`) : `${m.winner === 'a' ? m.aName : m.bName} wins`}</div>

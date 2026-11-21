@@ -16,6 +16,10 @@ export function drawSetup(matchId) {
   const x = h(`pf:${matchId}`);
   return { target: 15 + (parseInt(x.slice(0, 4), 16) % 10), maxStep: 2 + (parseInt(x.slice(4, 8), 16) % 3), first: parseInt(x.slice(8, 10), 16) % 2 === 0 ? 'a' : 'b' };
 }
+/** Coin flip for who moves first: the server commits sha256("first:"+seed) when the match is created (before any prompt
+ *  is known to the opponent) and reveals the seed when the fight ends, so anyone can check the flip was not chosen later. */
+export const firstCommit = (seed) => h(`first:${seed}`);
+export const firstFromSeed = (seed, matchId) => (parseInt(h(`flip:${seed}:${matchId}`).slice(0, 2), 16) % 2 === 0 ? 'a' : 'b');
 export function cleanPrompt(p) {
   const s = String(p ?? '').replace(/\s+/g, ' ').trim().slice(0, PF.promptMax);
   if (s.length < 5) throw new Error('write a strategy prompt of at least 5 characters');
@@ -24,13 +28,15 @@ export function cleanPrompt(p) {
 export const legalMoves = (total, { target, maxStep }) => Array.from({ length: Math.min(maxStep, target - total) }, (_, i) => i + 1);
 /** First legal number in the reply; otherwise null (the server then plays the smallest legal move and marks it). */
 export function parseMove(text, legal) {
+  const t = String(text ?? '');
+  try { const j = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1)); const n = Number(j.add); if (legal.includes(n)) return n; } catch { /* not JSON: fall back to the first legal number */ }
   for (const m of String(text ?? '').matchAll(/\d+/g)) { const n = Number(m[0]); if (legal.includes(n)) return n; }
   return null;
 }
 export function messagesFor(prompt, { target, maxStep }, total, history, you) {
   return [
-    { role: 'system', content: `You are an AI agent playing the game "Race to ${target}". Players take turns adding a whole number from 1 to ${maxStep} to a shared total that starts at 0. The player who makes the total exactly ${target} wins. The total may never go above ${target}.\nYour owner gave you this strategy:\n"""${prompt}"""\nFollow your owner's strategy. Reply with ONLY the number you add.` },
-    { role: 'user', content: `Total is ${total}. Moves so far: ${history.length ? history.map((t) => `${t.side === you ? 'you' : 'opponent'} +${t.add}`).join(', ') : 'none'}. You may add ${legalMoves(total, { target, maxStep }).join(', ')}. Your move:` },
+    { role: 'system', content: `You are an AI agent playing the game "Race to ${target}". Players take turns adding a whole number from 1 to ${maxStep} to a shared total that starts at 0. The player who makes the total exactly ${target} wins. The total may never go above ${target}.\nYour owner gave you this strategy:\n"""${prompt}"""\nFollow your owner's strategy. Reply with ONLY a JSON object like {"add": 2}.` },
+    { role: 'user', content: `Total is ${total}. Moves so far: ${history.length ? history.map((t) => `${t.side === you ? 'you' : 'opponent'} +${t.add}`).join(', ') : 'none'}. You may add ${legalMoves(total, { target, maxStep }).join(', ')}. Reply as JSON: {"add": <number>}` },
   ];
 }
 
@@ -38,14 +44,18 @@ export function messagesFor(prompt, { target, maxStep }, total, history, you) {
  * Play a full match. ask(messages) -> Promise<string> (the model reply). Never throws on a bad reply:
  * an unparsable or failed reply plays the smallest legal move (marked auto) so the match always finishes.
  */
-export async function playMatch({ id, promptA, promptB, ask, deadlineMs = 24000 }) {
+export async function playMatch({ id, promptA, promptB, ask, deadlineMs = 24000, seed }) {
   const setup = drawSetup(id);
+  if (seed) setup.first = firstFromSeed(seed, id);
   const turns = []; let total = 0; let side = setup.first; const t0 = Date.now();
   while (total < setup.target) {
     const legal = legalMoves(total, setup);
     let add = null, auto = false, said = '';
     if (Date.now() - t0 < deadlineMs) {
-      try { said = await ask(messagesFor(side === 'a' ? promptA : promptB, setup, total, turns, side)); add = parseMove(said, legal); } catch { /* fall through */ }
+      const msgs = messagesFor(side === 'a' ? promptA : promptB, setup, total, turns, side);
+      for (let attempt = 0; attempt < 2 && add == null && Date.now() - t0 < deadlineMs; attempt++) { // one retry on an invalid or failed reply
+        try { said = await ask(attempt ? [...msgs, { role: 'user', content: `Invalid. Reply with ONLY JSON like {"add": ${legal[0]}} using one of: ${legal.join(', ')}.` }] : msgs); add = parseMove(said, legal); } catch { /* retry once, then play automatically */ }
+      }
     }
     if (add == null) { add = legal[0]; auto = true; }
     total += add;
@@ -62,7 +72,7 @@ export function groqAsk(key, model = PF.model, retried = false) {
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST', signal: AbortSignal.timeout(8000),
       headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ model, messages, temperature: 0.2, max_completion_tokens: 700, reasoning_effort: 'low' }),
+      body: JSON.stringify({ model, messages, temperature: 0.2, max_completion_tokens: 700, reasoning_effort: 'low', response_format: { type: 'json_object' } }),
     });
     if (r.status === 429 && !retried) { await new Promise((ok) => setTimeout(ok, 1500)); return groqAsk(key, model, true)(messages); } // free-tier burst: one short wait
     if (!r.ok) throw new Error(`groq ${r.status}`);

@@ -68,6 +68,11 @@ const routes = {
     return { address, added };
   },
   /** Coins of a WizardConnect wallet (public addresses only), so the browser can build the deposit for the wallet to sign. */
+  /** Live solvency: house wallet balance (from chain) vs what players could withdraw (from the database). */
+  async solvency() {
+    const [house, owed] = await Promise.all([timed(chain.houseBalance(), 8000, 'house balance').catch(() => null), S.playerCashLiability()]);
+    return { network: chain.NETWORK, address: chain.houseAddress(), houseSats: house, playerCashSats: owed, covered: house == null ? null : house >= owed };
+  },
   async price(req, b, q) {
     const now = Math.floor(Date.now() / 1000);
     const [p, history, chart] = await Promise.all([timed(spot(), 6000, 'price'), q.get('history') ? recentCloses(12) : [], q.get('chart') ? chartSeries(q.get('chart')) : null]);

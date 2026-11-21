@@ -190,7 +190,7 @@ export default function App() {
           <button className="back" onClick={() => go('games')}>← All games</button>
           {me && <GuestNote />}
           <div className="gamelayout">
-            <div className="stagecol"><Stage3D game="rps" /></div>
+            <div className="stagecol"><Stage3D game="rps" live={!!duel} /></div>
             <section className="col">
               {duel ? <DuelView id={duel} me={me} explorer={cfg.explorer} network={cfg.network} onClose={() => go('rps')} onChange={refresh} />
                 : me ? <NewDuel rules={cfg.rules} player={me} onCreated={(id) => go('rps', id)} /> : null}
@@ -212,7 +212,7 @@ export default function App() {
         <main className="wrap game">
           <button className="back" onClick={() => go('games')}>← All games</button>
           <div className="gamelayout">
-            <div className="stagecol"><Stage3D game="pf" /></div>
+            <div className="stagecol"><Stage3D game="pf" live={!!fight} /></div>
             <section className="col">
               {fight ? <FightView id={fight} me={me} explorer={cfg.explorer} network={cfg.network} onClose={() => go('pf')} onChange={refresh} />
                 : me ? <NewFight rules={cfg.rules} player={me} onCreated={(id) => go('pf', id)} /> : null}

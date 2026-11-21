@@ -58,6 +58,8 @@ create table if not exists pf_matches (
   created_s bigint not null, target int, max_step int, first text, turns jsonb, winner text, winner_id int references players(id),
   status text not null default 'open', settled_at timestamptz, record_txid text, record_try_at timestamptz
 );
+alter table pf_matches add column if not exists first_seed text;
+alter table pf_matches add column if not exists first_commit text;
 insert into players (token_hash, name, ref_code, cash, is_house) values ('house', 'House Bot', 'HOUSE', 100000000, true) on conflict do nothing;
 `;
 

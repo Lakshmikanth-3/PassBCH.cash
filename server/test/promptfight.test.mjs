@@ -49,4 +49,26 @@ describe('prompt fight rules', () => {
   test('on-chain record is 59 bytes', () => {
     expect(P.pfRecordBytes({ id: 'ab'.repeat(16), winner: 'a', target: 20, maxStep: 3, stake: 5000, turns: [{ side: 'a', add: 3 }] }).length).toBe(59);
   });
+
+  test('parses a JSON reply and ignores illegal numbers inside it', () => {
+    expect(P.parseMove('{"add": 2}', [1, 2, 3])).toBe(2);
+    expect(P.parseMove('{"add": 9} then 1', [1, 2, 3])).toBe(1);
+    expect(P.parseMove('{"add": 3} extra', [1, 2, 3])).toBe(3);
+  });
+  test('an invalid reply is retried once before an automatic move is used', async () => {
+    let calls = 0;
+    const ask = async () => { calls++; return calls % 2 === 1 ? 'no idea' : '{"add": 1}'; };
+    const r = await P.playMatch({ id: 'cd'.repeat(16), promptA: 'x', promptB: 'y', ask });
+    expect(r.turns.every((t) => !t.auto)).toBe(true); // every first reply was invalid, every retry valid
+    expect(calls).toBe(r.turns.length * 2);
+  });
+  test('first mover comes from a committed seed: the commitment matches and the flip is reproducible', async () => {
+    const seed = 'ab'.repeat(16), id = 'ef'.repeat(16);
+    expect(P.firstCommit(seed)).toMatch(/^[0-9a-f]{64}$/);
+    expect(P.firstFromSeed(seed, id)).toBe(P.firstFromSeed(seed, id));
+    const r = await P.playMatch({ id, promptA: 'x', promptB: 'y', ask: async () => '{"add": 1}', seed });
+    expect(r.first).toBe(P.firstFromSeed(seed, id));
+    const sides = new Set(Array.from({ length: 40 }, (_, i) => P.firstFromSeed(i.toString(16).padStart(32, '0'), id)));
+    expect(sides.size).toBe(2); // both players can get the first move
+  });
 });

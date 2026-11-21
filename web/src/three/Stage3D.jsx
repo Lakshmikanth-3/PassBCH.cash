@@ -3,7 +3,7 @@ import { api } from '../duel/api.js';
 import { show } from './show.js';
 
 /** One game's 3D TV-show stage, with a LIVE badge and the current camera name like a broadcast. */
-export default function Stage3D({ game, height, children }) {
+export default function Stage3D({ game, height, children, live = false }) {
   const canvas = useRef(null);
   const [shot, setShot] = useState('');
   const [failed, setFailed] = useState(false);
@@ -38,7 +38,7 @@ export default function Stage3D({ game, height, children }) {
       {!failed && !low && <canvas ref={canvas} role="img" aria-label={`3D ${game} stage`} />}
       {low && <div className="stage-fallback">Low-power mode: 3D is off (turn it on in Vault → Settings)</div>}
       {failed && <div className="stage-fallback">3D view not available on this device</div>}
-      <div className="onair"><span className="dot" /> LIVE{shot && <span className="cam">{shot}</span>}</div>
+      <div className={`onair ${live ? 'live' : ''}`}><span className="dot" /> {live ? 'LIVE' : 'STUDIO'}{shot && <span className="cam">{shot}</span>}</div>
       {children && <div className="stage-overlay">{children}</div>}
     </div>
   );

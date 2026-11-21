@@ -1,3 +1,4 @@
+import { Solvency } from './Solvency.jsx';
 import React, { useEffect, useState } from 'react';
 import { api, sats } from './api.js';
 import { useFx, fiat } from './money.js';
@@ -29,6 +30,7 @@ export function Winners({ explorer, go }) {
       {err && <p className="err">{err}</p>}
       {!w ? <div className="card"><p className="muted">Loading…</p></div> : (
         <>
+          <Solvency />
           <div className="stats4">
             <div className="card stat"><span className="muted small">Paid to winners</span><b>{sats(w.totals.paid)}</b><span className="muted small">{fiat(w.totals.paid, rates, ccy)}</span></div>
             <div className="card stat"><span className="muted small">Wins</span><b>{w.totals.wins}</b><span className="muted small">{w.totals.winners} {w.totals.winners === 1 ? 'winner' : 'different winners'}</span></div>
@@ -37,10 +39,10 @@ export function Winners({ explorer, go }) {
           </div>
           <div className="grid">
             <div className="card">
-              <h2>Top winners</h2>
+              <h2>Top winners <span className="muted small">ranked by net profit = winnings minus stakes</span></h2>
               {w.top.length === 0 ? <p className="muted">No wins in this period yet — be the first.</p> : (
-                <table className="lb"><thead><tr><th>#</th><th>Player</th><th>Wins</th><th>Won</th></tr></thead>
-                  <tbody>{w.top.map((t, i) => <tr key={t.name}><td className={i < 3 ? 'medal m' + i : ''}>{i + 1}</td><td>{who(t.name)}</td><td>{t.wins}</td><td className="green">{sats(t.won)}<div className="muted small">{fiat(t.won, rates, ccy)}</div></td></tr>)}</tbody></table>
+                <table className="lb"><thead><tr><th>#</th><th>Player</th><th>Wins</th><th>Net profit</th><th>Gross won</th></tr></thead>
+                  <tbody>{w.top.map((t, i) => <tr key={t.name}><td className={i < 3 ? 'medal m' + i : ''}>{i + 1}</td><td>{who(t.name)}</td><td>{t.wins}</td><td className="green"><b>{sats(t.net)}</b><div className="muted small">{fiat(t.net, rates, ccy)}</div></td><td className="muted">{sats(t.won)}</td></tr>)}</tbody></table>
               )}
             </div>
             <div className="col">

@@ -101,7 +101,14 @@ export function DuelView({ id, me, explorer, network, onClose, onChange }) {
   const [d, setD] = useState(null); const [err, setErr] = useState(null);
   const [move, setMove] = useState(null); const [copied, setCopied] = useState(false);
   const revealing = useRef(false);
-  const shown = useRef(false);
+  const shown = useRef(false); const wasLive = useRef(false); const lastX = useRef(null);
+  // The 3D table always seats "You" on the left: flip the view if you were the joiner.
+  const replay = (x) => {
+    const flip = x.bPlayer === me?.id;
+    document.querySelector('.stage3d')?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+    show({ game: 'duel', kind: 'duel', aMove: flip ? x.bMove : x.aMove, bMove: flip ? x.aMove : x.bMove, result: flip ? ({ 1: 2, 2: 1 }[x.result] ?? 0) : x.result,
+      names: flip ? [x.bName ?? 'You', x.aName] : [x.aName, x.bName ?? 'Opponent'] });
+  };
   const [revealed, setRevealed] = useState(false);
   const mine = session.salt(id);
   const link = `${location.origin}/duel/${id}`;
@@ -113,14 +120,11 @@ export function DuelView({ id, me, explorer, network, onClose, onChange }) {
         const x = await api('duel', { q: `&id=${id}` });
         if (stop) return;
         setD(x);
+        if (x.status !== 'settled') wasLive.current = true; // we watched this duel happen: play the show
         if (x.status === 'settled' && x.aMove && x.bMove && !shown.current) {
-          // The 3D table always seats "You" on the left: flip the view if you were the joiner.
-          shown.current = true;
-          setTimeout(() => setRevealed(true), 5200);
-          const flip = x.bPlayer === me?.id;
-          document.querySelector('.stage3d')?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
-          show({ game: 'duel', kind: 'duel', aMove: flip ? x.bMove : x.aMove, bMove: flip ? x.aMove : x.bMove, result: flip ? ({ 1: 2, 2: 1 }[x.result] ?? 0) : x.result,
-            names: flip ? [x.bName ?? 'You', x.aName] : [x.aName, x.bName ?? 'Opponent'] });
+          shown.current = true; lastX.current = x;
+          if (wasLive.current) { setTimeout(() => setRevealed(true), 5200); replay(x); }
+          else setRevealed(true); // opened a finished duel (reload / old link): result at once, with a Replay button
         } else if (x.status === 'open' && !shown.current) {
           show({ kind: 'duel', waiting: x.aPlayer === me?.id ? 'Waiting for your opponent…' : `${x.aName} is waiting for you` });
         }
@@ -159,6 +163,7 @@ export function DuelView({ id, me, explorer, network, onClose, onChange }) {
         <div className="fighter"><div className="who">{d.bName ?? 'waiting…'}</div><div className={`hand ${d.bMove ? 'shown' : 'hidden'}`}>{d.bMove && (revealed || d.status !== 'settled') ? <MoveIcon move={d.bMove} size={56} /> : <span className="lock">?</span>}</div></div>
       </div>
       {verdict}
+      {d.status === 'settled' && d.bPlayer && revealed && <button className="secondary" style={{ marginTop: 10 }} onClick={() => replay(lastX.current ?? d)}>Replay the show</button>}
       {d.status === 'open' && iAmA && (
         <div className="share">
           <p>Send this link to a friend. Their bonus covers the stake.</p>

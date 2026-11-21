@@ -58,9 +58,10 @@ export function Leaderboard({ explorer, onOpen }) {
   if (!lb) return <div className="card"><p className="muted">Loading leaderboard…</p></div>;
   return (
     <>
-      {open.length > 0 && (
+      {(
         <div className="card">
           <h2>Open challenges</h2>
+          {open.length === 0 && <p className="muted small" style={{ margin: 0 }}>No open challenges right now. Create one with "Challenge a friend" and share the link.</p>}
           {open.slice(0, 6).map((o) => <button key={o.id} className="openrow" onClick={() => onOpen(o.id)}><span>{o.name} challenges anyone</span><span><b>{sats(o.stake)}</b><span className="accept">Accept</span></span></button>)}
         </div>
       )}

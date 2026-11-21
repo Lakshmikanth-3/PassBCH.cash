@@ -3,7 +3,7 @@ import { randomBytes } from 'node:crypto';
 import * as E from './engine.mjs';
 import { tx, db } from './db.mjs';
 import { getCandle, priceAt } from './price.mjs';
-import { PF, cleanPrompt, playMatch, groqAsk } from './promptfight.mjs';
+import { PF, cleanPrompt, playMatch, groqAsk, firstCommit } from './promptfight.mjs';
 
 export class UserError extends Error { constructor(m, status = 400) { super(m); this.status = status; } }
 const nowS = () => Math.floor(Date.now() / 1000);
@@ -425,7 +425,8 @@ export async function pfCreate(token, { stake, prompt, vsBot }) {
     let split; try { split = E.takeStake({ bonus: Number(p.bonus), cash: Number(p.cash) }, stake); } catch (e) { throw new UserError(e.message); }
     const mid = randomBytes(16).toString('hex');
     await c.query('update players set bonus = bonus - $1, cash = cash - $2, wagered = wagered + $1 + $2 where id = $3', [split.fromBonus, split.fromCash, p.id]);
-    await c.query('insert into pf_matches (id, stake, vs_bot, a_player, a_prompt, a_from_bonus, a_from_cash, created_s) values ($1,$2,$3,$4,$5,$6,$7,$8)', [mid, stake, !!vsBot, p.id, clean, split.fromBonus, split.fromCash, nowS()]);
+    const seed = randomBytes(16).toString('hex'); // coin flip for who moves first: committed now, revealed after the fight
+    await c.query('insert into pf_matches (id, stake, vs_bot, a_player, a_prompt, a_from_bonus, a_from_cash, created_s, first_seed, first_commit) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)', [mid, stake, !!vsBot, p.id, clean, split.fromBonus, split.fromCash, nowS(), seed, firstCommit(seed)]);
     return mid;
   });
   if (vsBot) await pfJoinAs(id, 'house', PF.housePrompt);
@@ -447,7 +448,7 @@ async function pfJoinAs(id, who, prompt) {
   });
   const key = process.env.GROQ_KEY;
   const ask = key ? groqAsk(key) : async () => { throw new Error('no model key'); };
-  const r = await playMatch({ id, promptA: m.a_prompt, promptB: m.b_prompt, ask });
+  const r = await playMatch({ id, promptA: m.a_prompt, promptB: m.b_prompt, ask, seed: m.first_seed ?? undefined });
   return tx(async (c) => {
     const result = r.winner === 'a' ? 1 : 2;
     for (const cr of E.settle(result, m.stake, { fromBonus: m.a_from_bonus, fromCash: m.a_from_cash }, { fromBonus: m.b_from_bonus, fromCash: m.b_from_cash })) {
@@ -476,7 +477,7 @@ export async function pfGet(id, token) {
   const done = m.status === 'done';
   return { id: m.id, stake: m.stake, status: m.status, vsBot: m.vs_bot, aName: m.a_name, bName: m.b_name, aPlayer: m.a_player, bPlayer: m.b_player,
     aPrompt: done || meId === m.a_player ? m.a_prompt : null, bPrompt: done || meId === m.b_player ? m.b_prompt : null,
-    target: m.target, maxStep: m.max_step, first: m.first, turns: m.turns, winner: m.winner, recordTxid: m.record_txid };
+    target: m.target, maxStep: m.max_step, first: m.first, firstCommit: m.first_commit ?? null, firstSeed: done ? m.first_seed ?? null : null, turns: m.turns, winner: m.winner, recordTxid: m.record_txid };
 }
 export async function pfOpen() {
   return (await (await db()).query("select m.id, m.stake, m.created_s, p.name from pf_matches m join players p on p.id=m.a_player where m.status='open' order by m.created_s desc limit 20")).rows;
@@ -489,6 +490,18 @@ const GAME_SQL = {
   updown: `select 'updown' game, p.name, b.payout amount, b.record_txid tx, b.settled_at at from bets b join players p on p.id = b.player_id where b.outcome = 'win'`,
   pf: `select 'pf' game, w.name, m.stake * 2 amount, m.record_txid tx, m.settled_at at from pf_matches m join players w on w.id = m.winner_id where m.status = 'done' and not w.is_house`,
 };
+// Net result per player per finished game: what you won minus what you staked (ties and refunds are 0).
+const NET_SQL = {
+  rps: `select a_player pid, case result when 1 then stake when 2 then -stake else 0 end net, settled_at at from duels where settled_at is not null and b_player is not null
+        union all select b_player, case result when 2 then stake when 1 then -stake else 0 end, settled_at from duels where settled_at is not null and b_player is not null`,
+  updown: `select player_id pid, case outcome when 'win' then payout - stake when 'lose' then -stake else 0 end net, settled_at at from bets where outcome is not null`,
+  pf: `select a_player pid, case winner when 'a' then stake else -stake end net, settled_at at from pf_matches where status = 'done'
+        union all select b_player, case winner when 'b' then stake else -stake end, settled_at from pf_matches where status = 'done'`,
+};
+/** What the house owes players in withdrawable cash (bonus credit is play-only and is not a withdrawable liability). */
+export async function playerCashLiability() {
+  return Number((await (await db()).query('select coalesce(sum(cash),0)::bigint s from players where not is_house')).rows[0].s);
+}
 /** Public winners board: totals, top winners and the biggest / latest wins, by game and period. */
 export async function winners({ game = 'all', period = 'all' } = {}) {
   const c = await db();
@@ -496,7 +509,12 @@ export async function winners({ game = 'all', period = 'all' } = {}) {
   const since = period === 'today' ? "now() - interval '1 day'" : period === 'week' ? "now() - interval '7 days'" : "'epoch'::timestamptz";
   const wins = `(${games.map((g) => GAME_SQL[g]).join(' union all ')}) w where w.at >= ${since}`;
   const [{ rows: top }, { rows: biggest }, { rows: latest }, { rows: [t] }, { rows: [played] }] = await Promise.all([
-    c.query(`select name, count(*)::int wins, sum(amount)::bigint won from ${wins} group by name order by won desc, wins desc limit 20`),
+    // Ranked by NET profit (winnings minus stakes); gross winnings are shown next to it.
+    c.query(`with n as (select pid, net from (${games.map((g) => NET_SQL[g]).join(' union all ')}) x where x.at >= ${since}),
+      g as (select name, count(*)::int wins, sum(amount)::bigint won from ${wins} group by name)
+      select p.name, coalesce(g.wins, 0)::int wins, coalesce(g.won, 0)::bigint won, sum(n.net)::bigint net, count(*)::int games
+      from n join players p on p.id = n.pid left join g on g.name = p.name where not p.is_house group by p.name, g.wins, g.won
+      having sum(n.net) > 0 order by net desc, wins desc limit 20`),
     c.query(`select * from ${wins} order by amount desc, at desc limit 12`),
     c.query(`select * from ${wins} order by at desc limit 20`),
     c.query(`select count(*)::int wins, coalesce(sum(amount),0)::bigint paid, count(distinct name)::int winners from ${wins}`),
@@ -506,7 +524,7 @@ export async function winners({ game = 'all', period = 'all' } = {}) {
       (select count(*) from pf_matches where status = 'done' and settled_at >= ${since})::int fights,
       (select count(*) from players where not is_house)::int players`),
   ]);
-  const num = (r) => ({ ...r, won: r.won != null ? Number(r.won) : undefined, amount: r.amount != null ? Number(r.amount) : undefined });
+  const num = (r) => ({ ...r, won: r.won != null ? Number(r.won) : undefined, net: r.net != null ? Number(r.net) : undefined, amount: r.amount != null ? Number(r.amount) : undefined });
   return { top: top.map(num), biggest: biggest.map(num), latest: latest.map(num), totals: { ...t, paid: Number(t.paid), ...played } };
 }
 

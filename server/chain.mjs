@@ -55,6 +55,10 @@ export async function houseSend({ p = provider(), opReturn, to, sats = 0n, befor
   return txid;
 }
 
+export const houseAddress = () => houseKey().address;
+/** Spendable BCH (sats) in the house wallet, read from chain. */
+export async function houseBalance(p = provider()) { return Number((await p.getUtxos(houseKey().address)).filter(plain).reduce((a, u) => a + u.satoshis, 0n)); }
+
 export const recordDuel = (d, beforeSend) => houseSend({ beforeSend, opReturn: recordBytes({ id: d.id, result: d.result, stake: d.stake, moveA: d.a_move, moveB: d.b_move, commit: d.a_commit }) });
 export const payWithdrawal = (to, sats, beforeSend, p) => houseSend({ p, to, sats: BigInt(sats), beforeSend });
 export async function depositUtxos(playerId, p = provider()) { return spendable(p, depositKey(playerId).address); }

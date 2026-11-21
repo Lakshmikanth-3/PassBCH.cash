@@ -1,3 +1,4 @@
+import { Solvency } from './Solvency.jsx';
 import React, { useEffect, useState } from 'react';
 import { api, sats } from './api.js';
 
@@ -129,6 +130,7 @@ export function Rules({ rules }) {
     <main className="wrap narrow rules">
       <div className="card">
         <h2>How PassBCH.cash works</h2>
+        <Solvency />
         <p className="muted">Three short games played with Bitcoin Cash. During the BLAZE hackathon everything runs on <b>chipnet (test BCH with no real value)</b>; mainnet only after full testing.</p>
       </div>
       <div className="card"><h2>Rock · Paper · Scissors</h2><ul>
@@ -140,7 +142,8 @@ export function Rules({ rules }) {
         <li>Price higher = UP wins, lower = DOWN wins, <b>exactly the same = your stake comes back</b>. A right call pays {(r.updownPayoutPct ?? 190) / 100}×.</li></ul></div>
       <div className="card"><h2>Prompt Fight</h2><ul>
         <li>Each player writes a strategy prompt for an AI agent (Groq gpt-oss-20b). The agents play <b>Race to N</b>: take turns adding 1…k; whoever reaches N exactly wins.</li>
-        <li>N (15–24), k (2–4) and who moves first are drawn from the match id. Code enforces every move — there is no AI judge to trick.</li>
+        <li>N (15–24) and k (2–4) are drawn from the match id. <b>Who moves first is a commit-reveal coin flip:</b> the server publishes sha256(seed) when the match is created and reveals the seed after the fight. Code enforces every move; there is no AI judge to trick.</li>
+        <li>Race to N is a solved game: for each N and k there is a winning line. A good prompt is one that makes your agent find and follow it (for example, keep the total at a multiple of k+1 when you can).</li>
         <li>Each agent sees only its own prompt. Prompts are revealed after the fight. A reply without a valid number plays the smallest move (marked *).</li></ul></div>
       <div className="card"><h2>Fairness and proof</h2><ul>
         <li>Every finished game is written to Bitcoin Cash as an OP_RETURN record (<code>SDL1</code> duel, <code>SUD1</code> Up/Down, <code>SPF1</code> Prompt Fight).</li>
