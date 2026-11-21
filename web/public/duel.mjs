@@ -17,7 +17,7 @@ const width = (s) => [...strip(s)].reduce((n, ch) => n + (/[\u{1F300}-\u{1FAFF}\
 const pad = (s, n) => s + ' '.repeat(Math.max(0, n - width(s)));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const sats = (n) => `${(Number(n ?? 0) / 1e8).toFixed(8).replace(/0+$/, '').replace(/\.$/, '')} BCH`;
-export const VERSION = '2026.11.22-1'; // must match CLIENT_VERSION in api/duel.mjs
+export const VERSION = '2026.11.22-2'; // must match CLIENT_VERSION in api/duel.mjs
 let NETWORK = 'chipnet';
 const CUR = { USD: '$', INR: '₹', JPY: '¥', EUR: '€', GBP: '£', AED: 'AED ', SGD: 'S$', IDR: 'Rp ', PHP: '₱', NGN: '₦', BRL: 'R$' };
 let fxCache = null;
@@ -185,7 +185,16 @@ async function rps(rules) {
   const move = await pickMove(); const stake = await pickStake(rules);
   const salt = randomBytes(16).toString('hex'); const commit = createHash('sha256').update(`${move}:${salt}`).digest('hex');
   const { id } = await api('create', { body: { stake, commit, vsBot: c === '1' } });
-  if (c === '2') box('Challenge created', [`Send this link: ${bold(cyan(`${BASE}/duel/${id}`))}`, `Terminal friend (PowerShell): ${bold(lime(`irm ${BASE}/duel/${id} | iex`))}`, `Terminal friend (Mac/Linux): ${bold(lime(`curl -sL ${BASE}/duel/${id} | sh`))}`, dim('The same link opens the browser game for anyone else.')], cyan);
+  if (c === '2') box('Challenge created', [`Send this link: ${bold(cyan(`${BASE}/duel/${id}`))}`, dim('Friend in a terminal? Copy one of the lines below (they sit outside the box).')], cyan);
+  if (c === '2') console.log(`
+  Windows PowerShell:
+
+irm ${BASE}/duel/${id} | iex
+
+  Mac / Linux:
+
+curl -sL ${BASE}/duel/${id} | sh
+`);
   let spin = 0;
   for (;;) {
     const d = await api('duel', { q: `&id=${id}` });
@@ -319,7 +328,16 @@ async function promptFight(rules) {
   const prompt = await writePrompt(); const stake = await pickStake(rules);
   if (c === '1') console.log(dim('  the agents are fighting…'));
   const { id } = await api('pfcreate', { body: { stake, prompt, vsBot: c === '1' } });
-  if (c === '2') box('Fight created', [`Send this link: ${bold(cyan(`${BASE}/fight/${id}`))}`, `Terminal friend (PowerShell): ${bold(lime(`irm ${BASE}/fight/${id} | iex`))}`, `Terminal friend (Mac/Linux): ${bold(lime(`curl -sL ${BASE}/fight/${id} | sh`))}`, dim('The same link opens the browser game for anyone else.')], cyan);
+  if (c === '2') box('Fight created', [`Send this link: ${bold(cyan(`${BASE}/fight/${id}`))}`, dim('Friend in a terminal? Copy one of the lines below (they sit outside the box).')], cyan);
+  if (c === '2') console.log(`
+  Windows PowerShell:
+
+irm ${BASE}/fight/${id} | iex
+
+  Mac / Linux:
+
+curl -sL ${BASE}/fight/${id} | sh
+`);
   let spin = 0;
   for (;;) {
     const m = await api('pf', { q: `&id=${id}` });
