@@ -20,3 +20,6 @@ export const Bolt = (p) => <S {...p}><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" />
 export const Swords = (p) => <S {...p}><path d="M14.5 17.5 3 6V3h3l11.5 11.5" /><path d="m13 19 6-6M16 16l4 4M19 21l2-2" /><path d="M9.5 6.5 14 2h3v3l-4.5 4.5" /></S>;
 export const MOVE_ICON = { rock: Rock, paper: Paper, scissors: Scissors };
 export const MoveIcon = ({ move, ...p }) => { const I = MOVE_ICON[move]; return I ? <I {...p} /> : <span>?</span>; };
+
+export const Coin = (p) => <S {...p}><circle cx="12" cy="12" r="9" /><path d="M12 7v10M9.5 9.5c0-1 1-1.7 2.5-1.7s2.5.7 2.5 1.7-1 1.5-2.5 1.7-2.5.7-2.5 1.8 1 1.7 2.5 1.7 2.5-.7 2.5-1.7" /></S>;
+export const Keyboard = (p) => <S {...p}><rect x="2.5" y="6" width="19" height="12" rx="2" /><path d="M6 10h.01M9 10h.01M12 10h.01M15 10h.01M18 10h.01M7 14h10" /></S>;

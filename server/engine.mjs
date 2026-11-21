@@ -170,3 +170,45 @@ export function aiRecordBytes({ id, pass, passed, total, taskIdx, modelIdx, tran
 /** Rolling one-minute Up/Down: entry = price the second you bet, exit = price exactly 60 s later. */
 export const betEnds = (entryTs) => entryTs + UPDOWN.roundS;
 export const betCanSettle = (entryTs, nowS) => nowS >= betEnds(entryTs) + UPDOWN.settleDelayS;
+
+
+// ---------- Quick games: Coin Flip and Typing Race (one record type, SQG1) ----------
+export const QG = { payoutPct: 190, botWpm: [45, 80], maxTypeS: 180, minMsPerChar: 45 /* faster than ~260 wpm is not typing */ };
+export const PHRASES = [
+  'bitcoin cash is peer to peer electronic cash for everyone',
+  'every result is written to the chain and anyone can verify it',
+  'play a quick game while your agent is still thinking',
+  'fees below a cent make tiny games possible on bitcoin cash',
+  'hide your move with a hash then reveal it when both are locked',
+  'the house cannot change a result once it is on the blockchain',
+];
+/** Coin Flip: the house commits sha256("cf:"+seed) first; the player adds a client seed; result = parity of sha256(seed:clientSeed:id). 0 heads, 1 tails. */
+export const cfCommit = (seed) => sha256(`cf:${seed}`);
+export const cfResult = (seed, clientSeed, id) => parseInt(sha256(`cf:${seed}:${clientSeed}:${id}`).slice(0, 2), 16) % 2;
+/** Typing Race: the phrase is drawn from the game id; the House Bot's time is fixed by the committed seed (45 to 80 wpm). */
+export const typingPhrase = (id) => PHRASES[parseInt(sha256(`phrase:${id}`).slice(0, 4), 16) % PHRASES.length];
+export const typingBotMs = (seed, id, phrase) => {
+  const wpm = QG.botWpm[0] + (parseInt(sha256(`bot:${seed}:${id}`).slice(0, 4), 16) % (QG.botWpm[1] - QG.botWpm[0] + 1));
+  return Math.round((phrase.length / 5 / wpm) * 60000);
+};
+/** Typing result from the player's measured time: too fast = not typed by a human = loss. */
+export function typingOutcome(text, phrase, playerMs, botMs) {
+  if (text !== phrase) return 'lose';
+  if (playerMs > QG.maxTypeS * 1000 || playerMs < phrase.length * QG.minMsPerChar) return 'lose';
+  return playerMs < botMs ? 'win' : playerMs === botMs ? 'refund' : 'lose';
+}
+/** Win pays 1.9x in cash; a refund returns the stake in the same buckets; a loss pays nothing. */
+export function settleQuick(outcome, stake, split) {
+  if (outcome === 'refund') return { outcome, bonus: split.fromBonus, cash: split.fromCash };
+  if (outcome === 'win') return { outcome, bonus: 0, cash: Math.floor((stake * QG.payoutPct) / 100) };
+  return { outcome: 'lose', bonus: 0, cash: 0 };
+}
+/** OP_RETURN: "SQG1" | id(16) | kind(1: coin=1 type=2) | outcome(1: win=1 lose=2 refund=0) | stake(4) | a(4) | b(4) | commit(32) = 66 bytes.
+ *  coin: a = your pick, b = the flip. type: a = your time (ms), b = the House Bot's time (ms). */
+export function qRecordBytes({ id, kind, outcome, stake, a, b, commit }) {
+  const buf = Buffer.alloc(66);
+  buf.write('SQG1', 0, 'ascii'); Buffer.from(id, 'hex').copy(buf, 4);
+  buf[20] = kind === 'coin' ? 1 : 2; buf[21] = { win: 1, lose: 2, refund: 0 }[outcome];
+  buf.writeUInt32LE(stake, 22); buf.writeUInt32LE(a, 26); buf.writeUInt32LE(b, 30); Buffer.from(commit, 'hex').copy(buf, 34);
+  return buf;
+}

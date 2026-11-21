@@ -7,7 +7,7 @@ import { spot, recentCloses, chartSeries, rates, swapQuote } from '../server/pri
 import { nextRound, UPDOWN } from '../server/engine.mjs';
 
 // Bump when web/public/duel.mjs changes: old terminal clients update themselves.
-export const CLIENT_VERSION = '2026.11.22-3';
+export const CLIENT_VERSION = '2026.11.22-4';
 
 const json = (res, status, body) => { res.statusCode = status; res.setHeader('content-type', 'application/json'); res.setHeader('cache-control', 'no-store'); res.end(JSON.stringify(body)); };
 const tokenOf = (req) => (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '') || null;
@@ -33,6 +33,7 @@ async function recordPending() {
     ['duels', (d) => chain.recordDuel(d, (t) => S.setRecordTx(d.id, t))],
     ['ai_rounds', (r) => chain.recordAi(r, (t) => S.setAiRecord(r.id, t))],
     ['bets', (b) => chain.recordBet(b, (t) => S.setBetRecord(b.id, t))],
+    ['qgames', (q) => chain.recordQ(q, (t) => S.setQRecord(q.id, t))],
   ];
   for (const [table, send] of jobs) {
     for (const row of await S.claimUnrecorded(table, 3)) {
@@ -55,6 +56,12 @@ const routes = {
   async me(req) { await S.sweep(); return S.me(tokenOf(req)); },
   async login(req, b) { return S.login(b.code); },
   async create(req, b) { return S.createDuel(tokenOf(req), b); },
+  async cfcommit(req) { return S.cfCommitSeed(tokenOf(req)); },
+  async cfplay(req, b) { const r = await S.cfPlay(tokenOf(req), b); await recordSoon(); return r; },
+  async trstart(req, b) { return S.trStart(tokenOf(req), b); },
+  async trfinish(req, b) { const r = await S.trFinish(tokenOf(req), b); await recordSoon(); return r; },
+  async qgame(req, b, q) { await recordSoon(); return S.qGet(q.get('id')); },
+  async qmine(req, b, q) { return S.myQ(tokenOf(req), q.get('kind') === 'type' ? 'type' : 'coin'); },
   async cancel(req, b) { return S.cancelDuel(tokenOf(req), b.id); },
   async join(req, b) { return S.joinDuel(tokenOf(req), b); },
   async reveal(req, b) { const r = await S.reveal(tokenOf(req), b); await recordSoon(); return r; },
@@ -104,8 +111,8 @@ const routes = {
     if (!/^[0-9a-f]{64}$/.test(txid)) throw new S.UserError('enter a 64-character transaction id');
     const raw = await timed(chain.provider().getRawTransaction(txid), 10000, 'transaction lookup').catch(() => null);
     if (!raw) throw new S.UserError('transaction not found on ' + chain.NETWORK, 404);
-    const kinds = { '53444c31': 'SDL1', '53554431': 'SUD1', '53504631': 'SPF1', '53414931': 'SAI1' };
-    const m = raw.match(/6a(?:4c[0-9a-f]{2}|[0-9a-f]{2})(53444c31|53554431|53504631|53414931)([0-9a-f]{32})/);
+    const kinds = { '53444c31': 'SDL1', '53554431': 'SUD1', '53504631': 'SPF1', '53414931': 'SAI1', '53514731': 'SQG1' };
+    const m = raw.match(/6a(?:4c[0-9a-f]{2}|[0-9a-f]{2})(53444c31|53554431|53504631|53414931|53514731)([0-9a-f]{32})/);
     const kind = m ? kinds[m[1]] : null;
     return { txid, raw, network: chain.NETWORK, explorer: chain.EXPLORER, kind, match: kind ? await S.matchById(kind, m[2]) : null };
   },

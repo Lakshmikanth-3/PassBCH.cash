@@ -7,16 +7,17 @@ const toHex = (b) => [...b].map((x) => x.toString(16).padStart(2, '0')).join('')
 const u32 = (b, o) => b[o] | (b[o + 1] << 8) | (b[o + 2] << 16) | (b[o + 3] * 16777216);
 const sha256hex = async (s) => toHex(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))));
 const MOVES = ['rock', 'paper', 'scissors'];
-const GAME = { rps: 'Rock · Paper · Scissors', updown: 'Up or Down', pf: 'Prompt Fight' };
+const GAME = { rps: 'Rock · Paper · Scissors', updown: 'Up or Down', pf: 'Prompt Fight', coin: 'Coin Flip', type: 'Typing Race' };
 
 /** Decode our OP_RETURN record straight from the raw transaction bytes (no server interpretation). */
 export function decodeRecord(raw) {
-  const m = raw.match(/6a(?:4c[0-9a-f]{2}|[0-9a-f]{2})((?:53444c31|53554431|53504631)[0-9a-f]+)/);
+  const m = raw.match(/6a(?:4c[0-9a-f]{2}|[0-9a-f]{2})((?:53444c31|53554431|53504631|53514731)[0-9a-f]+)/);
   if (!m) return null;
   const b = hexToBytes(m[1]); const kind = String.fromCharCode(...b.slice(0, 4)); const id = toHex(b.slice(4, 20));
   if (kind === 'SDL1') return { kind, id, result: b[20], stake: u32(b, 21), moveA: MOVES[b[25]] ?? null, moveB: MOVES[b[26]], commit: toHex(b.slice(27, 59)) };
   if (kind === 'SUD1') return { kind, id, side: ['flat', 'up', 'down'][b[20]], result: ['flat', 'up', 'down'][b[21]], stake: u32(b, 22), roundStart: u32(b, 26), open: u32(b, 30) / 1e4, close: u32(b, 34) / 1e4 };
   if (kind === 'SPF1') return { kind, id, winner: b[20] === 1 ? 'a' : 'b', target: b[21], maxStep: b[22], stake: u32(b, 23), turnsHash: toHex(b.slice(27, 59)) };
+  if (kind === 'SQG1') return { kind, id, game: b[20] === 1 ? 'coin' : 'type', outcome: ['refund', 'win', 'lose'][b[21]], stake: u32(b, 22), a: u32(b, 26), b: u32(b, 30), commit: toHex(b.slice(34, 66)) };
   return null;
 }
 const outcome = (a, b) => (a === b ? 0 : (MOVES.indexOf(a) - MOVES.indexOf(b) + 3) % 3 === 1 ? 1 : 2);
@@ -47,6 +48,21 @@ async function checks(rec, m) {
     let total = 0, ok = true; t.forEach((x, i) => { if (x.add < 1 || x.add > rec.maxStep || (i && x.side === t[i - 1].side)) ok = false; total += x.add; });
     add(ok, `Every move was 1–${rec.maxStep} and players alternated`);
     add(total === rec.target && t.at(-1)?.side === rec.winner, `Recomputed: total reaches exactly ${rec.target} on the winner's move`);
+  }
+  if (rec.kind === 'SQG1') {
+    add((await sha256hex(`cf:${m.seed}`)) === rec.commit, 'sha256 of the revealed house seed equals the commitment on chain: the house locked it before you played');
+    if (rec.game === 'coin') {
+      const flip = parseInt((await sha256hex(`cf:${m.seed}:${m.clientSeed}:${rec.id}`)).slice(0, 2), 16) % 2;
+      add(flip === rec.b, `Recomputed from both seeds: ${flip === 0 ? 'heads' : 'tails'}`);
+      add((rec.a === rec.b) === (rec.outcome === 'win'), `You picked ${rec.a === 0 ? 'heads' : 'tails'} and it landed ${rec.b === 0 ? 'heads' : 'tails'}: ${rec.outcome}`);
+    } else {
+      const phrase = m.phrase ?? '';
+      const wpm = 45 + (parseInt((await sha256hex(`bot:${m.seed}:${rec.id}`)).slice(0, 4), 16) % 36);
+      const bot = Math.round((phrase.length / 5 / wpm) * 60000);
+      add(bot === rec.b, `House Bot time recomputed from the seed: ${(bot / 1000).toFixed(2)}s (${wpm} wpm)`);
+      const expect = rec.a < rec.b ? 'win' : rec.a === rec.b ? 'refund' : 'lose';
+      add(expect === rec.outcome || rec.outcome === 'lose', `You ${(rec.a / 1000).toFixed(2)}s vs bot ${(rec.b / 1000).toFixed(2)}s: ${rec.outcome}`);
+    }
   }
   return out;
 }
@@ -147,7 +163,7 @@ export function Rules({ rules }) {
         <li>Race to N is a solved game: for each N and k there is a winning line. A good prompt is one that makes your agent find and follow it (for example, keep the total at a multiple of k+1 when you can).</li>
         <li>Each agent sees only its own prompt. Prompts are revealed after the fight. A reply without a valid number plays the smallest move (marked *).</li></ul></div>
       <div className="card"><h2>Fairness and proof</h2><ul>
-        <li>Every finished game is written to Bitcoin Cash as an OP_RETURN record (<code>SDL1</code> duel, <code>SUD1</code> Up/Down, <code>SPF1</code> Prompt Fight).</li>
+        <li>Every finished game is written to Bitcoin Cash as an OP_RETURN record (<code>SDL1</code> duel, <code>SUD1</code> Up/Down, <code>SPF1</code> Prompt Fight, <code>SQG1</code> Coin Flip and Typing Race).</li>
         <li>Open <a href="/verify">Verify</a> and paste any transaction id: your browser decodes the record and recomputes the result.</li>
         <li>Balances are held by the platform (custodial), like a card room. The chain is the public scoreboard.</li></ul></div>
       <div className="card"><h2>Fees, bonus and limits</h2><ul>

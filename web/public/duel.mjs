@@ -17,7 +17,7 @@ const width = (s) => [...strip(s)].reduce((n, ch) => n + (/[\u{1F300}-\u{1FAFF}\
 const pad = (s, n) => s + ' '.repeat(Math.max(0, n - width(s)));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const sats = (n) => `${(Number(n ?? 0) / 1e8).toFixed(8).replace(/0+$/, '').replace(/\.$/, '')} BCH`;
-export const VERSION = '2026.11.22-3'; // must match CLIENT_VERSION in api/duel.mjs
+export const VERSION = '2026.11.22-4'; // must match CLIENT_VERSION in api/duel.mjs
 let NETWORK = 'chipnet';
 const CUR = { USD: '$', INR: '₹', JPY: '¥', EUR: '€', GBP: '£', AED: 'AED ', SGD: 'S$', IDR: 'Rp ', PHP: '₱', NGN: '₦', BRL: 'R$' };
 let fxCache = null;
@@ -131,7 +131,9 @@ async function home() {
     `${bold(gold('[1]'))} ${bold('Rock · Paper · Scissors')}      ${dim('table with a host · House Bot, friend or open challenges')}`,
     `${bold(cyan('[2]'))} ${bold('Up or Down')}                  ${dim('1-minute BCH price call · pays 1.9×')}`,
     `${bold(lime('[3]'))} ${bold('Prompt Fight')}                ${dim('your prompt trains an AI agent · it fights live')}`,
-    `${bold(mag('[4]'))} ${dim('Upcoming BCH games — coming soon')}`,
+    `${bold(gold('[4]'))} ${bold('Coin Flip')}                   ${dim('heads or tails · house seed locked first · pays 1.9×')}`,
+    `${bold(cyan('[5]'))} ${bold('Typing Race')}                ${dim('type a phrase faster than the House Bot · pays 1.9×')}`,
+    `${bold(mag('[6]'))} ${dim('Upcoming BCH games — coming soon')}`,
     '',
     `${bold('[w]')} Vault   ${bold('[l]')} Winners worldwide   ${bold('[p]')} Player profile   ${bold('[v]')} Verify a result`,
     `${bold('[r]')} Rules & fees   ${bold('[o]')} Log out   ${bold('[q]')} Quit`,
@@ -313,6 +315,47 @@ async function pfJoin(id) {
   const done = await api('pf', { q: `&id=${id}` });
   await fightShow(done);
   console.log(done.winner === 'b' ? lime(bold(`  You win ${sats(2 * done.stake)}!`)) : red(`  You lose ${sats(done.stake)}`));
+}
+
+async function proofLine(id) {
+  for (let k = 0; k < 15; k++) {
+    const g = await api('qgame', { q: `&id=${id}` });
+    if (g.recordTxid) { console.log(`  ${lime('Verified on Bitcoin Cash ✓')} ${dim(g.recordTxid)}\n  ${dim(`check it: ${BASE}/verify/${g.recordTxid}`)}`); return; }
+    if (k === 0) console.log(dim('  writing the proof to Bitcoin Cash…'));
+    await sleep(2000);
+  }
+}
+
+async function coinFlip(rules) {
+  const { player } = await api('me');
+  const round = await api('cfcommit');
+  box('Coin Flip', [`The house locked its secret seed: ${dim(round.commit.slice(0, 32) + '…')}`, dim('You add your own random seed; the flip comes from both. Pays 1.9×.'), rulesLine()], gold);
+  const pick = (await ask(`  ${bold('[h]')} Heads  ${bold('[t]')} Tails > `)).trim().toLowerCase();
+  if (pick !== 'h' && pick !== 't') return console.log(dim('  cancelled'));
+  const stake = await pickStake(rules);
+  if (stake > player.bonus + player.cash) return console.log(red('  Not enough balance — add funds in the vault [w].'));
+  const r = await api('cfplay', { body: { id: round.id, pick: pick === 'h' ? 0 : 1, stake, clientSeed: randomBytes(16).toString('hex') } });
+  if (TTY) for (let i = 0; i < 8; i++) { process.stdout.write(`\r   ${['(  H  )', '( ... )', '(  T  )', '( ... )'][i % 4]} flipping`); await sleep(160); }
+  process.stdout.write('\r' + ' '.repeat(40) + '\r');
+  console.log(`   landed ${bold(r.result === 0 ? 'HEADS' : 'TAILS')}`);
+  console.log(r.outcome === 'win' ? lime(bold(`  You win ${sats(r.payout)}!`)) : red(`  You lose ${sats(stake)}`));
+  console.log(dim(`  house seed revealed: ${r.seed}`));
+  await proofLine(r.id);
+}
+
+async function typingRace(rules) {
+  const { player } = await api('me');
+  box('Typing Race', ['Type the phrase exactly and press Enter before the House Bot finishes (45 to 80 wpm, locked by a hash).', dim('The server times you from the moment the phrase appears. Pays 1.9×.'), rulesLine()], cyan);
+  const stake = await pickStake(rules);
+  if (stake > player.bonus + player.cash) return console.log(red('  Not enough balance — add funds in the vault [w].'));
+  const r = await api('trstart', { body: { stake } });
+  console.log(`\n  ${bold(lime(r.phrase))}\n`);
+  const text = (await ask('  type it > ')).replace(/\r?\n$/, '');
+  const f = await api('trfinish', { body: { id: r.id, text } });
+  console.log(`  you ${bold((f.playerMs / 1000).toFixed(2) + 's')} · House Bot ${bold((f.botMs / 1000).toFixed(2) + 's')}${f.note ? dim(` · ${f.note}`) : ''}`);
+  console.log(f.outcome === 'win' ? lime(bold(`  You beat the bot! You win ${sats(f.payout)}`)) : f.outcome === 'refund' ? gold('  Dead heat: stake back') : red(`  The bot wins. You lose ${sats(stake)}`));
+  console.log(dim(`  bot seed revealed: ${f.seed}`));
+  await proofLine(f.id);
 }
 
 async function promptFight(rules) {
@@ -508,7 +551,9 @@ async function main() {
       if (c === '1') await rps(rules);
       else if (c === '2') await updown(rules);
       else if (c === '3') await promptFight(rules);
-      else if (c === '4') box('Upcoming BCH games', ['Tournaments · lucky draws · team battles · more', dim('Coming soon — stay tuned!')], mag);
+      else if (c === '4') await coinFlip(rules);
+      else if (c === '5') await typingRace(rules);
+      else if (c === '6') box('Upcoming BCH games', ['Tournaments · lucky draws · team battles · more', dim('Coming soon — stay tuned!')], mag);
       else if (c === 'w') await vault(rules);
       else if (c === 'l') await winners();
       else if (c === 'p') await profile();

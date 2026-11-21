@@ -8,7 +8,8 @@ import { Wallet, Leaderboard, Terminal } from './duel/Side.jsx';
 import { Vault, AddFunds, Withdraw, Activity, Settings } from './duel/Funds.jsx';
 import { Winners, WinnersStrip } from './duel/Winners.jsx';
 import { Verify, Profile, Rules } from './duel/Proof.jsx';
-import { Trophy } from './icons.jsx';
+import { Trophy, Coin, Keyboard } from './icons.jsx';
+import { CoinFlip, TypingRace } from './duel/QuickGames.jsx';
 import { useFx, fiat } from './duel/money.js';
 import { UpDown, UpDownFeed } from './duel/UpDown.jsx';
 import { NewFight, FightView, FightLobby } from './duel/PromptFight.jsx';
@@ -17,7 +18,7 @@ import Stage3D from './three/Stage3D.jsx';
 import Showcase from './three/Showcase.jsx';
 
 // Real pages: /  /login  /games  /games/rps  /games/predict  /games/ai  /wallet  /duel/<id>
-const PATHS = { '': '/', login: '/login', games: '/games', rps: '/games/rps', predict: '/games/predict', pf: '/games/prompt-fight', wallet: '/wallet', add: '/wallet/add', withdraw: '/wallet/withdraw', winners: '/winners', verify: '/verify', rules: '/rules' };
+const PATHS = { '': '/', login: '/login', games: '/games', rps: '/games/rps', predict: '/games/predict', pf: '/games/prompt-fight', coin: '/games/coin-flip', typing: '/games/typing-race', wallet: '/wallet', add: '/wallet/add', withdraw: '/wallet/withdraw', winners: '/winners', verify: '/verify', rules: '/rules' };
 const readRoute = () => {
   if (typeof location === 'undefined') return { route: '' };
   const q = new URLSearchParams(location.search);
@@ -36,12 +37,14 @@ const readRoute = () => {
   const route = Object.keys(PATHS).find((k) => PATHS[k] === path);
   return { route: route ?? (path === '/' ? '' : 'notfound') };
 };
-const TITLES = { '': 'PassBCH.cash — play while your AI thinks', login: 'Log in · PassBCH.cash', games: 'Games · PassBCH.cash', rps: 'Rock Paper Scissors · PassBCH.cash', predict: 'Up or Down · PassBCH.cash', pf: 'Prompt Fight · PassBCH.cash', wallet: 'Vault · PassBCH.cash', add: 'Add funds · PassBCH.cash', withdraw: 'Withdraw · PassBCH.cash', winners: 'Worldwide winners · PassBCH.cash', verify: 'Verify a result · PassBCH.cash', rules: 'Rules & fairness · PassBCH.cash', profile: 'Player · PassBCH.cash', notfound: 'Page not found · PassBCH.cash' };
+const TITLES = { '': 'PassBCH.cash — play while your AI thinks', login: 'Log in · PassBCH.cash', games: 'Games · PassBCH.cash', rps: 'Rock Paper Scissors · PassBCH.cash', coin: 'Coin Flip · PassBCH.cash', typing: 'Typing Race · PassBCH.cash', predict: 'Up or Down · PassBCH.cash', pf: 'Prompt Fight · PassBCH.cash', wallet: 'Vault · PassBCH.cash', add: 'Add funds · PassBCH.cash', withdraw: 'Withdraw · PassBCH.cash', winners: 'Worldwide winners · PassBCH.cash', verify: 'Verify a result · PassBCH.cash', rules: 'Rules & fairness · PassBCH.cash', profile: 'Player · PassBCH.cash', notfound: 'Page not found · PassBCH.cash' };
 
 export const GAMES = [
   { id: 'rps', Icon: Rock, title: 'Rock · Paper · Scissors', line: 'Sit at the table with the host. Beat a friend or the House Bot. Winner takes the pot.', tag: 'PvP · 2 min', color: 'gold' },
   { id: 'predict', Icon: Chart, title: 'Up or Down', line: 'Will BCH close the next minute higher or lower? Two buttons. Pays 1.9×.', tag: 'Prediction · 1 min', color: 'cyan' },
   { id: 'pf', Icon: Agents, title: 'Prompt Fight', line: 'Write a strategy prompt. Your AI agent fights another one live. Winner takes the pot.', tag: 'AI vs AI · 30 s', color: 'lime' },
+  { id: 'coin', Icon: Coin, title: 'Coin Flip', line: 'Pick heads or tails. The house locks its seed first and your browser adds its own, so the flip is provably fair. Pays 1.9×.', tag: 'Instant · 5 s', color: 'gold' },
+  { id: 'typing', Icon: Keyboard, title: 'Typing Race', line: 'Type a short phrase faster than the House Bot. Timed by the server, paste blocked. Also playable in the terminal.', tag: 'Skill · 15 s', color: 'cyan' },
   { id: 'soon', Icon: Hourglass, title: 'Upcoming BCH games', line: 'Tournaments, lucky draws, team battles and more — coming soon.', tag: 'Coming soon', color: 'magenta', soon: true },
 ];
 
@@ -209,6 +212,20 @@ export default function App() {
           {me ? <UpDown rules={cfg.rules} player={me} explorer={cfg.explorer} onChange={refresh} />
             : <div className="gamelayout"><div className="stagecol"><MarketChart livePts={[]} status="Pick a name to call UP or DOWN on the next minute." /></div><Signup refCode={ref} onDone={refresh} /></div>}
           <UpDownFeed explorer={cfg.explorer} />
+        </main>
+      )}
+      {screen === 'coin' && cfg && (
+        <main className="wrap game">
+          <button className="back" onClick={() => go('games')}>← All games</button>
+          {me ? <CoinFlip rules={cfg.rules} player={me} explorer={cfg.explorer} network={cfg.network} onChange={refresh} />
+            : <div className="gamelayout"><div className="card"><h2>Coin Flip</h2><p className="muted">Provably fair heads or tails: the house commits to a hidden seed before you pick. Pick a name to play.</p></div><Signup refCode={ref} onDone={refresh} /></div>}
+        </main>
+      )}
+      {screen === 'typing' && cfg && (
+        <main className="wrap game">
+          <button className="back" onClick={() => go('games')}>← All games</button>
+          {me ? <TypingRace rules={cfg.rules} player={me} explorer={cfg.explorer} network={cfg.network} onChange={refresh} />
+            : <div className="gamelayout"><div className="card"><h2>Typing Race</h2><p className="muted">Type a phrase faster than the House Bot. Pick a name to play.</p></div><Signup refCode={ref} onDone={refresh} /></div>}
         </main>
       )}
       {screen === 'pf' && cfg && (

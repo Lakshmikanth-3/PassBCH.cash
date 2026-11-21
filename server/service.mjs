@@ -275,6 +275,84 @@ export async function settleBets() {
   return n;
 }
 
+// ---------- Coin Flip and Typing Race ----------
+async function qPay(k, q, outcome, split) {
+  const s2 = E.settleQuick(outcome, q.stake, split);
+  await k.query('update players set bonus = bonus + $1, cash = cash + $2 where id = $3', [s2.bonus, s2.cash, q.player_id]);
+  if (s2.outcome === 'win') await k.query('update players set wins = wins + 1, won_sats = won_sats + $1 where id=$2', [s2.cash - q.stake, q.player_id]);
+  if (s2.outcome === 'lose') await k.query('update players set losses = losses + 1 where id=$1', [q.player_id]);
+  return s2;
+}
+/** Coin Flip step 1: the house locks its seed (shows only the hash) before you pick. */
+export async function cfCommitSeed(token) {
+  const c = await db(); const p = await playerByToken(c, token);
+  await c.query("delete from qgames where kind='coin' and stake is null and created_at < now() - interval '1 hour'");
+  const id = randomBytes(16).toString('hex'), seed = randomBytes(16).toString('hex'), commit = E.cfCommit(seed);
+  await c.query("insert into qgames (id, kind, player_id, seed, commit) values ($1,'coin',$2,$3,$4)", [id, p.id, seed, commit]);
+  return { id, commit };
+}
+/** Coin Flip step 2: you pick heads (0) or tails (1) and add your own seed; the result follows from both seeds. */
+export async function cfPlay(token, { id, pick, stake, clientSeed }) {
+  stake = Number(stake); pick = Number(pick);
+  if (pick !== 0 && pick !== 1) throw new UserError('pick heads or tails');
+  const cs = String(clientSeed ?? '').slice(0, 64); if (cs.length < 8) throw new UserError('missing client seed');
+  return tx(async (k) => {
+    const p = await playerByToken(k, token, true);
+    const { rows: [q] } = await k.query("select * from qgames where id=$1 and kind='coin' for update", [id]);
+    if (!q || q.player_id !== p.id) throw new UserError('no such flip', 404);
+    if (q.stake != null) throw new UserError('this flip was already played');
+    let split; try { split = E.takeStake({ bonus: Number(p.bonus), cash: Number(p.cash) }, stake); } catch (e) { throw new UserError(e.message); }
+    await k.query('update players set bonus = bonus - $1, cash = cash - $2, wagered = wagered + $1 + $2 where id = $3', [split.fromBonus, split.fromCash, p.id]);
+    const result = E.cfResult(q.seed, cs, id), outcome = result === pick ? 'win' : 'lose';
+    const s2 = await qPay(k, { ...q, stake }, outcome, split);
+    await k.query('update qgames set stake=$1, from_bonus=$2, from_cash=$3, client_seed=$4, pick=$5, result=$6, outcome=$7, payout=$8, settled_at=now() where id=$9',
+      [stake, split.fromBonus, split.fromCash, cs, pick, result, outcome, s2.bonus + s2.cash, id]);
+    return { id, result, pick, outcome, payout: s2.bonus + s2.cash, seed: q.seed, commit: q.commit };
+  });
+}
+/** Typing Race start: stake is taken, the phrase is drawn from the id, the House Bot's time is locked by the seed. */
+export async function trStart(token, { stake }) {
+  stake = Number(stake);
+  return tx(async (k) => {
+    const p = await playerByToken(k, token, true);
+    let split; try { split = E.takeStake({ bonus: Number(p.bonus), cash: Number(p.cash) }, stake); } catch (e) { throw new UserError(e.message); }
+    await k.query('update players set bonus = bonus - $1, cash = cash - $2, wagered = wagered + $1 + $2 where id = $3', [split.fromBonus, split.fromCash, p.id]);
+    const id = randomBytes(16).toString('hex'), seed = randomBytes(16).toString('hex'), phrase = E.typingPhrase(id), commit = E.cfCommit(seed);
+    await k.query("insert into qgames (id, kind, player_id, seed, commit, stake, from_bonus, from_cash, phrase, started_ms) values ($1,'type',$2,$3,$4,$5,$6,$7,$8,$9)",
+      [id, p.id, seed, commit, stake, split.fromBonus, split.fromCash, phrase, Date.now()]);
+    return { id, phrase, commit, maxS: E.QG.maxTypeS };
+  });
+}
+/** Typing Race finish: the SERVER measures the time since the start; the text must match exactly. */
+export async function trFinish(token, { id, text }) {
+  const now = Date.now();
+  return tx(async (k) => {
+    const p = await playerByToken(k, token, true);
+    const { rows: [q] } = await k.query("select * from qgames where id=$1 and kind='type' for update", [id]);
+    if (!q || q.player_id !== p.id) throw new UserError('no such race', 404);
+    if (q.settled_at) throw new UserError('this race already finished');
+    const playerMs = now - Number(q.started_ms), botMs = E.typingBotMs(q.seed, id, q.phrase);
+    const outcome = E.typingOutcome(String(text ?? ''), q.phrase, playerMs, botMs);
+    const s2 = await qPay(k, q, outcome, { fromBonus: q.from_bonus, fromCash: q.from_cash });
+    await k.query('update qgames set player_ms=$1, bot_ms=$2, outcome=$3, payout=$4, settled_at=now() where id=$5', [playerMs, botMs, outcome, s2.bonus + s2.cash, id]);
+    const wrong = String(text ?? '') !== q.phrase, tooFast = !wrong && playerMs < q.phrase.length * E.QG.minMsPerChar;
+    return { id, outcome, payout: s2.bonus + s2.cash, playerMs, botMs, seed: q.seed, commit: q.commit,
+      note: wrong ? 'the text did not match the phrase' : tooFast ? 'too fast to be typed by a person' : playerMs > E.QG.maxTypeS * 1000 ? 'out of time' : null };
+  });
+}
+export async function qGet(id) {
+  const { rows: [q] } = await (await db()).query('select q.*, p.name from qgames q join players p on p.id=q.player_id where q.id=$1', [id]);
+  if (!q) throw new UserError('no such game', 404);
+  const done = !!q.settled_at;
+  return { id: q.id, kind: q.kind, name: q.name, stake: q.stake, outcome: q.outcome, payout: q.payout, result: q.result, pick: q.pick, playerMs: q.player_ms, botMs: q.bot_ms, commit: q.commit,
+    seed: done ? q.seed : null, clientSeed: q.client_seed, phrase: done ? q.phrase : null, recordTxid: q.record_txid, settled: done };
+}
+export async function setQRecord(id, txid) { await (await db()).query('update qgames set record_txid=$1 where id=$2', [txid, id]); }
+export async function myQ(token, kind) {
+  const c = await db(); const p = await playerByToken(c, token);
+  return (await c.query('select id, kind, stake, outcome, payout, pick, result, player_ms, bot_ms, record_txid from qgames where player_id=$1 and kind=$2 and settled_at is not null order by settled_at desc limit 6', [p.id, kind])).rows;
+}
+
 export async function myBets(token) {
   const c = await db();
   const p = await playerByToken(c, token);
@@ -404,6 +482,7 @@ const RECORDABLE = {
   duels: "settled_at is not null and b_player is not null",
   bets: "settled_at is not null",
   ai_rounds: "status = 'done'",
+  qgames: "settled_at is not null",
 };
 export async function claimUnrecorded(table, limit = 3) {
   const where = RECORDABLE[table];
@@ -500,12 +579,16 @@ export async function setPfRecord(id, txid) { await (await db()).query('update p
 
 // ---------- Worldwide winners (all games) ----------
 const GAME_SQL = {
+  coin: `select 'coin' game, p.name, q.payout amount, q.record_txid tx, q.settled_at at from qgames q join players p on p.id = q.player_id where q.kind = 'coin' and q.outcome = 'win'`,
+  type: `select 'type' game, p.name, q.payout amount, q.record_txid tx, q.settled_at at from qgames q join players p on p.id = q.player_id where q.kind = 'type' and q.outcome = 'win'`,
   rps: `select 'rps' game, w.name, d.stake * 2 amount, d.record_txid tx, d.settled_at at from duels d join players w on w.id = d.winner where d.winner is not null and not w.is_house`,
   updown: `select 'updown' game, p.name, b.payout amount, b.record_txid tx, b.settled_at at from bets b join players p on p.id = b.player_id where b.outcome = 'win'`,
   pf: `select 'pf' game, w.name, m.stake * 2 amount, m.record_txid tx, m.settled_at at from pf_matches m join players w on w.id = m.winner_id where m.status = 'done' and not w.is_house`,
 };
 // Net result per player per finished game: what you won minus what you staked (ties and refunds are 0).
 const NET_SQL = {
+  coin: `select player_id pid, case outcome when 'win' then payout - stake when 'lose' then -stake else 0 end net, settled_at at from qgames where kind = 'coin' and outcome is not null`,
+  type: `select player_id pid, case outcome when 'win' then payout - stake when 'lose' then -stake else 0 end net, settled_at at from qgames where kind = 'type' and outcome is not null`,
   rps: `select a_player pid, case result when 1 then stake when 2 then -stake else 0 end net, settled_at at from duels where settled_at is not null and b_player is not null
         union all select b_player, case result when 2 then stake when 1 then -stake else 0 end, settled_at from duels where settled_at is not null and b_player is not null`,
   updown: `select player_id pid, case outcome when 'win' then payout - stake when 'lose' then -stake else 0 end net, settled_at at from bets where outcome is not null`,
@@ -557,6 +640,10 @@ export async function matchById(kind, id) {
   if (kind === 'SPF1') {
     const { rows: [m] } = await c.query('select m.*, pa.name a_name, pb.name b_name from pf_matches m join players pa on pa.id=m.a_player left join players pb on pb.id=m.b_player where m.id=$1', [id]);
     return m && { game: 'pf', id: m.id, aName: m.a_name, bName: m.b_name, stake: m.stake, target: m.target, maxStep: m.max_step, first: m.first, turns: m.turns, winner: m.winner, aPrompt: m.a_prompt, bPrompt: m.b_prompt, recordTxid: m.record_txid };
+  }
+  if (kind === 'SQG1') {
+    const { rows: [q] } = await c.query('select q.*, p.name from qgames q join players p on p.id=q.player_id where q.id=$1 and q.settled_at is not null', [id]);
+    return q && { game: q.kind, id: q.id, name: q.name, stake: q.stake, seed: q.seed, clientSeed: q.client_seed, pick: q.pick, result: q.result, phrase: q.phrase, playerMs: q.player_ms, botMs: q.bot_ms, outcome: q.outcome, commit: q.commit, recordTxid: q.record_txid };
   }
   return null;
 }

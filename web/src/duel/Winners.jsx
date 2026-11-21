@@ -4,7 +4,7 @@ import { api, sats } from './api.js';
 import { useFx, fiat } from './money.js';
 import { Trophy } from '../icons.jsx';
 
-const GAME_NAME = { rps: 'Rock · Paper · Scissors', updown: 'Up or Down', pf: 'Prompt Fight' };
+const GAME_NAME = { rps: 'Rock · Paper · Scissors', updown: 'Up or Down', pf: 'Prompt Fight', coin: 'Coin Flip', type: 'Typing Race' };
 const ago = (t) => { const s = Math.max(1, Math.floor((Date.now() - new Date(t).getTime()) / 1000)); return s < 60 ? `${s}s ago` : s < 3600 ? `${Math.floor(s / 60)}m ago` : s < 86400 ? `${Math.floor(s / 3600)}h ago` : `${Math.floor(s / 86400)}d ago`; };
 
 /** Worldwide winners across every game: totals, top winners, biggest and latest wins (each with its on-chain record). */
@@ -24,7 +24,7 @@ export function Winners({ explorer, go }) {
       <h2 className="screen-title"><Trophy size={26} /> Worldwide winners</h2>
       <p className="muted">Every win in every game, from every player — each one backed by a public record on Bitcoin Cash.</p>
       <div className="row gap filters">
-        <div className="seg four">{[['all', 'All games'], ['rps', 'Rock · Paper · Scissors'], ['updown', 'Up or Down'], ['pf', 'Prompt Fight']].map(([k, l]) => <button key={k} className={game === k ? 'on' : ''} onClick={() => setGame(k)}>{l}</button>)}</div>
+        <div className="seg four">{[['all', 'All games'], ['rps', 'Rock · Paper · Scissors'], ['updown', 'Up or Down'], ['pf', 'Prompt Fight'], ['coin', 'Coin Flip'], ['type', 'Typing Race']].map(([k, l]) => <button key={k} className={game === k ? 'on' : ''} onClick={() => setGame(k)}>{l}</button>)}</div>
         <div className="seg three slim">{[['today', 'Today'], ['week', '7 days'], ['all', 'All time']].map(([k, l]) => <button key={k} className={period === k ? 'on' : ''} onClick={() => setPeriod(k)}>{l}</button>)}</div>
       </div>
       {err && <p className="err">{err}</p>}

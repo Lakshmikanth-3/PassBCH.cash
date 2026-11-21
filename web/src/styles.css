@@ -429,3 +429,19 @@ main + .foot, .foot { margin-top: auto; } #root > main { width: 100%; }
 .onair.live .dot { animation: blink 1.2s infinite; }
 
 .solvency { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; font-size: 14px; margin: 10px 0; } .solvency.bad { border-color: #e4a29d; }
+
+/* Coin Flip and Typing Race */
+.coinstage { background: #0b0c14; border-radius: 16px; min-height: 340px; display: grid; place-content: center; gap: 18px; padding: 24px; box-shadow: 0 4px 0 var(--border); }
+.coin { width: 150px; height: 150px; border-radius: 50%; position: relative; transform-style: preserve-3d; margin: 0 auto; transition: transform 1.2s cubic-bezier(.2,.8,.2,1); }
+.cf { position: absolute; inset: 0; border-radius: 50%; display: grid; place-items: center; font: 800 56px var(--font); backface-visibility: hidden; border: 6px solid #f2c14e; background: #e5a928; color: #7a5200; }
+.cf.t { transform: rotateY(180deg); background: #d6ae57; }
+.coin.heads { transform: rotateY(1800deg); } .coin.tails { transform: rotateY(1980deg); }
+.coin.spin { animation: coinspin 1.2s linear infinite; }
+@keyframes coinspin { to { transform: rotateY(360deg); } }
+.typing .phrase { font: 500 22px/1.7 var(--mono); letter-spacing: .02em; background: var(--surface2); border-radius: 12px; padding: 14px 16px; margin: 12px 0; user-select: none; }
+.typing .phrase .ok { color: var(--green-dk); } .typing .phrase .bad { color: #fff; background: #d6453d; border-radius: 3px; }
+.typing input { font: 18px var(--mono); }
+.progressbar { height: 8px; background: var(--surface2); border-radius: 8px; overflow: hidden; margin: 4px 0 10px; } .progressbar > div { height: 100%; background: var(--green); transition: width .1s; }
+.cards4 { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 900px) { .cards4 { grid-template-columns: 1fr 1fr; } } @media (max-width: 520px) { .cards4 { grid-template-columns: 1fr; } }
+.seg.four { display: flex; flex-wrap: wrap; } .seg.four button { flex: 1 1 auto; }
