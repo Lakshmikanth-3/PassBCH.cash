@@ -3,11 +3,16 @@ import { createHash, randomBytes } from 'node:crypto';
 
 export const MOVES = ['rock', 'paper', 'scissors'];
 export const EMOJI = { rock: '✊', paper: '✋', scissors: '✌️' };
+// One switch: BCH_NETWORK=mainnet|chipnet (DUEL_NETWORK is the older name and still works).
+export const IS_MAINNET = (process.env.BCH_NETWORK ?? process.env.DUEL_NETWORK) === 'mainnet';
 export const RULES = {
-  stakes: [2500, 5000, 10000, 25000], // sats per side
-  signupBonus: 25000,                // ≈ 5 US cents at ~$190/BCH
-  referralBonus: 25000,              // to BOTH the inviter and the new player
-  bonusCap: 100,                     // total bonus grants, platform-wide (abuse limit)
+  // Quick-pick chips; any whole number of sats between minStake and maxStake is also allowed (custom stake).
+  stakes: IS_MAINNET ? [500, 1000, 2000, 5000] : [2500, 5000, 10000, 25000],
+  minStake: IS_MAINNET ? 500 : 1000,
+  maxStake: IS_MAINNET ? 20000 : 100000,
+  signupBonus: IS_MAINNET ? 2000 : 25000,   // mainnet: 0.00002 BCH (real money, kept tiny); chipnet: 0.00025 BCH
+  referralBonus: IS_MAINNET ? 2000 : 25000, // to BOTH the inviter and the new player
+  bonusCap: IS_MAINNET ? 50 : 100,          // total bonus grants, platform-wide (abuse limit)
   withdrawFeePct: 5,                 // platform fee, taken only on withdrawal
   minWithdraw: 10000,
   networkFee: 400,                   // paid by the platform out of the fee
@@ -37,7 +42,7 @@ export const botSeedCommit = (houseSecret, duelId) => sha256(`seed:${sha256(`bot
 
 /** Stake split: bonus credit is spent first. Throws if the player can't cover it. */
 export function takeStake({ bonus, cash }, stake) {
-  if (!RULES.stakes.includes(stake)) throw new Error('stake not allowed');
+  if (!Number.isInteger(stake) || stake < RULES.minStake || stake > RULES.maxStake) throw new Error(`stake must be between ${RULES.minStake} and ${RULES.maxStake} sats`);
   if (bonus + cash < stake) throw new Error('insufficient balance');
   const fromBonus = Math.min(bonus, stake);
   return { fromBonus, fromCash: stake - fromBonus };

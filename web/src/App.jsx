@@ -146,7 +146,7 @@ export default function App() {
 
   return (
     <>
-      {screen === '' && <Banner config={{ ...CONFIG, network: cfg?.network ?? CONFIG.network }} />}
+      {screen === '' && <Banner config={{ ...CONFIG, network: cfg?.network ?? CONFIG.network, deckUrl: cfg?.deckUrl ?? CONFIG.deckUrl, emberAddress: cfg?.emberAddress ?? CONFIG.emberAddress }} />}
       <TopBar me={me} go={go} logout={logout} loading={!hydrated} />
       {err && <div className="wrap"><div className="card err">Can't reach the game server: {err}</div></div>}
       {screen === '' && <Landing go={go} me={me} cfg={cfg} />}

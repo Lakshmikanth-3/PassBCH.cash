@@ -1,3 +1,4 @@
+import { StakePicker } from './StakePicker.jsx';
 import LowBalance from './LowBalance.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { api, sats } from './api.js';
@@ -60,9 +61,7 @@ export function UpDown({ rules, player, explorer, onChange }) {
       <div className="card">
       <Trend hist={hist} now={px?.price} />
       <h2>Pick your stake</h2>
-      <div className="chips">
-        {rules.stakes.map((s) => <button key={s} type="button" className={`chip ${stake === s ? 'on' : ''}`} disabled={s > total} title={s > total ? 'Not enough balance — add funds in the Vault' : undefined} onClick={() => setStake(s)}>{sats(s)}</button>)}
-      </div>
+      <StakePicker rules={rules} stake={stake} setStake={setStake} total={total} />
       <LowBalance player={player} rules={rules} />
       <div className="udbtns">
         <button className="upbtn" disabled={busy || stake > total || !!live} onClick={() => setPending('up')}>▲ UP<small>pays {sats(Math.floor((stake * (rules.updownPayoutPct ?? 190)) / 100))}</small></button>

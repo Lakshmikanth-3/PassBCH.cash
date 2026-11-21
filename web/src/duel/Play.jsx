@@ -1,3 +1,4 @@
+import { StakePicker } from './StakePicker.jsx';
 import { TermInvite } from './TermInvite.jsx';
 import LowBalance from './LowBalance.jsx';
 import React, { useEffect, useRef, useState } from 'react';
@@ -79,9 +80,7 @@ export function NewDuel({ rules, player, onCreated }) {
       <h2>1. Pick your move</h2>
       <MovePicker value={move} onChange={setMove} />
       <h2>2. Pick your stake</h2>
-      <div className="chips">
-        {rules.stakes.map((s) => <button key={s} type="button" className={`chip ${stake === s ? 'on' : ''}`} disabled={s > total} title={s > total ? 'Not enough balance — add funds in the Vault' : undefined} onClick={() => setStake(s)}>{sats(s)}</button>)}
-      </div>
+      <StakePicker rules={rules} stake={stake} setStake={setStake} total={total} />
       <div className="row gap">
         <button className="primary big" disabled={!move || busy || stake > total} onClick={() => start(true)}><Agents size={20} /> Play the House Bot</button>
         <button className="secondary big" disabled={!move || busy || stake > total} onClick={() => start(false)}><Swords size={20} /> Challenge a friend</button>

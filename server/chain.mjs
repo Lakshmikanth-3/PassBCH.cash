@@ -4,10 +4,10 @@ import { ElectrumNetworkProvider, TransactionBuilder, SignatureTemplate } from '
 import { recordBytes, betRecordBytes, aiRecordBytes } from './engine.mjs';
 import { pfRecordBytes } from './promptfight.mjs';
 
-export const NETWORK = process.env.DUEL_NETWORK === 'mainnet' ? 'mainnet' : 'chipnet';
+export const NETWORK = (process.env.BCH_NETWORK ?? process.env.DUEL_NETWORK) === 'mainnet' ? 'mainnet' : 'chipnet';
 const PREFIX = NETWORK === 'mainnet' ? 'bitcoincash' : 'bchtest';
 const HOSTS = { chipnet: ['chipnet.bch.ninja', 'chipnet.imaginary.cash'], mainnet: ['bch.imaginary.cash', 'electroncash.dk', 'bch.loping.net'] };
-export const EXPLORER = NETWORK === 'mainnet' ? 'https://explorer.salemkode.com/tx/' : 'https://chipnet.imaginary.cash/tx/';
+export const EXPLORER = NETWORK === 'mainnet' ? 'https://blockchair.com/bitcoin-cash/transaction/' : 'https://chipnet.imaginary.cash/tx/';
 const FEE_PER_BYTE = 1n;
 
 export function keyOf(skBin) {

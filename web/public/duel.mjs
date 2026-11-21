@@ -140,8 +140,11 @@ async function home() {
 }
 
 async function pickStake(rules) {
-  const s = (await ask(`  Stake ${dim(rules.stakes.map((x, i) => `[${i + 1}] ${sats(x)}`).join('  '))}: `)).trim();
-  return rules.stakes[Number(s) - 1] ?? (rules.stakes.includes(Number(s)) ? Number(s) : rules.stakes[0]);
+  const s = (await ask(`  Stake ${dim(rules.stakes.map((x, i) => `[${i + 1}] ${sats(x)}`).join('  '))} ${dim(`or type an amount in BCH (min ${sats(rules.minStake)}, max ${sats(rules.maxStake)})`)}: `)).trim();
+  if (/^[1-9]$/.test(s) && rules.stakes[Number(s) - 1]) return rules.stakes[Number(s) - 1];
+  const custom = Math.round(Number(s.replace(/bch/i, '')) * 1e8);
+  if (Number.isFinite(custom) && custom >= rules.minStake && custom <= rules.maxStake) return custom;
+  console.log(dim(`  using ${sats(rules.stakes[0])}`)); return rules.stakes[0];
 }
 async function pickMove() {
   for (;;) {
@@ -487,12 +490,14 @@ async function selfUpdate(latest) {
 }
 
 async function main() {
-  const { rules, network, clientVersion } = await api('config');
+  const cfgSrv = await api('config'); const { rules, network, clientVersion } = cfgSrv;
   NETWORK = network;
   if (await selfUpdate(clientVersion)) return;
   if (!cfg.token) { if (!(await welcome())) return; }
   else { console.clear?.(); logo(); }
   console.log(dim(`  network: ${network} · ${BASE} · client ${VERSION}`));
+  console.log(dim(`  Built during BCH BLAZE 2026 · GitHub https://github.com/Lakshmikanth-3/PassBCH.cash${cfgSrv.deckUrl ? ` · Deck ${cfgSrv.deckUrl}` : ''}
+  Vote with EMBER2026: ${cfgSrv.emberAddress ?? ''}`));
   const [cmd, arg] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
   if (cmd === 'join' && arg) { try { await join(arg); } catch (e) { console.log(red(`  ✗ ${e.message}`)); } }
   if (cmd === 'fight' && arg) { try { await pfJoin(arg); } catch (e) { console.log(red(`  ✗ ${e.message}`)); } }

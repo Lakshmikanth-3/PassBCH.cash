@@ -417,3 +417,5 @@ main + .foot, .foot { margin-top: auto; } #root > main { width: 100%; }
 .mnote { margin: 6px 0 0; }
 
 .mranges { flex-wrap: wrap; } .mranges button { padding: 6px 9px; }
+
+.customstake { margin: -6px 0 14px; } .customstake input { margin-bottom: 4px; }

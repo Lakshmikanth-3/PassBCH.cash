@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 
 /**
- * BLAZE eligibility banner (always visible): deck, new + old repo, new + old demo, EMBER2026 CashTokens address.
- * We have no pre-hackathon code or demo, so "old" links say so and point at the first commit.
+ * BLAZE eligibility banner (home page): deck, GitHub, EMBER2026 CashTokens address, and the build-window statement.
+ * The deck link and EMBER address come from the API (env DECK_URL / EMBER_ADDRESS); config.js holds the fallbacks.
  */
 export default function Banner({ config }) {
   const [copied, setCopied] = useState(false);
@@ -15,17 +15,16 @@ export default function Banner({ config }) {
       <div className="wrap banner-row">
         {config.deckUrl
           ? <a href={config.deckUrl} target="_blank" rel="noreferrer">Deck</a>
-          : <span className="muted">Deck: not linked yet</span>}
-        <a href={config.repoUrl} target="_blank" rel="noreferrer">Repo</a>
-        <a href={config.demoUrl}>Demo</a>
-        <span className="muted">
-          Old repo / old demo: none. All code written during BLAZE, from 17 Nov 2026 (
-          <a href={firstCommitUrl} target="_blank" rel="noreferrer">first commit</a>)
-        </span>
+          : <span className="muted">Deck</span>}
+        <a href={config.repoUrl} target="_blank" rel="noreferrer">GitHub</a>
         <button className="ember" onClick={copy} title="CashTokens address for EMBER2026 votes">
-          EMBER2026: <code>{config.emberAddress.slice(12, 20)}…{config.emberAddress.slice(-6)}</code>
+          Vote with EMBER2026: <code>{config.emberAddress.slice(12, 20)}…{config.emberAddress.slice(-6)}</code>
           <span aria-live="polite">{copied ? ' copied' : ' copy'}</span>
         </button>
+        <span className="muted">
+          Built during BCH BLAZE 2026 (all code written during BLAZE, from 17 Nov;{' '}
+          <a href={firstCommitUrl} target="_blank" rel="noreferrer">first commit</a>)
+        </span>
         {config.network !== 'mainnet' && <span className="pill warn">{config.network}</span>}
       </div>
     </div>

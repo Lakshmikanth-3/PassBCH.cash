@@ -1,3 +1,4 @@
+import { StakePicker } from './StakePicker.jsx';
 import { TermInvite } from './TermInvite.jsx';
 import LowBalance from './LowBalance.jsx';
 import React, { useEffect, useRef, useState } from 'react';
@@ -29,7 +30,7 @@ export function NewFight({ rules, player, onCreated }) {
       <div className="row between small muted"><span>{prompt.length}/400</span><span>Try an example:</span></div>
       <div className="examples">{EXAMPLES.map((x, i) => <button key={i} type="button" className="chip" onClick={() => setPrompt(x)}>Strategy {i + 1}</button>)}</div>
       <h2>2. Pick your stake</h2>
-      <div className="chips">{rules.stakes.map((s) => <button key={s} type="button" className={`chip ${stake === s ? 'on' : ''}`} disabled={s > total} title={s > total ? 'Not enough balance — add funds in the Vault' : undefined} onClick={() => setStake(s)}>{sats(s)}</button>)}</div>
+      <StakePicker rules={rules} stake={stake} setStake={setStake} total={total} />
       <div className="row gap">
         <button className="primary big" disabled={!!busy || prompt.trim().length < 5 || stake > total} onClick={() => start(true)}><Agents size={20} /> {busy ?? 'Fight the House Agent'}</button>
         <button className="secondary big" disabled={!!busy || prompt.trim().length < 5 || stake > total} onClick={() => start(false)}><Swords size={20} /> Challenge a friend</button>

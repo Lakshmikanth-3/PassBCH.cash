@@ -36,7 +36,10 @@ describe('money', () => {
   });
   test('cannot stake more than the balance or an odd amount', () => {
     expect(() => E.takeStake({ bonus: 400, cash: 0 }, 2500)).toThrow(/insufficient/);
-    expect(() => E.takeStake({ bonus: 9999, cash: 0 }, 777)).toThrow(/not allowed/);
+    expect(() => E.takeStake({ bonus: 9999, cash: 0 }, 100)).toThrow(/stake must be/);
+    expect(() => E.takeStake({ bonus: 9999999, cash: 0 }, 5_000_000)).toThrow(/stake must be/);
+    expect(() => E.takeStake({ bonus: 9999, cash: 0 }, 1500.5)).toThrow(/stake must be/);
+    expect(E.takeStake({ bonus: 9999, cash: 0 }, 1777)).toEqual({ fromBonus: 1777, fromCash: 0 }); // custom stake
   });
   test('winner takes the whole pot in the staked buckets; money is conserved', () => {
     const a = { fromBonus: 1000, fromCash: 0 }, b = { fromBonus: 200, fromCash: 800 };

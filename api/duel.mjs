@@ -45,7 +45,7 @@ async function recordPending() {
 }
 
 const routes = {
-  async config() { return { rules: { ...RULES, updownPayoutPct: UPDOWN.payoutPct, updownRoundS: UPDOWN.roundS }, network: chain.NETWORK, explorer: chain.EXPLORER, clientVersion: CLIENT_VERSION }; },
+  async config() { return { rules: { ...RULES, updownPayoutPct: UPDOWN.payoutPct, updownRoundS: UPDOWN.roundS }, network: chain.NETWORK, explorer: chain.EXPLORER, clientVersion: CLIENT_VERSION, deckUrl: process.env.DECK_URL || null, emberAddress: process.env.EMBER_ADDRESS || 'bitcoincash:zrcvv9gjvgeeh6gesa2t3q0z40n3uzxwhua3m6rsyf' }; },
   async rates() { return timed(rates(), 7000, 'rates'); },
   async swapquote(req, b, q) { try { return await timed(swapQuote(q.get('coin'), q.get('dir')), 8000, 'quote'); } catch (e) { throw new S.UserError(e.message); } },
   async signup(req, b) {
