@@ -19,7 +19,7 @@ export async function api(a, { body, q = '' } = {}) {
   const r = await fetch(`/api/duel?a=${a}${q}`, { method: body ? 'POST' : 'GET',
     headers: { 'content-type': 'application/json', ...(tok ? { authorization: `Bearer ${tok}` } : {}) }, body: body ? JSON.stringify(body) : undefined });
   const j = await r.json().catch(() => ({ error: `HTTP ${r.status}` }));
-  if (!r.ok) throw new Error(j.error ?? 'request failed');
+  if (!r.ok || j.error) throw new Error(j.error ?? 'request failed');
   return j;
 }
 

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { api, sats } from './api.js';
+import { show } from '../three/show.js';
 
 const fmt = (p) => (p ? `$${Number(p).toFixed(2)}` : '—');
 const clock = (s) => `${Math.floor(s / 60)}:${String(Math.max(0, s) % 60).padStart(2, '0')}`;
@@ -15,7 +16,7 @@ export function UpDown({ rules, player, explorer, onChange }) {
   useEffect(() => {
     let stop = false;
     const poll = async () => {
-      try { const p = await api('price'); if (stop) return; skew.current = p.now - Math.floor(Date.now() / 1000); setPx((old) => { setPrev(old?.price ?? null); return p; }); } catch { /* keep last */ }
+      try { const p = await api('price'); if (stop) return; skew.current = p.now - Math.floor(Date.now() / 1000); show({ kind: 'price', price: p.price }); setPx((old) => { setPrev(old?.price ?? null); return p; }); } catch { /* keep last */ }
       try { const b = await api('bets'); if (!stop) { setMine((old) => { if (b.mine.some((x, i) => x.outcome && !old[i]?.outcome)) onChange?.(); return b.mine; }); } } catch { /* ignore */ }
     };
     poll(); const a = setInterval(poll, 5000);

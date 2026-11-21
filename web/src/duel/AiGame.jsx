@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { api, sats } from './api.js';
+import { show } from '../three/show.js';
 
 const short = (m) => m?.replace('openai/', '') ?? '';
 const x = (pct) => `${(pct / 100).toFixed(2)}×`;
@@ -19,6 +20,8 @@ export function AiGame({ rules, player, explorer, onChange }) {
       const doneId = s.recent[0]?.id;
       if (lastDone.current && doneId !== lastDone.current) onChange?.();
       lastDone.current = doneId; setSt(s);
+      const c = s.current ?? s.recent[0];
+      if (c) show({ kind: 'ai', status: s.current ? (s.current.status === 'open' && s.now < Number(s.current.bet_close_s) ? 'open' : 'running') : c.status, model: c.model.replace('openai/', ''), slug: c.slug, pass: c.pass, passed: c.passed, total: c.total });
     } catch (e) { setErr(e.message); }
   };
   useEffect(() => {

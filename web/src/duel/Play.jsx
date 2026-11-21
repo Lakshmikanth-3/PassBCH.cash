@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { api, commitMove, session, MOVES, EMOJI, sats } from './api.js';
+import { show } from '../three/show.js';
 
 export function Signup({ onDone, refCode }) {
   const [name, setName] = useState('');
@@ -12,7 +13,7 @@ export function Signup({ onDone, refCode }) {
   };
   return (
     <form className="card signup" onSubmit={go}>
-      <h2>Get {refCode ? '20,000' : '10,000'} free sats and play</h2>
+      <h2>Get {refCode ? '50,000' : '25,000'} free sats and play</h2>
       <p className="muted">No wallet needed to start. Pick a name; your bonus is ready instantly.</p>
       <input aria-label="Player name" placeholder="Your player name" value={name} onChange={(e) => setName(e.target.value)} maxLength={20} required />
       <input aria-label="Referral code" placeholder="Referral code (optional)" value={ref} onChange={(e) => setRef(e.target.value.toUpperCase())} maxLength={6} />
@@ -71,6 +72,7 @@ export function DuelView({ id, me, explorer, onClose, onChange }) {
   const [d, setD] = useState(null); const [err, setErr] = useState(null);
   const [move, setMove] = useState(null); const [copied, setCopied] = useState(false);
   const revealing = useRef(false);
+  const shown = useRef(false);
   const mine = session.salt(id);
   const link = `${location.origin}/?duel=${id}`;
 
@@ -81,6 +83,7 @@ export function DuelView({ id, me, explorer, onClose, onChange }) {
         const x = await api('duel', { q: `&id=${id}` });
         if (stop) return;
         setD(x);
+        if (x.status === 'settled' && x.aMove && x.bMove && !shown.current) { shown.current = true; show({ game: 'duel', kind: 'duel', aMove: x.aMove, bMove: x.bMove, result: x.result }); }
         if (x.status === 'awaiting_reveal' && mine && x.aPlayer === me?.id && !revealing.current) {
           revealing.current = true;
           await api('reveal', { body: { id, ...mine } }).catch((e) => setErr(e.message));

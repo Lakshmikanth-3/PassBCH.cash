@@ -6,6 +6,7 @@ import { Signup, NewDuel, DuelView } from './duel/Play.jsx';
 import { Wallet, Leaderboard, Terminal } from './duel/Side.jsx';
 import { UpDown, UpDownFeed } from './duel/UpDown.jsx';
 import { AiGame } from './duel/AiGame.jsx';
+import Arena3D from './three/Arena3D.jsx';
 
 const params = () => new URLSearchParams(typeof location === 'undefined' ? '' : location.search);
 
@@ -38,18 +39,21 @@ export default function App() {
         <h1>PassBCH.cash</h1>
         <p className="tag">Play while your AI thinks. Bet on an AI passing its coding exam, on the next minute of BCH, or duel a friend — for real Bitcoin Cash. Every result on chain.</p>
       </header>
+      <section className="wrap stagewrap">
+        {!duelId && (
+          <div className="tabs" role="tablist">
+              <button role="tab" aria-selected={game === 'duel'} className={game === 'duel' ? 'on' : ''} onClick={() => setGame('duel')}>✊ Duel</button>
+              <button role="tab" aria-selected={game === 'updown'} className={game === 'updown' ? 'on' : ''} onClick={() => setGame('updown')}>📈 Up or Down</button>
+              <button role="tab" aria-selected={game === 'ai'} className={game === 'ai' ? 'on' : ''} onClick={() => setGame('ai')}>🤖 AI Pass/Fail</button>
+            </div>
+        )}
+        <Arena3D game={duelId ? 'duel' : game} />
+      </section>
       <main className="wrap grid">
         <section className="col">
           {err && <div className="card err">Can't reach the game server: {err}</div>}
           {cfg && !me && <Signup refCode={ref} onDone={() => refresh()} />}
           {cfg && duelId && <DuelView id={duelId} me={me} explorer={cfg.explorer} onClose={() => openDuel(null)} onChange={refresh} />}
-          {cfg && me && !duelId && (
-            <div className="tabs" role="tablist">
-              <button role="tab" aria-selected={game === 'duel'} className={game === 'duel' ? 'on' : ''} onClick={() => setGame('duel')}>✊ Duel</button>
-              <button role="tab" aria-selected={game === 'updown'} className={game === 'updown' ? 'on' : ''} onClick={() => setGame('updown')}>📈 Up or Down</button>
-              <button role="tab" aria-selected={game === 'ai'} className={game === 'ai' ? 'on' : ''} onClick={() => setGame('ai')}>🤖 AI Pass/Fail</button>
-            </div>
-          )}
           {cfg && me && !duelId && game === 'duel' && <NewDuel rules={cfg.rules} player={me} onCreated={(id) => openDuel(id)} />}
           {cfg && me && !duelId && game === 'updown' && <UpDown rules={cfg.rules} player={me} explorer={cfg.explorer} onChange={refresh} />}
           {cfg && me && !duelId && game === 'ai' && <AiGame rules={cfg.rules} player={me} explorer={cfg.explorer} onChange={refresh} />}
