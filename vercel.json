@@ -18,5 +18,10 @@
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/duel.mjs": {
+      "maxDuration": 30
+    }
+  }
 }

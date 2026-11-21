@@ -30,7 +30,7 @@ const plain = (u) => !u.token;
 async function spendable(p, address) { return (await p.getUtxos(address)).filter(plain).sort((a, b) => Number(b.satoshis - a.satoshis)); }
 
 /** Build, sign and send a tx from the house wallet: optional OP_RETURN, optional payment, change back. */
-export async function houseSend({ p = provider(), opReturn, to, sats = 0n }) {
+export async function houseSend({ p = provider(), opReturn, to, sats = 0n, beforeSend }) {
   const house = houseKey();
   const utxos = await spendable(p, house.address);
   const need = BigInt(sats) + 1000n;
@@ -47,11 +47,13 @@ export async function houseSend({ p = provider(), opReturn, to, sats = 0n }) {
     return b;
   };
   const size = BigInt(build(1000n).build().length / 2);
-  const tx = build(size * FEE_PER_BYTE + 10n);
-  const { txid } = await tx.send();
+  const hex = build(size * FEE_PER_BYTE + 10n).build();
+  const txid = binToHex(sha256.hash(sha256.hash(hexToBin(hex))).reverse());
+  await beforeSend?.(txid); // persist the txid first: a timeout after broadcast must never cause a refund
+  await p.sendRawTransaction(hex);
   return txid;
 }
 
-export const recordDuel = (d, p) => houseSend({ p, opReturn: recordBytes({ id: d.id, result: d.result, stake: d.stake, moveA: d.a_move, moveB: d.b_move, commit: d.a_commit }) });
-export const payWithdrawal = (to, sats, p) => houseSend({ p, to, sats: BigInt(sats) });
+export const recordDuel = (d, beforeSend) => houseSend({ beforeSend, opReturn: recordBytes({ id: d.id, result: d.result, stake: d.stake, moveA: d.a_move, moveB: d.b_move, commit: d.a_commit }) });
+export const payWithdrawal = (to, sats, beforeSend, p) => houseSend({ p, to, sats: BigInt(sats), beforeSend });
 export async function depositUtxos(playerId, p = provider()) { return spendable(p, depositKey(playerId).address); }

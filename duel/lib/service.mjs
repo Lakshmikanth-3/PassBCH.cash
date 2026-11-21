@@ -200,5 +200,8 @@ export async function creditDeposits(token, utxos) {
 export async function playerId(token) { return (await playerByToken(await db(), token)).id; }
 export async function setRecordTx(id, txid) { await (await db()).query('update duels set record_txid=$1 where id=$2', [txid, id]); }
 export async function unrecorded(limit = 5) {
-  return (await (await db()).query(`select id, result, stake, a_move, b_move, a_commit from duels where settled_at is not null and b_player is not null and record_txid is null order by settled_at limit $1`, [limit])).rows;
+  return (await (await db()).query(`select id, result, stake, a_move, b_move, a_commit from duels where settled_at is not null and b_player is not null and record_txid is null
+    and (record_try_at is null or record_try_at < now() - interval '30 seconds') order by settled_at limit $1`, [limit])).rows;
+}
+export async function markRecordTry(id) { await (await db()).query('update duels set record_try_at = now() where id=$1', [id]);
 }
