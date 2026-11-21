@@ -1,13 +1,13 @@
 #!/usr/bin/env node
-// Satoshi Duel in your terminal. No install, no dependencies: needs Node 18+.
-//   PowerShell:  irm https://satoshi-duel.vercel.app/play.ps1 | iex
-//   bash/zsh:    curl -fsSL https://satoshi-duel.vercel.app/play.sh | sh
+// PassBCH.cash in your terminal. No install, no dependencies: needs Node 18+.
+//   PowerShell:  irm https://passbch-cash.vercel.app/play.ps1 | iex
+//   bash/zsh:    curl -fsSL https://passbch-cash.vercel.app/play.sh | sh
 import { createHash, randomBytes } from 'node:crypto';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import readline from 'node:readline';
 
-const BASE = process.env.DUEL_URL ?? 'https://satoshi-duel.vercel.app';
-const CFG = path.join(os.homedir(), '.satoshi-duel.json');
+const BASE = process.env.DUEL_URL ?? 'https://passbch-cash.vercel.app';
+const CFG = path.join(os.homedir(), '.passbch.json');
 const MOVES = ['rock', 'paper', 'scissors'], EMOJI = { rock: '✊', paper: '✋', scissors: '✌️ ' };
 const c = (n) => (s) => (process.stdout.isTTY ? `\x1b[${n}m${s}\x1b[0m` : s);
 const bold = c(1), dim = c(2), green = c(32), red = c(31), yellow = c(33), cyan = c(36);
@@ -43,7 +43,7 @@ async function pickStake(rules) {
 }
 
 async function signup() {
-  console.log(bold('\n  Welcome to Satoshi Duel 🎲  rock-paper-scissors for real BCH\n'));
+  console.log(bold('\n  Welcome to PassBCH.cash 🎲  rock-paper-scissors for real BCH\n'));
   const name = (await ask('  Pick a player name: ')).trim();
   const ref = (process.argv.find((a) => a.startsWith('--ref='))?.slice(6) ?? (await ask(`  Referral code ${dim('(optional, Enter to skip)')}: `)).trim()) || undefined;
   const r = await api('signup', { body: { name, ref } });
@@ -151,7 +151,7 @@ async function main() {
   const [cmd, arg] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
   if (cmd === 'join' && arg) { await join(arg); return; }
   for (;;) {
-    console.log(bold(`\n  🎲 SATOSHI DUEL`) + dim(`  ${cfg.name} · ${network}`));
+    console.log(bold(`\n  🎲 PassBCH.cash`) + dim(`  ${cfg.name} · ${network}`));
     const choice = (await ask(`  [1] Play the House Bot  [2] Challenge a friend  [3] Join a duel  [4] Leaderboard  [5] Wallet  [6] Up or Down  [q] Quit\n  > `)).trim();
     try {
       if (choice === '1') await play({ vsBot: true, rules });

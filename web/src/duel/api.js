@@ -1,4 +1,4 @@
-// Browser client for the Satoshi Duel API. Token and per-duel salts live in localStorage (wrapped: storage can be blocked).
+// Browser client for the PassBCH.cash API. Token and per-duel salts live in localStorage (wrapped: storage can be blocked).
 export const MOVES = ['rock', 'paper', 'scissors'];
 export const EMOJI = { rock: '✊', paper: '✋', scissors: '✌️' };
 

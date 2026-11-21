@@ -5,6 +5,7 @@ import { api, session } from './duel/api.js';
 import { Signup, NewDuel, DuelView } from './duel/Play.jsx';
 import { Wallet, Leaderboard, Terminal } from './duel/Side.jsx';
 import { UpDown, UpDownFeed } from './duel/UpDown.jsx';
+import { AiGame } from './duel/AiGame.jsx';
 
 const params = () => new URLSearchParams(typeof location === 'undefined' ? '' : location.search);
 
@@ -13,7 +14,7 @@ export default function App() {
   const [me, setMe] = useState(null);
   const [duelId, setDuelId] = useState(params().get('duel'));
   const [err, setErr] = useState(null);
-  const [game, setGame] = useState(params().get('game') === 'updown' ? 'updown' : 'duel');
+  const [game, setGame] = useState(['updown', 'ai'].includes(params().get('game')) ? params().get('game') : 'duel');
   const ref = params().get('ref');
 
   const refresh = useCallback(async () => {
@@ -33,9 +34,9 @@ export default function App() {
     <>
       <Banner config={{ ...CONFIG, network: cfg?.network ?? CONFIG.network }} />
       <header className="wrap hero">
-        <div className="logo" aria-hidden>✊✋✌️</div>
-        <h1>Satoshi Duel</h1>
-        <p className="tag">Rock-paper-scissors and Up/Down on BCH price, for real Bitcoin Cash. Free sats to start. Every result written on chain.</p>
+        <div className="logo" aria-hidden>🤖 📈 ✊</div>
+        <h1>PassBCH.cash</h1>
+        <p className="tag">Play while your AI thinks. Bet on an AI passing its coding exam, on the next minute of BCH, or duel a friend — for real Bitcoin Cash. Every result on chain.</p>
       </header>
       <main className="wrap grid">
         <section className="col">
@@ -46,10 +47,12 @@ export default function App() {
             <div className="tabs" role="tablist">
               <button role="tab" aria-selected={game === 'duel'} className={game === 'duel' ? 'on' : ''} onClick={() => setGame('duel')}>✊ Duel</button>
               <button role="tab" aria-selected={game === 'updown'} className={game === 'updown' ? 'on' : ''} onClick={() => setGame('updown')}>📈 Up or Down</button>
+              <button role="tab" aria-selected={game === 'ai'} className={game === 'ai' ? 'on' : ''} onClick={() => setGame('ai')}>🤖 AI Pass/Fail</button>
             </div>
           )}
           {cfg && me && !duelId && game === 'duel' && <NewDuel rules={cfg.rules} player={me} onCreated={(id) => openDuel(id)} />}
           {cfg && me && !duelId && game === 'updown' && <UpDown rules={cfg.rules} player={me} explorer={cfg.explorer} onChange={refresh} />}
+          {cfg && me && !duelId && game === 'ai' && <AiGame rules={cfg.rules} player={me} explorer={cfg.explorer} onChange={refresh} />}
           {cfg && me && <Wallet player={me} rules={cfg.rules} explorer={cfg.explorer} network={cfg.network} onChange={refresh} />}
           <Terminal />
           <div className="card how">
@@ -64,7 +67,7 @@ export default function App() {
         </section>
         <aside className="col">{cfg && <Leaderboard explorer={cfg.explorer} onOpen={openDuel} />}{cfg && <UpDownFeed explorer={cfg.explorer} />}</aside>
       </main>
-      <footer className="wrap muted small foot">Built from scratch for BCH BLAZE 2026 · <a href={CONFIG.repoUrl}>source</a> · {cfg?.network ?? 'chipnet'}</footer>
+      <footer className="wrap muted small foot">PassBCH.cash · built from scratch for BCH BLAZE 2026 · <a href={CONFIG.repoUrl}>source</a> · {cfg?.network ?? 'chipnet'}</footer>
     </>
   );
 }

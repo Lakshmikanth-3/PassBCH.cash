@@ -12,7 +12,7 @@ const HAT = (
 
 /** WizardConnect: pair a BCH wallet by QR, then deposit with one approval on the phone. */
 export default function WalletConnect({ network, onDeposited, onAddress }) {
-  const wc = useWizardConnect({ dappName: 'Satoshi Duel', dappIcon: typeof location !== 'undefined' ? `${location.origin}/favicon.svg` : undefined });
+  const wc = useWizardConnect({ dappName: 'PassBCH.cash', dappIcon: typeof location !== 'undefined' ? `${location.origin}/favicon.svg` : undefined });
   const [amount, setAmount] = useState(10000);
   const [busy, setBusy] = useState(null); const [err, setErr] = useState(null); const [done, setDone] = useState(null);
   const prefix = network === 'mainnet' ? 'bitcoincash' : 'bchtest';
@@ -30,7 +30,7 @@ export default function WalletConnect({ network, onDeposited, onAddress }) {
       const { transaction, sourceOutputs, inputPaths } = buildDeposit({ utxos, to, amount, changeKey });
       setBusy('Approve the deposit in your wallet…');
       const res = await wc.manager.signTransaction({
-        transaction: toWire({ transaction, sourceOutputs, broadcast: true, userPrompt: `Deposit ${amount} sats to Satoshi Duel` }),
+        transaction: toWire({ transaction, sourceOutputs, broadcast: true, userPrompt: `Deposit ${amount} sats to PassBCH.cash` }),
         inputPaths,
       });
       if (res.error) throw new Error(res.error);

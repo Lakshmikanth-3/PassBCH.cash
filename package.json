@@ -1,15 +1,16 @@
 {
-  "name": "satoshi-duel",
+  "name": "passbch-cash",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Rock-paper-scissors and Up/Down for real Bitcoin Cash. Built for BCH BLAZE 2026.",
+  "description": "PassBCH.cash: play while your AI thinks. AI Pass/Fail, Up/Down and RPS duels for real Bitcoin Cash.",
   "scripts": {
     "dev": "vite --config web/vite.config.js",
     "build": "vite build --config web/vite.config.js",
     "api": "node server/dev-server.mjs",
     "test": "vitest run --config web/vite.config.js",
-    "e2e": "node scripts/e2e.mjs"
+    "e2e": "node scripts/e2e.mjs",
+    "ai-runner": "node ai/runner.mjs"
   },
   "dependencies": {
     "@bitauth/libauth": "3.0.0",

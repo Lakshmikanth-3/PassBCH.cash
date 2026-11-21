@@ -20,7 +20,7 @@ export default function Banner({ config }) {
         <a href={config.demoUrl}>Demo</a>
         <span className="muted">
           Old repo / old demo: none. All code written during BLAZE, from 17 Nov 2026 (
-          <a href={firstCommitUrl} target="_blank" rel="noreferrer">first commit</a>); Satoshi Duel built 21 Nov
+          <a href={firstCommitUrl} target="_blank" rel="noreferrer">first commit</a>)
         </span>
         <button className="ember" onClick={copy} title="CashTokens address for EMBER2026 votes">
           EMBER2026: <code>{config.emberAddress.slice(12, 20)}…{config.emberAddress.slice(-6)}</code>

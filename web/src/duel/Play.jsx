@@ -96,7 +96,7 @@ export function DuelView({ id, me, explorer, onClose, onChange }) {
   const iAmA = d.aPlayer === me?.id, iAmB = d.bPlayer === me?.id;
   const join = async () => { try { await api('join', { body: { id, move } }); onChange?.(); } catch (e) { setErr(e.message); } };
   const share = async () => {
-    try { if (navigator.share) await navigator.share({ title: 'Satoshi Duel', text: `${d.aName} challenges you to rock-paper-scissors for ${sats(d.stake)}`, url: link }); else { await navigator.clipboard.writeText(link); setCopied(true); } } catch { /* cancelled */ }
+    try { if (navigator.share) await navigator.share({ title: 'PassBCH.cash', text: `${d.aName} challenges you to rock-paper-scissors for ${sats(d.stake)}`, url: link }); else { await navigator.clipboard.writeText(link); setCopied(true); } } catch { /* cancelled */ }
   };
   let verdict = null;
   if (d.status === 'settled' && d.bPlayer) {
