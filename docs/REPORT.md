@@ -19,7 +19,7 @@
 | Rules and FAQ | https://passbch.vercel.app/rules |
 | House wallet (chipnet) | `bchtest:qql3cd7mlgqepacnudgh9qg6xc9na6a40qgmzdahgk` |
 | Code started | 17 Nov 2026 (all code written during BLAZE; about 170 commits) |
-| Tests | 53 automated (all pass) + live end-to-end script (13 checks) + live browser test (27 / 27 checks) |
+| Tests | 56 automated (all pass) + live end-to-end script (13 checks) + live browser test (27 / 27 checks) |
 
 ---
 
@@ -286,7 +286,7 @@ Regulation: real-money games are regulated in many countries (including India). 
 | Record decoding (`web/test/proof.test.js`) | 5 passed |
 | Claude Code panel (`panel/panel.test.mjs`) | 6 passed |
 | Banner (`web/test/banner.test.jsx`) | 3 passed |
-| **Total `npm test`** | **53 passed** (re-run 22 Nov after these changes) |
+| **Total `npm test`** | **56 passed** (re-run 22 Nov after these changes) |
 | Live end-to-end (`npm run e2e`) | 13 / 13: signup, referral, bot duel, friend duel, self-join refused, changed move refused, payout, leaderboard, on-chain record, deposit address, bonus not withdrawable, withdrawal with fee |
 | Live browser test (headless Edge, 21 Nov) | 27 / 27: landing, signup, RPS + Verify, Up/Down settled after 60 s, Prompt Fight, vault, add funds tabs, withdraw, winners, rules, verify, profile, 404, phone width, no JS or server errors |
 | Terminal invite routes (22 Nov, live) | curl → `sh` launcher with `join <id>`; PowerShell → `ps1` launcher with `fight <id>`; browser → web app |
@@ -330,23 +330,24 @@ Regulation: real-money games are regulated in many countries (including India). 
 
 ---
 
-## 12. Known issues and gaps (honest list)
+## 12. Known issues and gaps (status on 22 Nov, after the final fix round)
 
-| # | Issue | Impact | Status |
-|---|---|---|---|
-| 1 | Prompt Fight: the first mover can have a forced win for some (N, step) pairs | Fairness of some fights | Open |
-| 2 | Prompt Fight: some AI replies are invalid and become automatic `*` moves (Groq rate limit / format) | Fight quality | Open (plan: structured JSON + one retry) |
-| 3 | "Writing on-chain record…" sometimes doesn't update until reload | Cosmetic | Open (plan: keep polling until the txid arrives) |
-| 4 | A finished fight replays its animation on reload | Cosmetic | Open (plan: instant result + Replay button) |
-| 5 | Winners ranks by gross winnings, not net profit | Ranking definition | Open |
-| 6 | A player record changed (KANTH 2-1-2 → 1-0-2), cause not found | Data trust | Investigate |
-| 7 | RPS open-challenges list disappears when empty (no empty state) | Cosmetic | Open |
-| 8 | LIVE badge is always lit; no camera toggle | Cosmetic | Open |
-| 9 | Login code is the only key; no wallet-signature login | Account recovery | Open |
-| 10 | Mainnet bonus is still 0.00025 BCH × 100 (worst case ≈ 0.025 BCH) | Cost on mainnet | Lower before mainnet |
-| 11 | WizardConnect / Paytaca not yet tested on a real phone | Deposit path | Needs you |
-| 12 | Terminal invite: the friend's terminal must have Node.js 18+ | Reach | By design (the launcher says so) |
-| 13 | Custodial balances | Trust | By design; documented |
+| # | Issue | Status |
+|---|---|---|
+| 1 | Prompt Fight first mover could be a forced win | **Mitigated.** First mover is a commit-reveal coin flip (hash published at creation, seed revealed after). Race to N is still a solved game, so a strong prompt that finds the winning line wins; this is explained on /rules. The commitment is stored in the database and shown on the fight; it is not inside the 59-byte on-chain record. |
+| 2 | Invalid AI replies became automatic `*` moves | **Fixed.** Groq is asked for JSON `{"add": n}`, the reply is validated, retried once, then the automatic move is used. Tests added. |
+| 3 | "Writing on-chain record…" stuck | **Fixed.** Fights keep polling until the txid arrives; the Verified card updates by itself. |
+| 4 | Finished fight/duel replayed on reload | **Fixed.** Opening a finished game shows the result at once with a Replay button. |
+| 5 | Winners ranked by gross | **Fixed.** Ranked by net profit (winnings minus stakes); gross is shown next to it. |
+| 6 | KANTH record changed (2-1-2 to 1-0-2) | **Finding (inferred, not proven).** The code never overwrites a player's record: the leaderboard recomputes W-L-D live from settled duel rows. My test clean-ups deleted QA test accounts together with their duels, and a duel against KANTH would disappear from his record with them. No code path edits stats. |
+| 7 | RPS open challenges vanished when empty | **Fixed.** Empty state shown. |
+| 8 | LIVE badge always lit | **Fixed.** Shows STUDIO (grey) until a duel or fight is actually open. |
+| 9 | Login code is the only key | Open (documented). |
+| 10 | Mainnet bonus too large | **Fixed.** Mainnet: 0.00002 BCH, 50 grants, 3 per network address, stakes 500 to 20,000 sats. |
+| 11 | WizardConnect / Paytaca phone test | Needs you. |
+| 12 | Terminal friend needs Node.js 18+ | By design. |
+| 13 | Custodial balances | By design; solvency line added. |
+| 14 | Non-custodial covenant duel, XO template | Not built (not safe to ship half-finished). |
 
 ---
 
@@ -368,7 +369,7 @@ Regulation: real-money games are regulated in many countries (including India). 
 
 ```bash
 npm ci
-npm test          # 53 tests, no secrets needed
+npm test          # 56 tests, no secrets needed
 npm run dev       # web app on http://localhost:5173
 # own API: DATABASE_URL, HOUSE_SK, HOUSE_SECRET, GROQ_KEY  →  npm run api  (http://localhost:8787)
 BASE=https://passbch.vercel.app npm run e2e   # live end-to-end (spends a little chipnet BCH)

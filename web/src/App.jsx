@@ -74,6 +74,7 @@ function Landing({ go, me, cfg, refresh }) {
     try {
       const r = await api('signup', { body: { name: `Guest${Math.floor(1000 + Math.random() * 9000)}` } });
       session.set({ token: r.token }); try { sessionStorage.setItem('pb.guest', '1'); } catch { /* blocked */ }
+      if (!r.bonusGiven) { try { sessionStorage.setItem('pb.nobonus', '1'); } catch { /* blocked */ } }
       await refresh(); go('rps');
     } catch (e) { setQerr(e.message); setQuick(false); }
   };
@@ -113,8 +114,10 @@ function GuestNote() {
   const [copied, setCopied] = useState(false);
   if (!on) return null;
   const code = session.get()?.token ?? '';
+  let nobonus = false; try { nobonus = sessionStorage.getItem('pb.nobonus') === '1'; } catch { /* blocked */ }
   return (
     <div className="guestnote">
+      {nobonus && <p className="small" style={{ margin: '0 0 8px' }}><b>No free bonus this time:</b> the limit of free credit per network address (3) or in total has been reached. Add a little BCH from the Vault to play.</p>}
       <b>Save your login code</b>
       <p className="small" style={{ margin: '4px 0' }}>You are playing as a guest. This code is the only way back into this account on another device or in the terminal. Anyone with it can use your balance.</p>
       <div className="row gap"><code className="linkbox">{code}</code>

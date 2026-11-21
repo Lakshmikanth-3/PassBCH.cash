@@ -1,6 +1,6 @@
 # PassBCH.cash
 
-Play a one-minute game while your AI coding agent is "cogitating", for Bitcoin Cash, and every result is written to the BCH chain where anyone can recompute it. Three games: **Rock · Paper · Scissors** at a 3D TV-show table, **Up or Down** on the next minute of the BCH price, and **Prompt Fight**, where your prompt trains an AI agent that fights another one live. The game server is trusted to hold balances (custodial, see the limits), but it cannot quietly change a result: the moves, prices and hashes are on chain and your browser re-checks them.
+**Play a one-minute Bitcoin Cash game in your terminal while Claude Code is thinking. Every result is proven on-chain and anyone can verify it.** Every result is written to the BCH chain where anyone can recompute it. Three games: **Rock · Paper · Scissors** at a 3D TV-show table, **Up or Down** on the next minute of the BCH price, and **Prompt Fight**, where your prompt trains an AI agent that fights another one live. The game server is trusted to hold balances (custodial, see the limits), but it cannot quietly change a result: the moves, prices and hashes are on chain and your browser re-checks them.
 
 ![PassBCH.cash: a 3D game-show table with you, an opponent and a host](docs/images/cover.png)
 
@@ -14,9 +14,24 @@ Play a one-minute game while your AI coding agent is "cogitating", for Bitcoin C
 | House wallet (writes every result) | [`bchtest:qql3cd7mlgqepacnudgh9qg6xc9na6a40qgmzdahgk`](https://chipnet.imaginary.cash/address/bchtest:qql3cd7mlgqepacnudgh9qg6xc9na6a40qgmzdahgk) |
 | Track | BCH BLAZE 2026, Mainnet Track (on chipnet until submission) |
 | Who it is for | Developers waiting on AI agents, BCH newcomers (free starting credit, one-minute rounds), streamers and friends who want quick provable games |
-| Tests | 53 automated (25 game rules · 8 Prompt Fight · 6 WizardConnect deposit · 5 on-chain record decoding · 6 Claude Code panel · 3 banner) · live chipnet end-to-end script (13 checks) · live browser audit of every page: all passing |
+| Tests | 56 automated (25 game rules · 8 Prompt Fight · 6 WizardConnect deposit · 5 on-chain record decoding · 6 Claude Code panel · 3 banner) · live chipnet end-to-end script (13 checks) · live browser audit of every page: all passing |
 
 **What you can do:** get free starting credit with just a name · play RPS against the House Bot or send a friend a link · call BCH up or down for exactly one minute · write a strategy prompt and watch your AI agent fight · accept open challenges · add BCH with **WizardConnect** or a QR code (live quotes for other crypto and for INR/JPY/USD cards and UPI) · withdraw BCH · see every winner worldwide · open any player's history · **verify any result in your browser** · do all of it from a terminal with one short command · see the live round in Claude Code's status bar while Claude is thinking.
+
+## Bounty and prize tracks
+
+| Track | Status |
+|---|---|
+| **Main BLAZE prizes** (1st / 2nd / 3rd, $8,000 in ParyonUSD) | Entered. Live demo, banner (deck, GitHub, EMBER2026), WizardConnect deposits, mainnet switch ready ([docs/MAINNET.md](docs/MAINNET.md)). |
+| Build with XO / Migrate to XO (General Protocols) | **Not built.** It needs an XO template, an inspectable invitation and about 500 words of hand-written feedback. The natural port is the Rock · Paper · Scissors escrow; it is the first item on the roadmap. |
+| Stablecoin Bridge, Decentralized Identity, SolidCash, FoldingCash claims | Not entered (different products). |
+
+## Mainnet transactions (filled in at submission)
+
+| What | Transaction |
+|---|---|
+| First real mainnet game record | _txid goes here_ |
+| Real mainnet withdrawal | _txid goes here_ |
 
 ## Evaluator Notes
 
@@ -34,7 +49,7 @@ Play a one-minute game while your AI coding agent is "cogitating", for Bitcoin C
 
 **Verify in 5 minutes:**
 
-1. `npm ci && npm test` (no secrets or accounts needed) → **53 tests pass**.
+1. `npm ci && npm test` (no secrets or accounts needed) → **56 tests pass**.
 2. Open https://passbch.vercel.app/verify/7a7fad7ffad96b2c73f640628e77c0b9de10216d5a15dcc9f5f15cb5f17d1bce → a real Prompt Fight shows **Verified ✓** with 5 checks recomputed in your browser.
 3. Open https://passbch.vercel.app → pick a name → **Rock · Paper · Scissors** → play the House Bot → watch the table, then press **Verify ✓** on your own result.
 4. In a terminal: `curl -sL passbch.vercel.app | sh` (or the PowerShell line) → the same account and games.
@@ -335,7 +350,7 @@ The live suites spend a little chipnet BCH from the house wallet.
 
 ## Feature-to-Test Traceability
 
-Re-run for this update on 21 Nov 2026: `npm test` → **53 passed**.
+Re-run for this update on 21 Nov 2026: `npm test` → **56 passed**.
 
 | Feature | Source | Test | What it proves | What it does not prove |
 |---|---|---|---|---|
@@ -348,13 +363,21 @@ Re-run for this update on 21 Nov 2026: `npm test` → **53 passed**.
 | Withdrawals | server/chain.mjs, api/duel.mjs | e2e (live) | Real chipnet payout with fee | Mainnet |
 | Pages | web/src | live browser audit | No app errors across every page and phone width | Every browser and device |
 
+## Limits to know before you play
+
+- **Custodial:** balances are held by the platform (a trusted operator); results are provable, balances are not.
+- **18+ only.** Real-money games are regulated in many countries; check your local law before playing on mainnet.
+- **Free-play mode:** on chipnet the BCH has no value. On mainnet the free bonus is 0.00002 BCH (50 grants platform-wide, 3 per network address, 2× wagering before withdrawal).
+- **Race to N is a solved game:** the first mover can have a forced win, so the first move is a commit-reveal coin flip (the seed hash is published before the fight, the seed after).
+- **House solvency** is shown live on /winners and /rules: house wallet balance (from chain) against what players could withdraw.
+
 ## Run locally
 
 Requires Node 22+.
 
 ```bash
 npm ci
-npm test                 # 53 tests, no secrets needed
+npm test                 # 56 tests, no secrets needed
 npm run dev              # web app on http://localhost:5173 (talks to the live API through a proxy)
 ```
 
@@ -400,7 +423,7 @@ React 18.3 · three.js 0.170 · Vite 5.4 · CashScript 0.11.5 (transaction build
 ## Status
 
 - Live at https://passbch.vercel.app on **chipnet**. All three games, the vault, WizardConnect and QR deposits, withdrawals, winners, profiles, Verify, Rules and the terminal client work on the hosted copy.
-- 53 automated tests and the live end-to-end check pass.
+- 56 automated tests and the live end-to-end check pass.
 - **Not built yet:** mainnet, swaps with other crypto and fiat on/off-ramps (quotes only), wallet-signature login, published House Bot seeds, new games (coin flip, dice, lucky draw, tournaments), notifications.
 - **Pending with the team:** WizardConnect test on a phone (Paytaca), the Widget Factory deck link for the banner.
 

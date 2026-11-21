@@ -17,7 +17,7 @@ const width = (s) => [...strip(s)].reduce((n, ch) => n + (/[\u{1F300}-\u{1FAFF}\
 const pad = (s, n) => s + ' '.repeat(Math.max(0, n - width(s)));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const sats = (n) => `${(Number(n ?? 0) / 1e8).toFixed(8).replace(/0+$/, '').replace(/\.$/, '')} BCH`;
-export const VERSION = '2026.11.22-2'; // must match CLIENT_VERSION in api/duel.mjs
+export const VERSION = '2026.11.22-3'; // must match CLIENT_VERSION in api/duel.mjs
 let NETWORK = 'chipnet';
 const CUR = { USD: '$', INR: '₹', JPY: '¥', EUR: '€', GBP: '£', AED: 'AED ', SGD: 'S$', IDR: 'Rp ', PHP: '₱', NGN: '₦', BRL: 'R$' };
 let fxCache = null;
@@ -204,7 +204,7 @@ curl -sL ${BASE}/duel/${id} | sh
     if (d.status === 'awaiting_reveal') {
       const r = await api('reveal', { body: { id, move, salt } }); endFrame();
       await tableShow(cfg.name ?? 'You', d.bName, move, d.bMove, r.result);
-      for (let k = 0; k < 5; k++) { const f = await api('duel', { q: `&id=${id}` }); if (f.recordTxid) { console.log(dim(`   on-chain record: ${f.recordTxid}`)); break; } await sleep(2000); }
+      for (let k = 0; k < 15; k++) { const f = await api('duel', { q: `&id=${id}` }); if (f.recordTxid) { console.log(dim(`   on-chain record: ${f.recordTxid}`)); break; } await sleep(2000); }
       return;
     }
     if (d.status === 'settled' || d.status === 'expired') { endFrame(); console.log(`  duel ${d.status}: ${d.settleReason}`); return; }
