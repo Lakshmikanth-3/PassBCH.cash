@@ -3,7 +3,7 @@ import * as S from '../server/service.mjs';
 import { RULES, sha256 } from '../server/engine.mjs';
 import { db } from '../server/db.mjs';
 import * as chain from '../server/chain.mjs';
-import { spot } from '../server/price.mjs';
+import { spot, recentCloses } from '../server/price.mjs';
 import { nextRound, UPDOWN } from '../server/engine.mjs';
 
 const json = (res, status, body) => { res.statusCode = status; res.setHeader('content-type', 'application/json'); res.setHeader('cache-control', 'no-store'); res.end(JSON.stringify(body)); };
@@ -55,7 +55,11 @@ const routes = {
     return { address, added };
   },
   /** Coins of a WizardConnect wallet (public addresses only), so the browser can build the deposit for the wallet to sign. */
-  async price() { const now = Math.floor(Date.now() / 1000); return { ...(await timed(spot(), 6000, 'price')), now, nextRound: nextRound(now), payoutPct: UPDOWN.payoutPct }; },
+  async price(req, b, q) {
+    const now = Math.floor(Date.now() / 1000);
+    const [p, history] = await Promise.all([timed(spot(), 6000, 'price'), q.get('history') ? recentCloses(12) : []]);
+    return { ...p, now, nextRound: nextRound(now), payoutPct: UPDOWN.payoutPct, history };
+  },
   async bet(req, b) { return S.placeBet(tokenOf(req), b); },
   async bets(req) { await within(S.settleBets(), 8000); await recordSoon(); return { mine: tokenOf(req) ? await S.myBets(tokenOf(req)) : [], feed: await S.betFeed() }; },
   async ai(req) { const st = await S.aiState(tokenOf(req)); await recordSoon(); return st; },
