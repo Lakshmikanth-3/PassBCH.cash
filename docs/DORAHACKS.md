@@ -101,12 +101,27 @@ It was executed on chipnet with two XO accounts and invitations: open `231206c8�
 - Security: no secrets in the repo or its history (scanned), a security policy, Dependabot, request size limits, a transaction id saved before every withdrawal broadcast (no double pay), and one house-wallet send at a time.
 - **Tech:** React 18 · three.js · Vite · Node on Vercel · Neon Postgres · CashScript 0.11.5 · libauth 3.0 · Electrum · WizardConnect · Groq (`gpt-oss-20b`) · Coinbase / Kraken APIs · npm package `passbch` · XO engine.
 
-## What's next
+## What's next: the PassBCH Claude Code plugin
 
-1. **Trustless duels on mainnet** with the XO / CashScript escrow, so players don't have to trust us with balances.
-2. **Claude Code plugin** (then VS Code and Cursor): install once, and a game appears the moment the agent starts thinking, with the live round and your result in the status line. Today's status-line panel (`panel/`) is the first step.
-3. **Tournaments and leaderboards** paid in BCH, with CashTokens prizes.
-4. **Wallet-signature login** in place of login codes.
+Today PassBCH already ships a **Claude Code status-line panel** ([`panel/`](https://github.com/Lakshmikanth-3/PassBCH.cash/tree/main/panel)): hooks notice when Claude starts and stops thinking, and the status bar shows *"Claude thinking 0:42 · play now →"*, your live bet and your result. The next step is to turn this into a **one-click Claude Code plugin**, so the game finds you instead of you finding the game.
+
+**How it will work**
+
+1. **Install once:** `/plugin install passbch`. No settings files, no copy-paste.
+2. **The moment your agent starts thinking**, a hook fires and the plugin offers a game sized to the wait: a 15-second Typing Race for a short task, a 60-second Up or Down for a long refactor.
+3. **`/passbch`** opens the game in a side terminal (or the browser) with one keystroke; **`/passbch:result`** shows your last game, balance and Verify link without leaving Claude Code.
+4. **When Claude finishes**, the status line tells you both results at once: *"Claude done ✓ · you won 0.0000095 BCH"*, so you never miss your agent's answer.
+5. **Every round stays provably fair**: the same commit-reveal games, one Bitcoin Cash transaction per result, verifiable in one click.
+
+**Where it goes after that**
+
+- **Every AI coding tool:** the same plugin model for VS Code, Cursor and other agents. Wherever an AI agent thinks, a one-minute BCH game is one key away.
+- **Team and friend play:** challenge a teammate who is waiting on their own agent (`npx passbch race <code>` already works terminal to terminal).
+- **Trustless stakes:** move duels from the custodial ledger into the **XO / CashScript escrow** we already built on chipnet, so stakes sit in an on-chain pot and the script pays the winner.
+- **Tournaments and leaderboards** paid in BCH, with CashTokens prizes and badges.
+- **Wallet-signature login** in place of login codes, and WizardConnect for one-tap deposits on mobile.
+
+**Why this matters for Bitcoin Cash:** millions of developers now wait on AI agents many times a day. A plugin puts a real BCH wallet and real, tiny, instant BCH transactions into that daily routine, which is everyday use of Bitcoin Cash by people who have never touched it before.
 
 ## Honest limits
 
