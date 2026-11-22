@@ -92,6 +92,8 @@ We migrated our Rock · Paper · Scissors game from a **custodial** server into 
 
 It was executed on chipnet with two XO accounts and invitations: open `231206c8…b882465`, reveal `395fc025…5f7c3e1`, and inspected as **SUCCESS** in the XO debug tool. Code and proof: https://github.com/Lakshmikanth-3/PassBCH.cash/tree/main/xo
 
+**XO developer feedback:** https://github.com/Lakshmikanth-3/PassBCH.cash/blob/main/xo/FEEDBACK.md
+
 ## Built to last
 
 - **62 automated tests**, a live end-to-end script (13/13) and a live browser audit (27/27).
