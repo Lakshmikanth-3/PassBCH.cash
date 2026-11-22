@@ -126,7 +126,7 @@ PassBCH.cash is a custodial BCH game platform with **verifiable results**: each 
 
 **Main limitation, stated plainly.** PassBCH.cash is **not trustless**. Balances are held by the platform, and the server runs the bot and price feed. A dishonest operator could refuse withdrawals or stop recording; it cannot rewrite a recorded result without the Verify page showing a mismatch. See [Threat Model](#threat-model-and-security-boundaries).
 
-## The three games
+## The five games
 
 | Game | You do | Settled by | Pays |
 |---|---|---|---|
@@ -135,6 +135,11 @@ PassBCH.cash is a custodial BCH game platform with **verifiable results**: each 
 | **Prompt Fight** | Write a strategy prompt (≤ 400 chars); fight the House Agent or a friend | Code-enforced Race to N; Groq `gpt-oss-20b` plays each side | Winner takes the pot |
 
 Stakes: 0.000025 · 0.00005 · 0.0001 · 0.00025 BCH. A fourth card, **Upcoming BCH games**, marks what's next.
+
+| **Coin Flip** | Pick heads or tails | The house commits `sha256(seed)` first, your terminal or browser adds its own seed, result = parity of `sha256(seed:yourSeed:id)` | 1.9× |
+| **Typing Race** | Type a phrase faster than the House Bot (45–80 wpm, fixed by a committed seed), or race a friend live on the same phrase | Server-measured time; paste blocked; superhuman speed loses | 1.9× vs the bot · winner takes the pot vs a friend |
+
+**Friends, terminal to terminal.** Every friend game prints one short line, for example `npx passbch race 6f3c…`. Your friend types it on any computer, in any terminal, and you play head to head. The same link also opens in a browser.
 
 ## System Architecture
 
