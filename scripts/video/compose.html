@@ -1,0 +1,295 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000}</style></head>
+<body><canvas id="c" width="1280" height="720"></canvas>
+<script>
+const W = 1280, H = 720, cv = document.getElementById('c'), g = cv.getContext('2d');
+const FONT = 'Inter, "Segoe UI", system-ui, sans-serif', MONO = '"Cascadia Mono", Consolas, monospace';
+const load = (src) => new Promise((r, j) => { const i = new Image(); i.onload = () => r(i); i.onerror = j; i.src = src; });
+const ease = (t) => t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2 * t);
+const lerp = (a, b, t) => a + (b - a) * t;
+
+// ---------- terminal emulator (same as the player) ----------
+const PAL = (n) => { if (n < 16) return ['#000', '#c00', '#0a0', '#c90', '#37f', '#a0a', '#0aa', '#ccc', '#555', '#f55', '#5f5', '#ff5', '#59f', '#f5f', '#5ff', '#fff'][n]; if (n < 232) { n -= 16; const c = [0, 95, 135, 175, 215, 255]; return `rgb(${c[Math.floor(n / 36)]},${c[Math.floor(n / 6) % 6]},${c[n % 6]})`; } const v = 8 + (n - 232) * 10; return `rgb(${v},${v},${v})`; };
+function Term() {
+  let lines = [[]], row = 0, col = 0, st = { b: 0, d: 0, fg: null, bg: null };
+  const sgr = (p) => { if (!p.length) p = [0]; for (let i = 0; i < p.length; i++) { const n = p[i]; if (n === 0) st = { b: 0, d: 0, fg: null, bg: null }; else if (n === 1) st.b = 1; else if (n === 2) st.d = 1; else if (n === 22) { st.b = 0; st.d = 0; } else if (n === 39) st.fg = null; else if (n === 49) st.bg = null; else if (n >= 30 && n <= 37) st.fg = PAL(n - 30); else if (n >= 90 && n <= 97) st.fg = PAL(n - 82); else if (n === 38 && p[i + 1] === 5) { st.fg = PAL(p[i + 2]); i += 2; } else if (n === 48 && p[i + 1] === 5) { st.bg = PAL(p[i + 2]); i += 2; } } };
+  const put = (ch) => { const L = lines[row] || (lines[row] = []); L[col] = { c: ch, s: { ...st } }; col++; };
+  return {
+    feed(s) { for (let i = 0; i < s.length; i++) { const ch = s[i]; if (ch === '\x1b' && s[i + 1] === '[') { let j = i + 2; while (j < s.length && !/[A-Za-z]/.test(s[j])) j++; const f = s[j], p = s.slice(i + 2, j).replace('?', '').split(';').filter((x) => x !== '').map(Number); i = j;
+      if (f === 'm') sgr(p); else if (f === 'A') row = Math.max(0, row - (p[0] || 1)); else if (f === 'J') { if (!p.length || p[0] === 0) { lines[row] = (lines[row] || []).slice(0, col); lines.length = row + 1; } else { lines = [[]]; row = 0; col = 0; } } else if (f === 'H') { row = 0; col = 0; } else if (f === 'K') lines[row] = (lines[row] || []).slice(0, col); }
+      else if (ch === '\r') col = 0; else if (ch === '\n') { row++; col = 0; if (!lines[row]) lines[row] = []; } else if (ch >= ' ') put(ch); } },
+    draw(x0, y0, rows, fs, cw, ch) {
+      const start = Math.max(0, lines.length - rows);
+      for (let r = start; r < lines.length; r++) { const L = lines[r] || []; const y = y0 + (r - start) * ch;
+        for (let c = 0; c < L.length; c++) { const x = L[c]; if (x && x.s.bg) { g.fillStyle = x.s.bg; g.fillRect(x0 + c * cw, y - ch + 4, cw + 0.6, ch); } }
+        for (let c = 0; c < L.length; c++) { const x = L[c]; if (!x || x.c === ' ') continue; g.font = `${x.s.b ? '700 ' : ''}${fs}px ${MONO}`; g.globalAlpha = x.s.d ? 0.62 : 1; g.fillStyle = x.s.fg || '#e6edf3'; g.fillText(x.c, x0 + c * cw, y); } }
+      g.globalAlpha = 1;
+    },
+  };
+}
+
+// ---------- drawing helpers ----------
+function rr(x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, r); }
+function chip(text, sub) { // lower-third caption
+  g.font = `800 34px ${FONT}`; const w1 = g.measureText(text).width; g.font = `500 20px ${FONT}`; const w2 = sub ? g.measureText(sub).width : 0;
+  const w = Math.max(w1, w2) + 48, h = sub ? 96 : 62, x = 40, y = H - h - 34;
+  g.fillStyle = 'rgba(13,17,23,0.86)'; rr(x, y, w, h, 16); g.fill(); g.fillStyle = '#0ac18e'; rr(x, y, 8, h, 4); g.fill();
+  g.fillStyle = '#fff'; g.font = `800 34px ${FONT}`; g.fillText(text, x + 26, y + 44);
+  if (sub) { g.fillStyle = '#b8c4bc'; g.font = `500 20px ${FONT}`; g.fillText(sub, x + 26, y + 78); }
+}
+function coin3d(cx, cy, r, angle, logo) { // flat logo turned into a spinning coin (fake 3D)
+  const sx = Math.cos(angle); const edge = Math.max(6, r * 0.12);
+  g.save(); g.translate(cx, cy);
+  g.fillStyle = '#047a4f'; g.beginPath(); g.ellipse(edge * Math.sign(sx || 1) * 0.5 * (1 - Math.abs(sx)) , 0, Math.max(2, Math.abs(sx) * r) + edge * (1 - Math.abs(sx)), r, 0, 0, 7); g.fill();
+  g.scale(Math.max(0.02, Math.abs(sx)), 1); g.drawImage(logo, -r, -r, 2 * r, 2 * r);
+  g.restore();
+}
+function fadeIn(t, d = 0.45) { if (t < d) { g.fillStyle = `rgba(0,0,0,${1 - t / d})`; g.fillRect(0, 0, W, H); } }
+function fadeOut(t, dur, d = 0.35) { if (t > dur - d) { g.fillStyle = `rgba(0,0,0,${(t - (dur - d)) / d})`; g.fillRect(0, 0, W, H); } }
+
+// Realistic VS Code window with Claude Code thinking (problem half of the opening).
+function drawVS(t, k) {
+  const C = { title: '#323233', act: '#333333', side: '#252526', tabs: '#2d2d2d', ed: '#1e1e1e', panel: '#1e1e1e', border: '#3c3c3c', status: '#007acc', fg: '#cccccc', dim: '#858585' };
+  g.fillStyle = C.ed; g.fillRect(0, 0, W, H);
+  // title bar + menu
+  g.fillStyle = C.title; g.fillRect(0, 0, W, 30);
+  g.fillStyle = '#3c8dde'; g.font = `700 13px ${FONT}`; g.fillText('⧉', 12, 20);
+  g.fillStyle = C.fg; g.font = `400 13px ${FONT}`; { let mx = 36; for (const m of ['File', 'Edit', 'Selection', 'View', 'Go', 'Run', 'Terminal', 'Help']) { g.fillText(m, mx, 20); mx += g.measureText(m).width + 18; } }
+  g.fillStyle = '#3c3c3c'; rr(470, 5, 340, 20, 5); g.fill(); g.fillStyle = C.dim; g.font = `400 12px ${FONT}`; g.fillText('🔍 my-project', 590, 19);
+  g.fillStyle = C.fg; ['—', '▢', '✕'].forEach((s, i) => g.fillText(s, 1180 + i * 34, 20));
+  // activity bar
+  g.fillStyle = C.act; g.fillRect(0, 30, 48, H - 52);
+  ['📄', '🔍', '⑂', '▷', '⊞', '✻'].forEach((s, i) => { g.globalAlpha = i === 0 || i === 5 ? 1 : 0.55; g.fillStyle = i === 5 ? '#d97757' : C.fg; g.font = `400 20px ${FONT}`; g.fillText(s, 14, 66 + i * 48); });
+  g.globalAlpha = 1; g.fillStyle = '#fff'; g.fillRect(0, 44, 2, 34);
+  // explorer
+  g.fillStyle = C.side; g.fillRect(48, 30, 210, H - 52);
+  g.fillStyle = C.dim; g.font = `600 11px ${FONT}`; g.fillText('EXPLORER', 64, 52); g.fillStyle = C.fg; g.fillText('⌄ MY-PROJECT', 60, 78);
+  const files = [['⌄ src', 0, '#cccccc'], ['TS app.ts', 1, '#4fc1ff'], ['TS server.ts', 1, '#4fc1ff'], ['TS checkout.ts', 1, '#4fc1ff'], ['⌄ tests', 0, '#cccccc'], ['TS checkout.test.ts', 1, '#4fc1ff'], ['{} package.json', 0, '#e5c07b'], ['ⓘ README.md', 0, '#519aba'], ['.env', 0, '#858585']];
+  files.forEach(([f, lv, c], i) => { const y = 102 + i * 24; if (i === 1) { g.fillStyle = '#37373d'; g.fillRect(48, y - 16, 210, 22); } g.fillStyle = c; g.font = `400 13px ${FONT}`; g.fillText(f, 72 + lv * 16, y); });
+  // Claude Code panel (right)
+  const px = 880; g.fillStyle = '#181818'; g.fillRect(px, 30, W - px, H - 52); g.fillStyle = C.border; g.fillRect(px, 30, 1, H - 52);
+  g.fillStyle = C.fg; g.font = `600 13px ${FONT}`; g.fillText('CLAUDE CODE', px + 16, 52);
+  g.fillStyle = '#2b2b2b'; rr(px + 16, 70, W - px - 32, 52, 8); g.fill(); g.fillStyle = '#e6e6e6'; g.font = `400 14px ${FONT}`; g.fillText('Build the checkout API, add tests,', px + 28, 92); g.fillText('and fix the failing build.', px + 28, 112);
+  const steps = [['●', '#4ec9b0', 'Read src/app.ts'], ['●', '#4ec9b0', 'Read src/checkout.ts'], ['●', '#4ec9b0', 'Edit src/server.ts  (+42 −7)'], ['●', '#4ec9b0', 'Bash npm test'], ['●', '#d7ba7d', '3 tests failing… fixing']];
+  const shown = Math.min(steps.length, 1 + Math.floor(t / 1.3));
+  steps.slice(0, shown).forEach(([d, c, s], i) => { const y = 154 + i * 30; g.fillStyle = c; g.font = `700 13px ${MONO}`; g.fillText(d, px + 18, y); g.fillStyle = '#cfcfcf'; g.font = `400 13px ${MONO}`; g.fillText(s, px + 36, y); });
+  const words = ['Cogitating…', 'Vibing…', 'Schlepping…', 'Pondering…', 'Noodling…', 'Percolating…'];
+  const w = words[Math.floor(t / 1.6) % words.length]; const secs = 95 + Math.floor(t * 9);
+  const sy = 154 + shown * 30 + 20;
+  g.save(); g.translate(px + 26, sy - 5); g.rotate(t * 2.6); g.fillStyle = '#d97757'; for (let i = 0; i < 6; i++) { g.rotate(Math.PI / 3); g.fillRect(-2, -10, 4, 7); } g.restore();
+  g.fillStyle = '#d97757'; g.font = `700 15px ${MONO}`; g.fillText(w, px + 44, sy);
+  g.fillStyle = C.dim; g.font = `400 13px ${MONO}`; g.fillText(`(${Math.floor(secs / 60)}m ${String(secs % 60).padStart(2, '0')}s · ↓ ${(2.1 + t * 0.4).toFixed(1)}k tokens · esc to interrupt)`, px + 44, sy + 22);
+  g.fillStyle = '#2b2b2b'; rr(px + 16, H - 96, W - px - 32, 50, 8); g.fill(); g.fillStyle = C.dim; g.font = `400 13px ${FONT}`; g.fillText('Queue another message…', px + 30, H - 66);
+  // tabs + editor
+  const ex = 258; g.fillStyle = C.tabs; g.fillRect(ex, 30, px - ex, 34);
+  g.fillStyle = C.ed; g.fillRect(ex, 30, 130, 34); g.fillStyle = '#4fc1ff'; g.font = `700 11px ${FONT}`; g.fillText('TS', ex + 12, 51); g.fillStyle = '#fff'; g.font = `400 13px ${FONT}`; g.fillText('app.ts', ex + 34, 51); g.fillStyle = C.dim; g.fillText('✕', ex + 108, 51);
+  g.fillStyle = '#4fc1ff'; g.font = `700 11px ${FONT}`; g.fillText('TS', ex + 144, 51); g.fillStyle = C.dim; g.font = `400 13px ${FONT}`; g.fillText('server.ts', ex + 166, 51);
+  const code = [
+    [['kw', 'import'], ['tx', ' { '], ['fn', 'createServer'], ['tx', ' } '], ['kw', 'from'], ['st', " './server'"]],
+    [['kw', 'import'], ['tx', ' { '], ['fn', 'checkout'], ['tx', ' } '], ['kw', 'from'], ['st', " './checkout'"]],
+    [],
+    [['kw', 'export async function'], ['fn', ' main'], ['tx', '() {']],
+    [['cm', '  // Claude is still working on this…']],
+    [['kw', '  const'], ['tx', ' app = '], ['fn', 'createServer'], ['tx', '()']],
+    [['tx', '  app.'], ['fn', 'post'], ['tx', '('], ['st', "'/checkout'"], ['tx', ', '], ['fn', 'checkout'], ['tx', ')']],
+    [['kw', '  await'], ['tx', ' app.'], ['fn', 'listen'], ['tx', '('], ['nu', '3000'], ['tx', ')']],
+    [['tx', '}']],
+  ];
+  const col = { kw: '#569cd6', fn: '#dcdcaa', st: '#ce9178', cm: '#6a9955', nu: '#b5cea8', tx: '#d4d4d4' };
+  code.forEach((line, i) => { const y = 92 + i * 22; g.fillStyle = '#6e7681'; g.font = `400 14px ${MONO}`; g.textAlign = 'right'; g.fillText(String(i + 1), ex + 34, y); g.textAlign = 'left'; let x = ex + 52; for (const [c, s] of line) { g.fillStyle = col[c]; g.fillText(s, x, y); x += g.measureText(s).width; } });
+  // terminal panel
+  const ty = 330; g.fillStyle = C.border; g.fillRect(ex, ty, px - ex, 1); g.fillStyle = C.panel; g.fillRect(ex, ty + 1, px - ex, H - 22 - ty - 1);
+  g.font = `400 11px ${FONT}`; ['PROBLEMS', 'OUTPUT', 'DEBUG CONSOLE', 'TERMINAL', 'PORTS'].forEach((s, i) => { g.fillStyle = i === 3 ? '#e7e7e7' : C.dim; g.fillText(s, ex + 16 + i * 96, ty + 24); if (i === 3) { g.fillStyle = '#e7e7e7'; g.fillRect(ex + 16 + i * 96, ty + 30, 62, 1.5); } });
+  g.fillStyle = '#cccccc'; g.font = `400 14px ${MONO}`; g.fillText('PS C:\\my-project> ' + (Math.floor(t * 2) % 2 ? '▌' : ''), ex + 16, ty + 62);
+  for (let i = 0; i < 3; i++) { const p = (t * 0.55 + i / 3) % 1; g.globalAlpha = (1 - p) * 0.8; g.fillStyle = '#8b949e'; g.font = `800 ${18 + i * 7}px ${FONT}`; g.fillText('z', ex + 250 + p * 40 + i * 16, ty + 70 - p * 22); } g.globalAlpha = 1;
+  g.fillStyle = C.dim; g.font = `italic 400 13px ${FONT}`; g.fillText('(idle… nothing to do but watch the spinner)', ex + 16, ty + 96);
+  // status bar
+  g.fillStyle = C.status; g.fillRect(0, H - 22, W, 22); g.fillStyle = '#fff'; g.font = `400 12px ${FONT}`;
+  g.fillText('⑂ main*   ⟳   ⓧ 0  ⚠ 0', 12, H - 7); g.fillText('Ln 5, Col 38   Spaces: 2   UTF-8   TypeScript   ✻ Claude Code', W - 420, H - 7);
+  // caption band
+  const a = ease(t / 0.8); g.globalAlpha = a;
+  g.fillStyle = 'rgba(10,12,16,0.88)'; rr(268, 470, 600, 196, 14); g.fill(); g.strokeStyle = '#d6453d'; g.lineWidth = 2; rr(268, 470, 600, 196, 14); g.stroke();
+  g.fillStyle = '#fff'; g.font = `800 38px ${FONT}`; g.fillText('Waiting for Claude… again.', 292, 520);
+  g.fillStyle = '#b8bfc7'; g.font = `500 18px ${FONT}`; g.fillText('5, 10, even 20 minutes per task, just watching the words.', 292, 556);
+  g.fillStyle = '#ff8a80'; g.font = `600 15px ${FONT}`; g.fillText('idle time today', 292, 600);
+  g.fillStyle = '#30363d'; rr(292, 612, 552, 12, 6); g.fill(); g.fillStyle = '#d6453d'; rr(292, 612, 552 * k, 12, 6); g.fill();
+  g.fillStyle = '#ff8a80'; g.font = `700 15px ${FONT}`; g.fillText(`${Math.floor(12 + k * 95)} min`, 292, 650);
+  g.globalAlpha = 1;
+}
+
+// ---------- scenes ----------
+let A = {};
+function sceneProblem(t, dur) {
+  const split = dur * 0.56; // the voice turns from problem to solution here
+  if (t < split) {
+    drawVS(t, t / split);
+  } else {
+    const u = t - split, d2 = dur - split;
+    const grd = g.createRadialGradient(640, 330, 40, 640, 360, 760); grd.addColorStop(0, '#0e3b2c'); grd.addColorStop(1, '#06130e'); g.fillStyle = grd; g.fillRect(0, 0, W, H);
+    // coins raining
+    for (let i = 0; i < 26; i++) { const x = (i * 137) % W, sp = 120 + (i * 53) % 140, y = ((u * sp + i * 90) % (H + 120)) - 60; coin3d(x, y, 16 + (i % 3) * 6, u * 3 + i, A.logo); }
+    g.fillStyle = 'rgba(6,19,14,0.55)'; g.fillRect(0, 0, W, H);
+    // hero coin flip-in
+    const a = ease(u / 1.2); coin3d(640, 230, lerp(10, 110, a), u * 4.2, A.logo);
+    g.globalAlpha = ease((u - 0.6) / 0.8); g.fillStyle = '#fff'; g.font = `800 64px ${FONT}`; let s = 'PassBCH.cash'; g.fillText(s, 640 - g.measureText(s).width / 2, 410);
+    g.fillStyle = '#d4ff5c'; g.font = `700 30px ${FONT}`; s = 'Turn the wait into play.'; g.fillText(s, 640 - g.measureText(s).width / 2, 456); g.globalAlpha = 1;
+    // terminal typing the command + a friend's terminal connected
+    const cmd = 'npx passbch'; const n = Math.max(0, Math.floor((u - 1.8) * 16));
+    g.globalAlpha = ease((u - 1.4) / 0.6);
+    g.fillStyle = '#0d1117'; rr(170, 500, 520, 130, 12); g.fill(); g.strokeStyle = '#0ac18e'; g.lineWidth = 2; g.stroke();
+    g.fillStyle = '#8b949e'; g.font = `600 15px ${FONT}`; g.fillText('your terminal', 190, 528);
+    g.fillStyle = '#e6edf3'; g.font = `20px ${MONO}`; g.fillText('> ' + cmd.slice(0, n) + (Math.floor(u * 3) % 2 ? '▌' : ''), 190, 570);
+    if (n >= cmd.length) { g.fillStyle = '#5ff'; g.font = `700 18px ${MONO}`; g.fillText('▸ Coin Flip · Typing Race · RPS', 190, 604); }
+    g.fillStyle = '#0d1117'; rr(800, 500, 310, 130, 12); g.fill(); g.strokeStyle = '#ff3df0'; g.stroke();
+    g.fillStyle = '#8b949e'; g.font = `600 15px ${FONT}`; g.fillText("friend's terminal", 820, 528); g.fillStyle = '#e6edf3'; g.font = `18px ${MONO}`; g.fillText('joined your race ✓', 820, 570);
+    g.setLineDash([10, 8]); g.lineDashOffset = -u * 40; g.strokeStyle = '#d4ff5c'; g.beginPath(); g.moveTo(690, 565); g.lineTo(800, 565); g.stroke(); g.setLineDash([]);
+    g.globalAlpha = 1;
+    const bonusA = ease((u - 3.2) / 0.6); if (bonusA > 0) { g.globalAlpha = bonusA; g.fillStyle = '#0ac18e'; rr(930, 120, 300, 74, 37); g.fill(); g.fillStyle = '#fff'; g.font = `800 24px ${FONT}`; g.fillText('+ welcome bonus', 962, 166); g.globalAlpha = 1; }
+  }
+}
+function sceneIntro(t, dur) {
+  g.fillStyle = '#0d1117'; g.fillRect(0, 0, W, H);
+  const v = A.intro; const s = Math.min(1180 / v.videoWidth, 640 / v.videoHeight) * lerp(1, 1.04, t / dur);
+  const w = v.videoWidth * s, h = v.videoHeight * s; g.save(); g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 30; g.drawImage(v, 640 - w / 2, 350 - h / 2, w, h); g.restore();
+  chip('Right next to Claude', 'the game runs in the same VS Code window');
+}
+function sceneTerm(t, dur) {
+  g.fillStyle = '#0d1117'; g.fillRect(0, 0, W, H);
+  g.fillStyle = '#161b22'; g.fillRect(0, 0, W, 40); ['#ff5f56', '#ffbd2e', '#27c93f'].forEach((c, i) => { g.fillStyle = c; g.beginPath(); g.arc(22 + i * 20, 20, 6, 0, 7); g.fill(); });
+  g.fillStyle = '#e6edf3'; g.font = `600 15px ${FONT}`; g.fillText('PowerShell — irm https://passbch.vercel.app | iex', 90, 26);
+  // feed events up to the scaled time
+  const T = A.termScale * t; while (A.ti < A.events.length && A.events[A.ti][0] <= T) { A.term.feed(A.events[A.ti][1]); A.ti++; }
+  A.term.draw(30, 70, 30, 14, 10.4, 20.6);
+  const cap = t < dur * 0.25 ? ['One command. One key.', 'guest account with a free welcome bonus'] : t < dur * 0.5 ? ['Coin Flip', 'house seed locked first · pays 1.9×'] : t < dur * 0.78 ? ['Typing Race', 'beat the House Bot on your keyboard'] : ['On-chain proof', 'every result is a Bitcoin Cash transaction'];
+  chip(cap[0], cap[1]);
+}
+function sceneImages(imgs, title, sub, blur) {
+  return (t, dur) => {
+    g.fillStyle = '#f3efe4'; g.fillRect(0, 0, W, H);
+    const n = imgs.length, seg = dur / n, i = Math.min(n - 1, Math.floor(t / seg)), lt = t - i * seg;
+    const drawImg = (img, a, z) => { g.globalAlpha = a; const s = lerp(1.0, 1.06, z); const w = W * s, h = H * s; g.drawImage(img, (W - w) / 2, (H - h) / 2 - 10 * z, w, h); g.globalAlpha = 1; };
+    drawImg(A.img[imgs[i]], 1, lt / seg);
+    if (i > 0 && lt < 0.5) drawImg(A.img[imgs[i - 1]], 1 - lt / 0.5, 1);
+    if (blur && blur[imgs[i]]) { const [x, y, w, h] = blur[imgs[i]]; g.save(); g.filter = 'blur(10px)'; g.drawImage(cv, x, y, w, h, x, y, w, h); g.restore(); g.fillStyle = 'rgba(243,239,228,0.55)'; g.fillRect(x, y, w, h); }
+    chip(title, sub);
+  };
+}
+function sceneEnd(t, dur) {
+  const grd = g.createRadialGradient(640, 300, 40, 640, 360, 760); grd.addColorStop(0, '#0e3b2c'); grd.addColorStop(1, '#06130e'); g.fillStyle = grd; g.fillRect(0, 0, W, H);
+  coin3d(640, 200, 100, t * 2.2, A.logo);
+  g.fillStyle = '#fff'; g.font = `800 66px ${FONT}`; let s = 'PassBCH.cash'; g.fillText(s, 640 - g.measureText(s).width / 2, 380);
+  g.fillStyle = '#d4ff5c'; g.font = `700 30px ${FONT}`; s = 'Play while your AI thinks.'; g.fillText(s, 640 - g.measureText(s).width / 2, 428);
+  g.fillStyle = '#e6edf3'; g.font = `22px ${MONO}`; s = 'irm https://passbch.vercel.app | iex'; g.fillText(s, 640 - g.measureText(s).width / 2, 500); s = 'curl -sL passbch.vercel.app | sh'; g.fillText(s, 640 - g.measureText(s).width / 2, 536);
+  g.fillStyle = '#9fb3a8'; g.font = `600 20px ${FONT}`; s = 'passbch.vercel.app  ·  every result verified on Bitcoin Cash  ·  vote with EMBER2026'; g.fillText(s, 640 - g.measureText(s).width / 2, 600);
+}
+
+// ---------- main (terminal-first cut, no music) ----------
+function chrome(x, y, w, h, title, accent) {
+  g.fillStyle = '#0d1117'; rr(x, y, w, h, 12); g.fill(); g.strokeStyle = accent; g.lineWidth = 2; rr(x, y, w, h, 12); g.stroke();
+  g.fillStyle = '#161b22'; rr(x + 1, y + 1, w - 2, 34, 11); g.fill();
+  ['#ff5f56', '#ffbd2e', '#27c93f'].forEach((c, i) => { g.fillStyle = c; g.beginPath(); g.arc(x + 20 + i * 18, y + 18, 5.5, 0, 7); g.fill(); });
+  g.fillStyle = '#c9d1d9'; g.font = `600 14px ${FONT}`; g.fillText(title, x + 80, y + 23);
+}
+function feedTo(P, T) { while (P.i < P.ev.length && P.ev[P.i][0] <= T) { P.term.feed(P.ev[P.i][1]); P.i++; } }
+function recTime(seg, lt, dur) { const len = seg[1] - seg[0]; const sp = Math.max(1, len / Math.max(1, dur - 0.8)); return seg[0] + Math.min(len, lt * sp); }
+function termScene(seg, title, sub) {
+  return (t, dur) => {
+    g.fillStyle = '#05070b'; g.fillRect(0, 0, W, H);
+    feedTo(A.PA, recTime(seg, t, dur));
+    chrome(220, 14, 840, 568, 'your terminal (next to Claude Code)', '#0ac18e');
+    g.save(); g.beginPath(); g.rect(222, 50, 836, 530); g.clip(); A.PA.term.draw(236, 74, 25, 14, 10.2, 20.6); g.restore();
+    chip(title, sub);
+  };
+}
+function friendScene(seg) {
+  return (t, dur) => {
+    g.fillStyle = '#05070b'; g.fillRect(0, 0, W, H);
+    const T = recTime(seg, t, dur); feedTo(A.PA, T); feedTo(A.PB, T);
+    chrome(14, 14, 620, 568, 'you — your laptop', '#0ac18e'); chrome(646, 14, 620, 568, 'your friend — another computer', '#ff3df0');
+    g.save(); g.beginPath(); g.rect(16, 50, 616, 530); g.clip(); A.PA.term.draw(26, 70, 30, 11, 7.85, 16.8); g.restore();
+    g.save(); g.beginPath(); g.rect(648, 50, 616, 530); g.clip();
+    if (A.PB.i === 0) { g.fillStyle = '#8b949e'; g.font = `500 18px ${FONT}`; g.fillText('waiting for your friend to paste the command…', 680, 300); }
+    A.PB.term.draw(658, 70, 30, 11, 7.85, 16.8); g.restore();
+    chip('Play a friend, terminal to terminal', 'they type: npx passbch race <code> · first to finish wins');
+  };
+}
+
+function sceneEarn(t, dur) {
+  const grd = g.createLinearGradient(0, 0, 0, H); grd.addColorStop(0, '#06130e'); grd.addColorStop(1, '#0b2a1f'); g.fillStyle = grd; g.fillRect(0, 0, W, H);
+  g.fillStyle = '#fff'; g.font = `800 44px ${FONT}`; let s = 'How Bitcoin Cash earns'; g.fillText(s, 640 - g.measureText(s).width / 2, 80);
+  // the chain: blocks sliding left, each game drops a transaction into the newest block
+  const bw = 150, gap = 40, y = 170, off = (t * 60) % (bw + gap);
+  for (let i = -1; i < 8; i++) { const x = 1180 - i * (bw + gap) - off; g.fillStyle = '#0ac18e'; rr(x, y, bw, 110, 14); g.fill(); g.fillStyle = '#063'; g.font = `700 16px ${MONO}`; g.fillText(`block ${874320 + 8 - i}`, x + 18, y + 30);
+    for (let k = 0; k < 6; k++) { g.fillStyle = 'rgba(255,255,255,.85)'; rr(x + 16 + (k % 3) * 42, y + 46 + Math.floor(k / 3) * 28, 34, 20, 5); g.fill(); }
+    if (i < 7) { g.strokeStyle = '#0ac18e'; g.lineWidth = 4; g.beginPath(); g.moveTo(x, y + 55); g.lineTo(x - gap, y + 55); g.stroke(); } }
+  const games = ['RPS', 'Up/Down', 'Prompt Fight', 'Coin Flip', 'Typing Race'];
+  for (let i = 0; i < 5; i++) { const p = ((t * 0.7 + i / 5) % 1); const x = 140 + i * 220, yy = 330 - p * 130; g.globalAlpha = 1 - p; g.fillStyle = '#d4ff5c'; rr(x, yy, 150, 34, 17); g.fill(); g.fillStyle = '#0b2a1f'; g.font = `700 16px ${FONT}`; g.fillText(games[i] + ' tx', x + 18, yy + 23); g.globalAlpha = 1; }
+  const cards = [['1 game = 1 BCH transaction', 'every result is written on chain'], ['Miners earn network fees', 'real everyday use of Bitcoin Cash'], ['Platform earns 5% on withdrawals', 'plus a small edge: Up or Down pays 1.9×']];
+  cards.forEach(([a, b], i) => { const k = ease((t - 0.6 - i * 0.9) / 0.6); if (k <= 0) return; g.globalAlpha = k; const x = 70 + i * 390, yy = 420 + (1 - k) * 30; g.fillStyle = 'rgba(255,255,255,.08)'; rr(x, yy, 360, 150, 18); g.fill(); g.strokeStyle = '#0ac18e'; g.lineWidth = 2; rr(x, yy, 360, 150, 18); g.stroke();
+    g.fillStyle = '#fff'; g.font = `800 21px ${FONT}`; g.fillText(a, x + 20, yy + 60, 320); g.fillStyle = '#9fd8c0'; g.font = `500 17px ${FONT}`; g.fillText(b, x + 20, yy + 98, 320); g.globalAlpha = 1; });
+}
+function sceneEnd2(t, dur) {
+  const grd = g.createRadialGradient(640, 300, 40, 640, 360, 760); grd.addColorStop(0, '#0e3b2c'); grd.addColorStop(1, '#06130e'); g.fillStyle = grd; g.fillRect(0, 0, W, H);
+  coin3d(640, 190, 100, t * 2.2, A.logo);
+  g.fillStyle = '#fff'; g.font = `800 66px ${FONT}`; let s = 'PassBCH.cash'; g.fillText(s, 640 - g.measureText(s).width / 2, 370);
+  g.fillStyle = '#d4ff5c'; g.font = `700 30px ${FONT}`; s = 'Play while your AI thinks.'; g.fillText(s, 640 - g.measureText(s).width / 2, 418);
+  g.fillStyle = '#0d1117'; rr(400, 456, 480, 70, 14); g.fill(); g.strokeStyle = '#0ac18e'; g.lineWidth = 2; g.stroke();
+  g.fillStyle = '#e6edf3'; g.font = `700 34px ${MONO}`; s = 'npx passbch'; g.fillText(s, 640 - g.measureText(s).width / 2, 503);
+  g.fillStyle = '#9fb3a8'; g.font = `600 19px ${FONT}`; s = 'invite a friend: npx passbch race <code>  ·  web: passbch.vercel.app  ·  vote with EMBER2026'; g.fillText(s, 640 - g.measureText(s).width / 2, 590);
+}
+async function main() {
+  const ac = new AudioContext(); const dest = ac.createMediaStreamDestination();
+  const wav = async (n) => ac.decodeAudioData(await (await fetch(n + '.wav')).arrayBuffer());
+  const names = ['v_earn', 'v_problem', 'v_intro', 'v_start', 'v_rps', 'v_updown', 'v_pf', 'v_coin', 'v_type', 'v_friend', 'v_proof', 'v_withdraw', 'v_web', 'v_end'];
+  const voice = {}; for (const n of names) voice[n] = await wav(n);
+  A.logo = await load('logo-192.png');
+  A.img = {}; for (const n of ['d_home', 'h_coin2', 'i_winners']) A.img[n] = await load(n + '.png');
+  A.intro = document.createElement('video'); A.intro.src = 'intro.mp4'; A.intro.muted = true; A.intro.playsInline = true; await new Promise((r) => { A.intro.oncanplaythrough = r; A.intro.load(); });
+  const R = await (await fetch('rec.json')).json();
+  // blank the typed login code (typed one character at a time after the "Login code:" prompt)
+  const li = R.A.findIndex((e) => e[1].includes('Login code:'));
+  if (li >= 0) for (let i = li + 1; i < R.A.length && R.A[i][1] !== '\r\n'; i++) if (R.A[i][1].length === 1) R.A[i][1] = '*';
+  A.PA = { ev: R.A, i: 0, term: Term() }; A.PB = { ev: R.B, i: 0, term: Term() };
+  const M = Object.fromEntries(R.marks); const seg = (a, b) => [M[a], M[b]];
+  const V = (n) => voice[n].duration;
+  const scenes = [
+    { v: 'v_problem', dur: V('v_problem') + 0.8, draw: sceneProblem },
+    { v: 'v_earn', dur: V('v_earn') + 0.8, draw: sceneEarn },
+    { v: 'v_intro', dur: V('v_intro') + 0.6, draw: sceneIntro, start() { A.intro.currentTime = 0; A.intro.playbackRate = 0.6; A.intro.play(); } },
+    { v: 'v_start', dur: V('v_start') + 0.8, draw: termScene(seg('start', 'rps'), 'One short command: npx passbch', 'any OS with Node.js · nothing long to remember') },
+    { v: 'v_rps', dur: V('v_rps') + 1.2, draw: termScene(seg('rps', 'updown'), 'Rock · Paper · Scissors', 'vs the House Bot · your move is locked by a hash') },
+    { v: 'v_updown', dur: V('v_updown') + 1.2, draw: termScene(seg('updown', 'pf'), 'Up or Down', 'live chart · real BCH price · settles in exactly 1 minute') },
+    { v: 'v_pf', dur: V('v_pf') + 1.2, draw: termScene(seg('pf', 'coin'), 'Prompt Fight', 'your prompt trains an AI agent · it fights live') },
+    { v: 'v_coin', dur: V('v_coin') + 1.0, draw: termScene(seg('coin', 'type'), 'Coin Flip', 'house seed locked first · pays 1.9×') },
+    { v: 'v_type', dur: V('v_type') + 1.6, draw: termScene(seg('type', 'friend'), 'Typing Race', 'beat the House Bot · the server keeps the time') },
+    { v: 'v_friend', dur: Math.max(V('v_friend') + 1, 17), draw: friendScene(seg('friend', 'proof')) },
+    { v: 'v_proof', dur: V('v_proof') + 1.2, draw: termScene(seg('proof', 'withdraw'), 'Leaderboard and Verify', 'every result is a Bitcoin Cash transaction') },
+    { v: 'v_withdraw', dur: V('v_withdraw') + 1.4, draw: termScene(seg('withdraw', 'end'), 'Withdraw your winnings', 'BCH sent on chain to your own wallet') },
+    { v: 'v_web', dur: V('v_web') + 0.8, draw: sceneImages(['d_home', 'h_coin2', 'i_winners'], 'Not a terminal user? Play on the web', 'passbch.vercel.app · same games, same account, same proof') },
+    { v: 'v_end', dur: V('v_end') + 2.4, draw: sceneEnd2 },
+  ];
+  let t0 = 0; for (const s of scenes) { s.t0 = t0; t0 += s.dur; } const TOTAL = t0;
+  const types = ['video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm'];
+  const mime = types.find((x) => MediaRecorder.isTypeSupported(x));
+  const stream = new MediaStream([...cv.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
+  const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 3_000_000, audioBitsPerSecond: 160_000 }); const chunks = [];
+  rec.ondataavailable = (e) => e.data.size && chunks.push(e.data); const done = new Promise((r) => { rec.onstop = r; });
+  await ac.resume(); rec.start(1000);
+  const start = ac.currentTime + 0.3;
+  for (const s of scenes) { const src = ac.createBufferSource(); src.buffer = voice[s.v]; src.connect(dest); src.start(start + s.t0 + 0.35); }
+  let cur = -1;
+  await new Promise((resolve) => {
+    const frame = () => {
+      const t = ac.currentTime - start; if (t >= TOTAL) return resolve();
+      let i = scenes.findIndex((s) => t >= s.t0 && t < s.t0 + s.dur); if (i < 0) i = 0;
+      const s = scenes[i]; if (i !== cur) { cur = i; s.start?.(); }
+      const lt = Math.max(0, t - s.t0); s.draw(lt, s.dur); fadeIn(lt); fadeOut(lt, s.dur);
+      requestAnimationFrame(frame);
+    };
+    frame();
+  });
+  rec.stop(); await done;
+  window.__blob = new Blob(chunks, { type: mime }); window.__result = { mime, size: window.__blob.size, total: TOTAL };
+}
+window.__run = () => main().catch((e) => { window.__error = String(e && e.stack || e); });
+
+</script></body></html>
