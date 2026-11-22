@@ -24,3 +24,11 @@ runs/
 xo/node_modules/
 xo/.secrets.json
 xo/data/
+
+# local scratch, editor and large media (final demo video and deck are committed explicitly)
+.vscode/
+.tmp-*
+docs/demo/deck_unpacked/
+docs/demo/BLAZE 2026 Project Template.pptx
+docs/demo/intro.mp4
+docs/demo/passbch-demo.mp4
