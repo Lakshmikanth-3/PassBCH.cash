@@ -9,14 +9,14 @@
 | | |
 |---|---|
 | Live app | https://passbch.vercel.app (same app: https://passbch-cash.vercel.app) |
-| Play from any terminal | `npx passbch` (any OS with Node.js) · or Windows: `irm https://passbch.vercel.app \| iex` · Mac/Linux: `curl -sL passbch.vercel.app \| sh` |
+| Play from any terminal | **`npx passbch`** (any OS with Node.js; friends join with `npx passbch race <code>`) · or Windows: `irm https://passbch.vercel.app \| iex` · Mac/Linux: `curl -sL passbch.vercel.app \| sh` |
 | Verify any result | https://passbch.vercel.app/verify (paste a transaction id) |
 | Worldwide winners | https://passbch.vercel.app/winners |
 | Network | **BCH chipnet (testnet) only.** Mainnet is switched on only after the project is finished and tested end to end ([docs/MAINNET.md](docs/MAINNET.md)) |
 | House wallet (writes every result) | [`bchtest:qql3cd7mlgqepacnudgh9qg6xc9na6a40qgmzdahgk`](https://chipnet.imaginary.cash/address/bchtest:qql3cd7mlgqepacnudgh9qg6xc9na6a40qgmzdahgk) |
 | Track | BCH BLAZE 2026, Mainnet Track (on chipnet until submission) |
 | Who it is for | Developers waiting on AI agents, BCH newcomers (free starting credit, one-minute rounds), streamers and friends who want quick provable games |
-| Tests | 62 automated (25 game rules · 8 Prompt Fight · 6 WizardConnect deposit · 5 on-chain record decoding · 6 Claude Code panel · 3 banner) · live chipnet end-to-end script (13 checks) · live browser audit of every page: all passing |
+| Tests | 62 automated (25 game rules · 11 Prompt Fight · 6 Coin Flip / Typing Race · 6 WizardConnect deposit · 5 on-chain record decoding · 6 Claude Code panel · 3 banner) · live chipnet end-to-end script (13 checks) · live browser audit of every page: all passing |
 
 **What you can do:** get free starting credit with just a name · play RPS against the House Bot or send a friend a link · call BCH up or down for exactly one minute · write a strategy prompt and watch your AI agent fight · accept open challenges · add BCH with **WizardConnect** or a QR code (live quotes for other crypto and for INR/JPY/USD cards and UPI) · withdraw BCH · see every winner worldwide · open any player's history · **verify any result in your browser** · do all of it from a terminal with one short command · see the live round in Claude Code's status bar while Claude is thinking.
 
