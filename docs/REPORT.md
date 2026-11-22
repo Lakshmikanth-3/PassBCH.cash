@@ -98,6 +98,8 @@ Heads or tails. The house commits sha256 of a secret seed first; your browser ad
 ### 3.5 Typing Race (about 15 seconds, web and terminal)
 Type a phrase (drawn from the game id) faster than the House Bot, whose speed (45 to 80 wpm) is fixed by a committed seed. The **server** times you from the moment the phrase appears; the text must match exactly; paste is blocked in the page and speeds above human typing (about 260 wpm) count as a loss. Pays 1.9x. Limit: someone could still script the terminal client with a bot typing just under the speed ceiling; the stake limits cap the damage. Record: `SQG1`.
 
+**Friend race.** Press "Challenge a friend": a link (`/race/<id>`, also `irm … | iex` / `curl … | sh` for terminals) opens a live race. When the friend joins, a 4-second shared countdown starts, both type the same phrase, and the first valid finish wins the pot (no house edge). The phrase is hidden until the start time; each side's progress is shown live in the 3D studio; unjoined races refund after 10 minutes and unfinished races are a draw after 3 minutes. Record: `SQG1` kind 3 (a and b are the two times, 0 = did not finish; commitment = sha256 of the phrase).
+
 ### 3.6 Fourth card: "Upcoming BCH games"
 Placeholder for tournaments, lucky draws and team battles (coming soon).
 

@@ -22,6 +22,8 @@ export function RaceView({ id, me, explorer, network, onClose, onChange, refCode
     return () => { stop = true; clearInterval(i); clearInterval(t); };
   }, [id, me?.id]);
 
+  const correct = s?.phrase ? [...text.toLowerCase()].filter((c, i) => c === s.phrase[i]).length : 0;
+  const prog = s?.phrase ? correct / s.phrase.length : 0;
   const now = Date.now() + skew;
   const mine = s?.role;
   const oppP = s ? (mine === 'a' ? s.bP : s.aP) : 0;
@@ -41,11 +43,10 @@ export function RaceView({ id, me, explorer, network, onClose, onChange, refCode
     if (now < s.startMs) show({ kind: 'typingcount', text: `Get ready… ${Math.ceil((s.startMs - now) / 1000)}` });
     else if (!started.current) { started.current = true; show({ kind: 'typingstart' }); }
     if (started.current) show({ kind: 'typingopp', p: oppP, name: oppName });
+    if (started.current) show({ kind: 'typingprogress', p: prog });
   }, [tick]);
 
   // progress to the server (about twice a second, only when it changed)
-  const correct = s?.phrase ? [...text.toLowerCase()].filter((c, i) => c === s.phrase[i]).length : 0;
-  const prog = s?.phrase ? correct / s.phrase.length : 0;
   useEffect(() => {
     if (!live || done.current) return;
     if (prog > sent.current.p && Date.now() - sent.current.at > 450) { sent.current = { p: prog, at: Date.now() }; api('prprogress', { body: { id, p: prog } }).catch(() => {}); }
