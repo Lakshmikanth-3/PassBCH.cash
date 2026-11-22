@@ -4,7 +4,11 @@
 
 **Play a one-minute Bitcoin Cash game in your terminal while Claude Code is thinking. Every result is proven on-chain and anyone can verify it.** Every result is written to the BCH chain where anyone can recompute it. Five games: **Rock · Paper · Scissors** at a 3D TV-show table, **Up or Down** on the next minute of the BCH price, **Prompt Fight**, where your prompt trains an AI agent that fights another one live, **Coin Flip** (house seed committed first, plus your own seed) and **Typing Race** (type a phrase faster than the House Bot, or challenge a friend to a live race from the browser or a terminal; also in the terminal). The game server is trusted to hold balances (custodial, see the limits), but it cannot quietly change a result: the moves, prices and hashes are on chain and your browser re-checks them.
 
-![PassBCH.cash live on Bitcoin Cash mainnet: home page with the BLAZE banner (deck, GitHub, EMBER2026)](docs/images/home-mainnet.png)
+![PassBCH.cash: a Bitcoin Cash game show for the minute while your AI thinks. Live on mainnet](docs/images/banner.png)
+
+![PassBCH running on Bitcoin Cash mainnet in the VS Code terminal, right next to Claude Code](docs/images/vscode-mainnet.png)
+
+![Live website on mainnet: home page with the BLAZE banner (deck, GitHub, EMBER2026)](docs/images/home-mainnet.png)
 
 | | |
 |---|---|
@@ -99,12 +103,10 @@ PassBCH.cash runs on **Bitcoin Cash mainnet** at https://passbch.vercel.app. Rea
 
 Each game is a small TV studio built in three.js. Nothing plays on its own: the stage only performs **your real result**, and a director cuts between named camera shots (`● LIVE | CAM YOU`) like a live broadcast.
 
-| | |
+| ![Rock Paper Scissors: you, the opponent and the host at the 3D table](docs/images/live-rps.png) | ![Up or Down: market host and live BCH candles](docs/images/live-updown.png) |
 |---|---|
-| ![Rock Paper Scissors table: you, the opponent and the host](docs/images/rps-table.png) | ![Close-up of the hands during "rock, paper, scissors"](docs/images/rps-hands.png) |
-| **Rock · Paper · Scissors.** You, your opponent and a game-show host at a table; TV cameras on tripods aim at it. | **The shake.** Jointed hands (3 joints per finger) shake "Rock… Paper… Scissors…", reveal the real moves, and the winner gets a spotlight and confetti. |
-| ![Up or Down studio with a market host and live candles](docs/images/updown-studio.png) | ![Prompt Fight: two AI agents in a boxing ring with a live counter](docs/images/prompt-fight.png) |
-| **Up or Down.** The last 12 real one-minute BCH candles, a glowing arrow and a market host who cheers when your call wins. | **Prompt Fight.** Two robot agents in a ring; every move is a punch and the counter climbs to N. The landing page replays the latest real fight. |
+| ![Prompt Fight: two AI agents in the ring](docs/images/live-promptfight.png) | ![Coin Flip: replay of the latest real mainnet game](docs/images/live-coinflip.png) |
+| ![Typing Race: you vs the House Bot on the track](docs/images/live-typing.png) | ![Mainnet Verify page: recomputed in the browser](docs/images/verify-mainnet.png) |
 
 ## The problem
 
