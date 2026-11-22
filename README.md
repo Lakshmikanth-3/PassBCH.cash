@@ -33,6 +33,15 @@ No Node.js? Windows: `irm https://passbch.vercel.app | iex` · Mac/Linux: `curl 
 
 The npm package ([packages/cli](packages/cli)) is a 30-line launcher: it always downloads the latest client from the live site, so it never goes stale.
 
+## Judges: verify it in under 2 minutes
+
+1. In any terminal: `npx passbch` (or open https://passbch.vercel.app).
+2. Press `g`: a guest account with free starting credit, no form.
+3. Press `4` and play one Coin Flip (or any game). The result ends with **Verified on Bitcoin Cash ✓** and a transaction id.
+4. Press `v` and paste that id: the client decodes the on-chain record and recomputes the result itself. The website does the same at `/verify/<txid>`.
+
+To see the friend flow, choose Typing Race → challenge a friend, and run the printed `npx passbch race <code>` in a second terminal.
+
 ## Bounty and prize tracks
 
 | Track | Status |
