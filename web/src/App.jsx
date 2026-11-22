@@ -106,7 +106,7 @@ function Landing({ go, me, cfg, refresh }) {
         ))}
       </section>
       <section id="how" className="wrap how3">
-        {[['1', 'Pick a name', 'Free starting credit lands instantly (0.00025 BCH). Invite a friend and you both get more.'], ['2', 'Pick a game', 'Every round takes about a minute — perfect while your AI is thinking.'], ['3', 'Win & withdraw', 'Add funds or withdraw in BCH (WizardConnect or QR). Every result is public on chain.']].map(([n, t, d]) => (
+        {[['1', 'Pick a name', `Free starting credit lands instantly (${bonus}). Invite a friend and you both get more.`], ['2', 'Pick a game', 'Every round takes about a minute — perfect while your AI is thinking.'], ['3', 'Win & withdraw', 'Add funds or withdraw in BCH (WizardConnect or QR). Every result is public on chain.']].map(([n, t, d]) => (
           <div key={n} className="card step"><span className="num">{n}</span><b>{t}</b><p className="muted">{d}</p></div>
         ))}
       </section>

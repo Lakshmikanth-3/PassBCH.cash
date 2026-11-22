@@ -174,7 +174,7 @@ export function Rules({ rules }) {
         <li>Open <a href="/verify">Verify</a> and paste any transaction id: your browser decodes the record and recomputes the result.</li>
         <li>Balances are held by the platform (custodial), like a card room. The chain is the public scoreboard.</li></ul></div>
       <div className="card"><h2>Fees, bonus and limits</h2><ul>
-        <li>Free starting credit: {((r.signupBonus ?? 25000) / 1e8).toFixed(5)} BCH; invite a friend and you both get more. Max 3 bonuses per network, 100 in total.</li>
+        <li>Free starting credit: {((r.signupBonus ?? 25000) / 1e8).toFixed(5)} BCH; invite a friend and you both get more. Max 3 bonuses per network, {r.bonusCap ?? 100} in total.</li>
         <li>Bonus is for playing; it must be played 2× before any withdrawal. Won bonus from a friend duel stays bonus.</li>
         <li>Withdrawal fee {r.withdrawFeePct ?? 5}% (min {((r.networkFee ?? 400) / 1e8).toFixed(6)} BCH). Up/Down and Prompt Fight have no extra fee; the House edge in Up/Down is 5% (pays 1.9×, not 2×).</li></ul></div>
       <div className="card"><h2>Responsible play</h2><ul>

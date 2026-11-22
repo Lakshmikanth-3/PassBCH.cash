@@ -8,6 +8,9 @@ import { MoveIcon, Agents, Swords } from '../icons.jsx';
 import { show } from '../three/show.js';
 
 export function Signup({ onDone, refCode }) {
+  const [rules, setRules] = useState(null); // bonus amounts come from the server (they differ on chipnet and mainnet)
+  useEffect(() => { api('config').then((c) => setRules(c.rules)).catch(() => {}); }, []);
+  const freeBch = rules ? ((rules.signupBonus + (refCode ? rules.referralBonus : 0)) / 1e8).toFixed(8).replace(/0+$/, '') : null;
   const [mode, setMode] = useState('new');
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
@@ -40,7 +43,7 @@ export function Signup({ onDone, refCode }) {
   return (
     <form className="card signup" onSubmit={go}>
       <div className="seg"><button type="button" className="on">New player</button><button type="button" onClick={() => setMode('code')}>Log in</button></div>
-      <h2>Get {refCode ? '0.0005' : '0.00025'} BCH free and play</h2>
+      <h2>{freeBch ? `Get ${freeBch} BCH free and play` : 'Get free BCH and play'}</h2>
       <p className="muted">No wallet needed to start. Pick a name; your bonus is ready instantly.</p>
       <input aria-label="Player name" placeholder="Your player name" value={name} onChange={(e) => setName(e.target.value)} maxLength={20} required />
       <input aria-label="Referral code" placeholder="Referral code (optional)" value={ref} onChange={(e) => setRef(e.target.value.toUpperCase())} maxLength={6} />
