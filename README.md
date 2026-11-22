@@ -412,11 +412,13 @@ Re-run for this update on 21 Nov 2026: `npm test` → **62 passed**.
 
 ## Demo video
 
-`docs/demo/passbch-demo.mp4` (about 2:47, voiceover): the problem (developers idle while Claude Code thinks), how Bitcoin Cash earns, then one real terminal session on chipnet: `npx passbch`, all five games, a friend joining a race from another terminal with one line, the leaderboard and Verify, and a real withdrawal. It ends with the web version for non-developers. The video file is uploaded with the submission rather than stored in git.
+`docs/demo/passbch-demo.mp4` (3:12, voiceover, no music):
 
-## Terminal demo recording
-
-`docs/demo/terminal-demo.html` replays a real run of the terminal client (guest start, Coin Flip, Typing Race vs the bot, Winners, Verify) in a terminal-style page: open the file, press Play, and screen-record it for a video. `docs/demo/terminal-demo.cast` is the same recording in asciicast format. `docs/demo/terminal-demo.mp4` is the same session rendered as a 38-second video (1280x760). Re-record with `npm run demo:record`, then `node scripts/render-demo-video.cjs` to make a new video (it uses a throwaway home folder and spends a little chipnet BCH).
+- **0:00** the problem: a VS Code window where Claude Code is "Cogitating… Vibing…" for minutes while the developer idles; then `npx passbch` in the same terminal.
+- **0:24** how Bitcoin Cash earns: one game = one on-chain transaction, network fees to miners, a 5% platform fee on withdrawals.
+- **0:35** one real terminal session on chipnet: all five games, a friend joining from a second terminal with `npx passbch race <code>`, the leaderboard, Verify, and a real withdrawal.
+- **2:35** a real browser session on https://passbch.vercel.app (one Coin Flip, then the Verify page), for players who do not use a terminal.
+- **2:58** how judges can verify it in under 2 minutes.
 
 ## Run locally
 
