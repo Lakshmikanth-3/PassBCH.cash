@@ -375,7 +375,7 @@ Re-run for this update on 21 Nov 2026: `npm test` → **62 passed**.
 
 ## Terminal demo recording
 
-`docs/demo/terminal-demo.html` replays a real run of the terminal client (guest start, Coin Flip, Typing Race vs the bot, Winners, Verify) in a terminal-style page: open the file, press Play, and screen-record it for a video. `docs/demo/terminal-demo.cast` is the same recording in asciicast format. Re-record with `npm run demo:record` (it uses a throwaway home folder and spends a little chipnet BCH).
+`docs/demo/terminal-demo.html` replays a real run of the terminal client (guest start, Coin Flip, Typing Race vs the bot, Winners, Verify) in a terminal-style page: open the file, press Play, and screen-record it for a video. `docs/demo/terminal-demo.cast` is the same recording in asciicast format. `docs/demo/terminal-demo.mp4` is the same session rendered as a 38-second video (1280x760). Re-record with `npm run demo:record`, then `node scripts/render-demo-video.cjs` to make a new video (it uses a throwaway home folder and spends a little chipnet BCH).
 
 ## Run locally
 

@@ -19,5 +19,8 @@ Tips:
 - Show the Up or Down chart for two seconds if there is time (real Coinbase prices, 1m to 5Y ranges).
 
 
+## Shortcut: ready-made terminal video
+`docs/demo/terminal-demo.mp4` is a 38-second video of the real terminal client (logo, one-key guest start, Coin Flip, Typing Race, Winners with solvency, Verify). Use it for shots 3 to 7, or add your own voice-over.
+
 ## Shortcut: replayable terminal demo
 `docs/demo/terminal-demo.html` plays a real recording of the terminal client. Open it in a browser, press Play and screen-record that window for shots 3 to 7. `npm run demo:record` makes a fresh recording.
