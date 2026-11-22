@@ -2,7 +2,7 @@
 
 # PassBCH.cash: play while your AI thinks
 
-**A Bitcoin Cash game show for the minute your AI coding agent is thinking. Live on mainnet. Every result is on chain, and anyone can recompute it. Coming next: a Claude Code plugin that opens a game the moment your agent starts thinking.**
+**A Bitcoin Cash game show for the minute your AI coding agent is thinking. Live on mainnet. Every result is on chain, and anyone can recompute it.**
 
 | | |
 |---|---|
