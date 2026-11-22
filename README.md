@@ -46,7 +46,7 @@ To see the friend flow, choose Typing Race → challenge a friend, and run the p
 
 | Track | Status |
 |---|---|
-| **Main BLAZE prizes** (1st / 2nd / 3rd, $8,000 in ParyonUSD) | Entered. Live demo, banner (deck, GitHub, EMBER2026), WizardConnect deposits, mainnet switch ready ([docs/MAINNET.md](docs/MAINNET.md)). |
+| **Main BLAZE prizes** (1st / 2nd / 3rd, $8,000 in ParyonUSD) | Entered. Live demo, [Widget Factory deck](https://docs.google.com/presentation/d/1ihRRCqbTXc56jZPF8c5AjsR113gBCRdJ/edit?usp=sharing), banner (deck, GitHub, EMBER2026), WizardConnect deposits, mainnet switch ready ([docs/MAINNET.md](docs/MAINNET.md)). |
 | **Build with XO / Migrate to XO** (General Protocols) | **Built.** [`xo/`](xo): the PassBCH Rock · Paper · Scissors game migrated into a trustless XO template (both stakes in an on-chain pot, commit-reveal checked and the winner paid by the script, timeout to the challenger). Executed on chipnet with invitations ([open](https://chipnet.imaginary.cash/tx/231206c80404e290355b94156f62f0787eaa4fafa3c731b79412a06b0b882465), [reveal follow-up](https://chipnet.imaginary.cash/tx/395fc025204be573e8efe4694134bee85a8a632680806515f914eb3535f7c3e1)); inspected as SUCCESS in the XO debug tool. Personal feedback: [xo/FEEDBACK.md](xo/FEEDBACK.md). |
 | Stablecoin Bridge, Decentralized Identity, SolidCash, FoldingCash claims | Not entered (different products). |
 
@@ -480,7 +480,7 @@ React 18.3 · three.js 0.170 · Vite 5.4 · CashScript 0.11.5 (transaction build
 - Live at https://passbch.vercel.app on **chipnet**. All three games, the vault, WizardConnect and QR deposits, withdrawals, winners, profiles, Verify, Rules and the terminal client work on the hosted copy.
 - 62 automated tests and the live end-to-end check pass.
 - **Not built yet:** mainnet, swaps with other crypto and fiat on/off-ramps (quotes only), wallet-signature login, published House Bot seeds, new games (coin flip, dice, lucky draw, tournaments), notifications.
-- **Pending with the team:** WizardConnect test on a phone (Paytaca), the Widget Factory deck link for the banner.
+- **Pending with the team:** WizardConnect test on a phone (Paytaca).
 
 ## AI assistance and licence
 
