@@ -20,6 +20,19 @@
 
 **What you can do:** get free starting credit with just a name · play RPS against the House Bot or send a friend a link · call BCH up or down for exactly one minute · write a strategy prompt and watch your AI agent fight · accept open challenges · add BCH with **WizardConnect** or a QR code (live quotes for other crypto and for INR/JPY/USD cards and UPI) · withdraw BCH · see every winner worldwide · open any player's history · **verify any result in your browser** · do all of it from a terminal with one short command · see the live round in Claude Code's status bar while Claude is thinking.
 
+## Quick start (30 seconds)
+
+```bash
+npx passbch                  # play in any terminal (Node.js 18+), nothing to install or remember
+npx passbch race <code>      # join a friend's Typing Race from the one line they send you
+npx passbch join <code>      # join a friend's Rock · Paper · Scissors duel
+npx passbch fight <code>     # join a friend's Prompt Fight
+```
+
+No Node.js? Windows: `irm https://passbch.vercel.app | iex` · Mac/Linux: `curl -sL passbch.vercel.app | sh` · or play in the browser at https://passbch.vercel.app.
+
+The npm package ([packages/cli](packages/cli)) is a 30-line launcher: it always downloads the latest client from the live site, so it never goes stale.
+
 ## Bounty and prize tracks
 
 | Track | Status |
