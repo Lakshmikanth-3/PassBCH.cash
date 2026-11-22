@@ -7,3 +7,8 @@ keys/
 *.pem
 node_modules/
 web/dist/
+
+xo/
+docs/demo/
+.vscode/
+.tmp-*
