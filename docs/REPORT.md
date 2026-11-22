@@ -17,6 +17,7 @@
 | Verify any result | https://passbch.vercel.app/verify |
 | Winners worldwide | https://passbch.vercel.app/winners |
 | Rules and FAQ | https://passbch.vercel.app/rules |
+| DoraHacks | https://dorahacks.io/build/51625 |
 | Pitch deck | https://docs.google.com/presentation/d/1ihRRCqbTXc56jZPF8c5AjsR113gBCRdJ/edit?usp=sharing |
 | House wallet (mainnet) | `bitcoincash:qqf029whcssjtkpfkyfk5s2z4t9vawvkfcn56u84un` |
 | First mainnet game | `c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970` (confirmed in block 978,468) |
@@ -377,4 +378,4 @@ Regulation: real-money games are regulated in many countries (including India). 
 - [x] XO technical feedback ([xo/FEEDBACK.md](../xo/FEEDBACK.md))
 - [x] Security review fixes deployed
 - [ ] Telegram roll call / post
-- [ ] DoraHacks submission before **22 Nov 2026, 14:00 UTC**
+- [x] DoraHacks submission: https://dorahacks.io/build/51625

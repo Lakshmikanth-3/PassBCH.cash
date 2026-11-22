@@ -19,6 +19,7 @@
 | Network | **Bitcoin Cash mainnet (live since 22 Nov 2026).** Built and tested on chipnet first; switch checklist: [docs/MAINNET.md](docs/MAINNET.md) |
 | House wallet (writes every result) | Mainnet: [`bitcoincash:qqf029whcssjtkpfkyfk5s2z4t9vawvkfcn56u84un`](https://blockchair.com/bitcoin-cash/address/qqf029whcssjtkpfkyfk5s2z4t9vawvkfcn56u84un) · chipnet (testing): `bchtest:qql3cd7mlgqepacnudgh9qg6xc9na6a40qgmzdahgk` |
 | First mainnet game | [`c1e08e25…3e14970`](https://blockchair.com/bitcoin-cash/transaction/c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970) · [verify it](https://passbch.vercel.app/verify/c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970) |
+| **DoraHacks** | https://dorahacks.io/build/51625 |
 | **Demo video** | **[https://youtu.be/Or1W7viUzTI](https://youtu.be/Or1W7viUzTI)** (2:50, every game played on mainnet) |
 | Pitch deck | [Widget Factory deck (Google Slides)](https://docs.google.com/presentation/d/1ihRRCqbTXc56jZPF8c5AjsR113gBCRdJ/edit?usp=sharing) |
 | Track | BCH BLAZE 2026, Mainnet Track |

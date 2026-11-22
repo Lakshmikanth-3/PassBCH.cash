@@ -12,6 +12,7 @@
 | First mainnet game | [`c1e08e25…3e14970`](https://passbch.vercel.app/verify/c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970): open it and see **Verified ✓** |
 | Pitch deck | https://docs.google.com/presentation/d/1ihRRCqbTXc56jZPF8c5AjsR113gBCRdJ/edit?usp=sharing |
 | Demo video | https://youtu.be/Or1W7viUzTI |
+| DoraHacks | https://dorahacks.io/build/51625 |
 
 ---
 
