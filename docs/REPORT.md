@@ -20,7 +20,7 @@
 | Pitch deck | https://docs.google.com/presentation/d/1ihRRCqbTXc56jZPF8c5AjsR113gBCRdJ/edit?usp=sharing |
 | House wallet (mainnet) | `bitcoincash:qqf029whcssjtkpfkyfk5s2z4t9vawvkfcn56u84un` |
 | First mainnet game | `c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970` (confirmed in block 978,468) |
-| Demo video | `docs/demo/passbch-demo-mainnet.mp4` (3:52, includes the live mainnet game and its confirmation) |
+| Demo video | https://youtu.be/Or1W7viUzTI (2:50, every game played on mainnet) |
 | EMBER2026 vote address | `bitcoincash:zrcvv9gjvgeeh6gesa2t3q0z40n3uzxwhua3m6rsyf` |
 | Code started | 17 Nov 2026 (all code written during BLAZE) |
 | Tests | 62 automated (all pass) + live end-to-end script (13 checks) + live browser audit (27 / 27 checks) |

@@ -19,6 +19,7 @@
 | Network | **Bitcoin Cash mainnet (live since 22 Nov 2026).** Built and tested on chipnet first; switch checklist: [docs/MAINNET.md](docs/MAINNET.md) |
 | House wallet (writes every result) | Mainnet: [`bitcoincash:qqf029whcssjtkpfkyfk5s2z4t9vawvkfcn56u84un`](https://blockchair.com/bitcoin-cash/address/qqf029whcssjtkpfkyfk5s2z4t9vawvkfcn56u84un) · chipnet (testing): `bchtest:qql3cd7mlgqepacnudgh9qg6xc9na6a40qgmzdahgk` |
 | First mainnet game | [`c1e08e25…3e14970`](https://blockchair.com/bitcoin-cash/transaction/c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970) · [verify it](https://passbch.vercel.app/verify/c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970) |
+| **Demo video** | **[https://youtu.be/Or1W7viUzTI](https://youtu.be/Or1W7viUzTI)** (2:50, every game played on mainnet) |
 | Pitch deck | [Widget Factory deck (Google Slides)](https://docs.google.com/presentation/d/1ihRRCqbTXc56jZPF8c5AjsR113gBCRdJ/edit?usp=sharing) |
 | Track | BCH BLAZE 2026, Mainnet Track |
 | Who it is for | Developers waiting on AI agents, BCH newcomers (free starting credit, one-minute rounds), streamers and friends who want quick provable games |
@@ -419,13 +420,14 @@ Re-run for this update on 21 Nov 2026: `npm test` → **62 passed**.
 
 ## Demo video
 
-`docs/demo/passbch-demo-mainnet.mp4` (about 4 minutes, voice-over, no music; the link is also on the DoraHacks page):
+**Watch: [https://youtu.be/Or1W7viUzTI](https://youtu.be/Or1W7viUzTI)** (2:50, voice-over; file: [docs/demo/passbch-demo-mainnet.mp4](docs/demo/passbch-demo-mainnet.mp4))
 
-- **0:00** the problem: Claude Code is "Cogitating…" for minutes while the developer idles; then `npx passbch` in the same terminal.
-- **0:24** how Bitcoin Cash earns: one game = one on-chain transaction, network fees to miners, a 5% platform fee on withdrawals.
-- **0:35** a real terminal session (recorded on chipnet): all five games, a friend joining from a second terminal with `npx passbch race <code>`, the leaderboard, Verify and a real withdrawal.
-- **2:18** **live on mainnet:** a new player on https://passbch.vercel.app plays one real Coin Flip; the result is written to Bitcoin Cash mainnet and the Verify page recomputes it (Verified ✓ · mainnet); then the confirmed mainnet transaction.
-- **end** how judges can verify it in under 2 minutes.
+Every game in the video is played on **Bitcoin Cash mainnet**:
+
+- the problem: Claude Code is "thinking" while the developer waits · how Bitcoin Cash earns · PassBCH running next to Claude Code in VS Code
+- `npx passbch` in the terminal, then **Rock · Paper · Scissors** (verified `acf4720b…`), **Up or Down** (a win, verified `48667e3f…`), **Coin Flip** (verified `0e469567…`), **Typing Race**, the leaderboard and Verify
+- the same games in the browser: a new player's Coin Flip, verified, then **confirmed in block 978,468** (`c1e08e25…`)
+- how judges can verify it in under 2 minutes
 
 ## Troubleshooting
 
