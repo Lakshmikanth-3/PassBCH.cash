@@ -8,7 +8,7 @@ import readline from 'node:readline';
 
 const BASE = process.env.DUEL_URL ?? 'https://passbch-cash.vercel.app';
 const CFG = path.join(os.homedir(), '.passbch.json');
-const TTY = !!process.stdout.isTTY && !process.env.NO_COLOR;
+const TTY = (!!process.stdout.isTTY || process.env.PASSBCH_FORCE_TTY === '1') && !process.env.NO_COLOR; // FORCE_TTY lets a recorder capture the colours and animation
 const esc = (n) => (s) => (TTY ? `\x1b[${n}m${s}\x1b[0m` : String(s));
 const bold = esc(1), dim = esc(2), cyan = esc('38;5;51'), mag = esc('38;5;207'), lime = esc('38;5;154'), red = esc('38;5;204'), gold = esc('38;5;220'), white = esc('97');
 const W = () => Math.max(48, Math.min(process.stdout.columns || 80, 92));
@@ -17,7 +17,7 @@ const width = (s) => [...strip(s)].reduce((n, ch) => n + (/[\u{1F300}-\u{1FAFF}\
 const pad = (s, n) => s + ' '.repeat(Math.max(0, n - width(s)));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const sats = (n) => `${(Number(n ?? 0) / 1e8).toFixed(8).replace(/0+$/, '').replace(/\.$/, '')} BCH`;
-export const VERSION = '2026.11.22-5'; // must match CLIENT_VERSION in api/duel.mjs
+export const VERSION = '2026.11.22-6'; // must match CLIENT_VERSION in api/duel.mjs
 let NETWORK = 'chipnet';
 const CUR = { USD: '$', INR: '₹', JPY: '¥', EUR: '€', GBP: '£', AED: 'AED ', SGD: 'S$', IDR: 'Rp ', PHP: '₱', NGN: '₦', BRL: 'R$' };
 let fxCache = null;
@@ -98,18 +98,19 @@ const mirror = (rows) => rows.map((r) => [...r].reverse().join('').replace(/[()]
 async function welcome() {
   console.clear?.(); logo();
   box('Welcome', [
-    `${bold('[1]')} ${lime('New player')}   ${dim('— pick a name, get 25,000 free sats')}`,
+    `${bold('[g]')} ${lime('Play as a guest')}  ${dim('— one key press, free bonus, no name needed')}`,
+    `${bold('[1]')} ${lime('New player')}   ${dim('— pick a name and get the free bonus')}`,
     `${bold('[2]')} ${cyan('Log in')}       ${dim('— paste the login code from the website Wallet page')}`,
     `${bold('[q]')} Quit`,
   ]);
   const c = (await ask('  > ')).trim().toLowerCase();
-  if (c === '1') {
-    const name = (await ask('  Player name: ')).trim();
-    const ref = (process.argv.find((a) => a.startsWith('--ref='))?.slice(6) ?? (await ask(`  Referral code ${dim('(Enter to skip)')}: `)).trim()) || undefined;
+  if (c === '1' || c === 'g') {
+    const name = c === 'g' ? `Guest${Math.floor(1000 + Math.random() * 9000)}` : (await ask('  Player name (Enter for a guest name): ')).trim() || `Guest${Math.floor(1000 + Math.random() * 9000)}`;
+    const ref = (process.argv.find((a) => a.startsWith('--ref='))?.slice(6) ?? (c === 'g' ? '' : (await ask(`  Referral code ${dim('(Enter to skip)')}: `)).trim())) || undefined;
     const r = await api('signup', { body: { name, ref } });
     cfg = { token: r.token, name: r.player.name }; save(cfg);
     box('Account created', [`${lime('✓')} Welcome ${bold(r.player.name)}! Free bonus: ${gold(sats(r.bonusGiven))}${r.referrer ? dim(` (invited by ${r.referrer})`) : ''}`,
-      `${dim('Login code (works on the website too):')} ${white(r.token)}`, dim(`Saved in ${CFG} — keep it private.`)], lime);
+      r.bonusGiven ? '' : gold('No free bonus this time: the limit per network address (3) or in total was reached. Add a little BCH from the vault [w].'), `${dim('Login code (works on the website too):')} ${white(r.token)}`, dim(`Save it: it is the only way back into this account. Stored in ${CFG}.`)].filter(Boolean), lime);
     return true;
   }
   if (c === '2') {
@@ -133,10 +134,11 @@ async function home() {
     `${bold(lime('[3]'))} ${bold('Prompt Fight')}                ${dim('your prompt trains an AI agent · it fights live')}`,
     `${bold(gold('[4]'))} ${bold('Coin Flip')}                   ${dim('heads or tails · house seed locked first · pays 1.9×')}`,
     `${bold(cyan('[5]'))} ${bold('Typing Race')}                ${dim('type a phrase faster than the House Bot · pays 1.9×')}`,
-    `${bold(mag('[6]'))} ${dim('Upcoming BCH games — coming soon')}`,
+    ...(NETWORK === 'mainnet' ? [] : [`${bold(mag('[6]'))} ${dim('Upcoming BCH games — coming soon')}`]),
     '',
     `${bold('[w]')} Vault   ${bold('[l]')} Winners worldwide   ${bold('[p]')} Player profile   ${bold('[v]')} Verify a result`,
     `${bold('[r]')} Rules & fees   ${bold('[o]')} Log out   ${bold('[q]')} Quit`,
+    dim('Claude Code status line (shows the live round while Claude thinks): node panel/panel.mjs install'),
   ]);
   return (await ask('  > ')).trim().toLowerCase();
 }
@@ -201,15 +203,19 @@ irm ${BASE}/duel/${id} | iex
 curl -sL ${BASE}/duel/${id} | sh
 `);
   let spin = 0;
+  // Ctrl+C while waiting cancels the challenge and refunds the stake (it also expires by itself after 10 minutes)
+  const onInt = async () => { try { await api('cancel', { body: { id } }); console.log(`\n  ${lime('challenge cancelled, stake refunded')}`); } catch { /* already started */ } process.exit(0); };
+  if (c === '2') { process.once('SIGINT', onInt); console.log(dim('  Ctrl+C cancels the challenge and refunds your stake. It also expires after 10 minutes.')); }
   for (;;) {
     const d = await api('duel', { q: `&id=${id}` });
     if (d.status === 'awaiting_reveal') {
       const r = await api('reveal', { body: { id, move, salt } }); endFrame();
       await tableShow(cfg.name ?? 'You', d.bName, move, d.bMove, r.result);
-      for (let k = 0; k < 15; k++) { const f = await api('duel', { q: `&id=${id}` }); if (f.recordTxid) { console.log(dim(`   on-chain record: ${f.recordTxid}`)); break; } await sleep(2000); }
+      process.removeListener('SIGINT', onInt);
+      await proofWait(async () => (await api('duel', { q: `&id=${id}` })).recordTxid);
       return;
     }
-    if (d.status === 'settled' || d.status === 'expired') { endFrame(); console.log(`  duel ${d.status}: ${d.settleReason}`); return; }
+    if (d.status === 'settled' || d.status === 'expired') { process.removeListener('SIGINT', onInt); endFrame(); console.log(`  duel ${d.status}: ${d.settleReason}`); return; }
     frame([`  ${dim('waiting for an opponent')} ${'⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'[spin++ % 10]}`]); await sleep(1500);
   }
 }
@@ -222,13 +228,25 @@ async function join(id) {
   let spin = 0;
   for (;;) {
     const f = await api('duel', { q: `&id=${id}` });
-    if (f.status === 'settled') { endFrame(); await tableShow(cfg.name ?? 'You', d.aName, move, f.aMove ?? 'rock', f.result === 0 ? 0 : f.result === 2 ? 1 : 2); return; }
+    if (f.status === 'settled') { endFrame(); await tableShow(cfg.name ?? 'You', d.aName, move, f.aMove ?? 'rock', f.result === 0 ? 0 : f.result === 2 ? 1 : 2); await proofWait(async () => (await api('duel', { q: `&id=${id}` })).recordTxid); return; }
     frame([`  ${dim(`waiting for ${d.aName} to reveal`)} ${'⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'[spin++ % 10]}`]); await sleep(1500);
   }
 }
 
 const SPARK = '▁▂▃▄▅▆▇█';
 const spark = (xs) => { const lo = Math.min(...xs), hi = Math.max(...xs), s = Math.max(1e-9, hi - lo); return xs.map((x, i) => { const ch = SPARK[Math.round(((x - lo) / s) * 7)]; return i && x < xs[i - 1] ? red(ch) : lime(ch); }).join(''); };
+
+/** Real Coinbase BCH-USD chart in the terminal (same ranges as the website dashboard). */
+async function chartView() {
+  const r = ((await ask(`  Range ${dim('1m 5m 15m 1h 5h 1y 5y')} [1h]: `)).trim().toLowerCase()) || '1h';
+  if (!['1m', '5m', '15m', '1h', '5h', '1y', '5y'].includes(r)) return console.log(dim('  unknown range'));
+  const p = await api('price', { q: `&chart=${r}` });
+  const pts = (p.chart ?? []).map((x) => x[1]); if (pts.length < 2) return console.log(dim('  not enough data yet'));
+  const W = 60, step = Math.max(1, Math.ceil(pts.length / W)), small = pts.filter((_, i) => i % step === 0);
+  const lo = Math.min(...pts), hi = Math.max(...pts), ch = p.price - pts[0], pct = (ch / pts[0]) * 100;
+  const fmtT = (t) => new Date(t * 1000).toLocaleString([], { ...(['1y', '5y'].includes(r) ? { month: 'short', year: '2-digit' } : { hour: '2-digit', minute: '2-digit' }) });
+  box(`BCH / USD · last ${r}`, [`${bold(white('$' + p.price.toFixed(2)))}  ${ch >= 0 ? lime(`▲ +${ch.toFixed(2)} (+${pct.toFixed(2)}%)`) : red(`▼ ${ch.toFixed(2)} (${pct.toFixed(2)}%)`)}`, spark(small), `${dim(`low $${lo.toFixed(2)} · high $${hi.toFixed(2)} · ${fmtT(p.chart[0][0])} → ${fmtT(p.chart.at(-1)[0])}`)}`, dim('Real Coinbase data. Past minutes do not decide the next one.')], cyan);
+}
 
 async function updown(rules) {
   const p = await api('price', { q: '&history=1' });
@@ -239,8 +257,13 @@ async function updown(rules) {
     `tap UP or DOWN · result in exactly ${bold(gold('1 minute'))} · a right call pays ${lime('1.9×')} · same price = refund`,
     dim('Entry = price when you confirm. Exit = public Coinbase trade price 60 s later.'),
   ], cyan);
-  const side = (await ask(`  ${lime(bold('[u] ▲ UP'))}    ${red(bold('[d] ▼ DOWN'))}   ${dim('[Enter] back')}: `)).trim().toLowerCase()[0];
-  if (side !== 'u' && side !== 'd') return;
+  let side;
+  for (;;) {
+    const a = (await ask(`  ${lime(bold('[u] ▲ UP'))}    ${red(bold('[d] ▼ DOWN'))}   ${bold('[c]')} chart (1m 5m 15m 1h 5h 1y 5y)   ${dim('[Enter] back')}: `)).trim().toLowerCase();
+    if (a === 'u' || a === 'd') { side = a; break; }
+    if (a === 'c') { await chartView(); continue; }
+    return;
+  }
   const stake = await pickStake(rules);
   const ok = (await ask(`  Confirm ${side === 'u' ? lime('▲ UP') : red('▼ DOWN')} for ${gold(sats(stake))}? ${dim('[y/N]')} `)).trim().toLowerCase();
   if (ok !== 'y') return console.log(dim('  cancelled'));
@@ -253,6 +276,7 @@ async function updown(rules) {
       box(m.outcome === 'win' ? 'YOU WIN' : m.outcome === 'lose' ? 'YOU LOSE' : 'SAME PRICE — REFUND', [
         `entry $${Number(m.open_price).toFixed(2)} → exit $${Number(m.close_price).toFixed(2)}  ${m.result === 'up' ? lime('▲ UP') : m.result === 'down' ? red('▼ DOWN') : 'flat'}`,
         m.outcome === 'win' ? lime(`+${sats(m.payout)}`) : m.outcome === 'lose' ? red(`-${sats(stake)}`) : 'stake refunded'], m.outcome === 'win' ? lime : m.outcome === 'lose' ? red : gold);
+      await proofWait(async () => (await api('bets')).mine.find((x) => x.id === b.id)?.record_txid);
       return;
     }
     const q = await api('price').catch(() => null); if (q) pts.push(q.price); if (pts.length > 40) pts.shift();
@@ -273,8 +297,8 @@ const BOT = { idle: [' [o_o] ', ' /|_|\\ ', '  / \\  '], punch: [' [o_o] ', ' /|
 const flipBot = (rows) => rows.map((r) => [...r].reverse().join('').replace(/[\\/[\]()]/g, (c) => ({ '\\': '/', '/': '\\', '[': ']', ']': '[' }[c] ?? c)));
 
 const EXAMPLES = [
-  'Always leave the total so that (target - total) is a multiple of (max step + 1). If you cannot, add 1.',
-  'Count backwards from the target in steps of (max step + 1) and always land on one of those numbers.',
+  'Plan the last moves first: work out which totals are safe to leave for the opponent, and steer toward them. Reply with a legal number.',
+  'Stay calm and defensive: never leave a total from which the opponent can reach the target in one move. Otherwise add a small number.',
 ];
 
 /** Replay a finished fight as a live ring-side show: a counter, punches, then the winner. */
@@ -315,16 +339,18 @@ async function pfJoin(id) {
   const done = await api('pf', { q: `&id=${id}` });
   await fightShow(done);
   console.log(done.winner === 'b' ? lime(bold(`  You win ${sats(2 * done.stake)}!`)) : red(`  You lose ${sats(done.stake)}`));
+  await proofWait(async () => (await api('pf', { q: `&id=${id}` })).recordTxid);
 }
 
-async function proofLine(id) {
+async function proofWait(getTx) {
   for (let k = 0; k < 15; k++) {
-    const g = await api('qgame', { q: `&id=${id}` });
-    if (g.recordTxid) { console.log(`  ${lime('Verified on Bitcoin Cash ✓')} ${dim(g.recordTxid)}\n  ${dim(`check it: ${BASE}/verify/${g.recordTxid}`)}`); return; }
+    const tx = await getTx().catch(() => null);
+    if (tx) { console.log(`  ${lime('Verified on Bitcoin Cash ✓')} ${dim(tx)}\n  ${dim(`check it: ${BASE}/verify/${tx}`)}\n  ${dim('next: play from here while Claude Code thinks · Claude Code status line: node panel/panel.mjs install')}`); return; }
     if (k === 0) console.log(dim('  writing the proof to Bitcoin Cash…'));
     await sleep(2000);
   }
 }
+async function proofLine(id) { await proofWait(async () => (await api('qgame', { q: `&id=${id}` })).recordTxid); }
 
 async function coinFlip(rules) {
   const { player } = await api('me');
@@ -359,12 +385,14 @@ async function raceFlow(rules, joinId) {
     await api('prjoin', { body: { id } });
   }
   let spin = 0, st;
+  const onInt = async () => { try { await api('prcancel', { body: { id } }); console.log(`\n  ${lime('race cancelled, stake refunded')}`); } catch { /* already started */ } process.exit(0); };
+  if (!joinId) { process.once('SIGINT', onInt); console.log(dim('  Ctrl+C cancels the race and refunds your stake. It also expires after 10 minutes.')); }
   for (;;) {
     st = await api('prstate', { q: `&id=${id}` });
     if (st.status === 'racing' || st.status === 'done' || st.status === 'cancelled') break;
     frame([`  ${dim('waiting for your friend to join (the challenge expires after 10 minutes)')} ${'⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'[spin++ % 10]}`]); await sleep(1000);
   }
-  endFrame();
+  endFrame(); process.removeListener('SIGINT', onInt);
   if (st.status === 'racing') {
     const wait = () => st.startMs - (Date.now() + (st.now - st.fetchedAt));
     st.fetchedAt = Date.now();
@@ -380,14 +408,20 @@ async function raceFlow(rules, joinId) {
   const ms = st.winner === 'a' ? st.aMs : st.bMs;
   console.log(st.winner === 'draw' ? gold('  Nobody finished: stakes back') : won ? lime(bold(`  You win ${sats(2 * st.stake)}!`)) : red(`  ${st.winner === 'a' ? st.aName : st.bName} wins. You lose ${sats(st.stake)}`));
   if (ms) console.log(dim(`  winner's time ${(ms / 1000).toFixed(2)}s, measured by the server`));
-  for (let k = 0; k < 15; k++) { const g = await api('prstate', { q: `&id=${id}` }); if (g.recordTxid) { console.log(`  ${lime('Verified on Bitcoin Cash ✓')} ${dim(g.recordTxid)}\n  ${dim(`check it: ${BASE}/verify/${g.recordTxid}`)}`); return; } if (k === 0) console.log(dim('  writing the proof to Bitcoin Cash…')); await sleep(2000); }
+  await proofWait(async () => (await api('prstate', { q: `&id=${id}` })).recordTxid);
 }
 
 async function typingRace(rules) {
   const { player } = await api('me');
   const mode = (await ask(`  ${bold('[1]')} vs the House Bot   ${bold('[2]')} challenge a friend   ${bold('[3]')} join a friend's race > `)).trim();
   if (mode === '2') return raceFlow(rules);
-  if (mode === '3') { const id = (await ask('  Race link or id: ')).trim().split(/race[=/]/).pop(); return raceFlow(rules, id); }
+  if (mode === '3') {
+    const openR = await api('propen').catch(() => []);
+    if (openR.length) box('Open races', openR.slice(0, 9).map((o, i) => `${bold(`[${i + 1}]`)} ${o.name} challenges anyone · ${gold(sats(o.stake))}`), cyan);
+    const a = (await ask(`  ${openR.length ? 'Number from the list, or ' : ''}race link or id: `)).trim();
+    const id = /^[1-9]$/.test(a) && openR[Number(a) - 1] ? openR[Number(a) - 1].id : a.split(/race[=/]/).pop();
+    return raceFlow(rules, id);
+  }
   box('Typing Race', ['Type the phrase exactly and press Enter before the House Bot finishes (45 to 80 wpm, locked by a hash).', dim('The server times you from the moment the phrase appears. Pays 1.9×.'), rulesLine()], cyan);
   const stake = await pickStake(rules);
   if (stake > player.bonus + player.cash) return console.log(red('  Not enough balance — add funds in the vault [w].'));
@@ -430,30 +464,31 @@ curl -sL ${BASE}/fight/${id} | sh
   let spin = 0;
   for (;;) {
     const m = await api('pf', { q: `&id=${id}` });
-    if (m.status === 'done') { endFrame(); await fightShow(m); console.log(m.winner === 'a' ? lime(bold(`  You win ${sats(2 * m.stake)}!`)) : red(`  You lose ${sats(m.stake)}`)); if (m.recordTxid) console.log(dim(`  on-chain record: ${m.recordTxid}`)); return; }
+    if (m.status === 'done') { endFrame(); await fightShow(m); console.log(m.winner === 'a' ? lime(bold(`  You win ${sats(2 * m.stake)}!`)) : red(`  You lose ${sats(m.stake)}`)); await proofWait(async () => (await api('pf', { q: `&id=${id}` })).recordTxid); return; }
     frame([`  ${dim(m.status === 'open' ? 'waiting for a challenger' : 'the agents are fighting')} ${'⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'[spin++ % 10]}`]); await sleep(2000);
   }
 }
 
-const GAME = { rps: 'Rock·Paper·Scissors', updown: 'Up or Down', pf: 'Prompt Fight' };
+const GAME = { rps: 'Rock·Paper·Scissors', updown: 'Up or Down', pf: 'Prompt Fight', coin: 'Coin Flip', type: 'Typing Race', race: 'Friend Race' };
 const ago = (t) => { const x = Math.max(1, Math.floor((Date.now() - new Date(t).getTime()) / 1000)); return x < 60 ? `${x}s` : x < 3600 ? `${Math.floor(x / 60)}m` : x < 86400 ? `${Math.floor(x / 3600)}h` : `${Math.floor(x / 86400)}d`; };
 
 async function winners() {
   let game = 'all', period = 'all';
   for (;;) {
     const [w, fx] = await Promise.all([api('winners', { q: `&game=${game}&period=${period}` }), rates().catch(() => null)]);
-    const t = w.totals;
+    const t = w.totals; const sv = await api('solvency').catch(() => null);
+    const sol = sv ? `${bold('House solvency:')} house wallet ${sv.houseSats == null ? 'n/a' : sats(sv.houseSats)} vs player cash ${sats(sv.playerCashSats)} ${sv.covered === true ? lime('covered') : sv.covered === false ? red('not fully covered') : ''}` : '';
     box(`Worldwide winners · ${game === 'all' ? 'all games' : GAME[game]} · ${{ all: 'all time', week: '7 days', today: 'today' }[period]}`, [
       `${gold(sats(t.paid))} paid to ${bold(t.winners)} ${t.winners === 1 ? 'winner' : 'winners'} ${dim(money(t.paid, fx))} · ${t.duels + t.bets + t.fights} games · ${t.players} players`,
       '', bold('Top winners'),
-      ...(w.top.length ? w.top.slice(0, 8).map((x, i) => `${pad(`${i + 1}. ${x.name}`, 26)} ${pad(`${x.wins} ${x.wins === 1 ? 'win' : 'wins'}`, 10)} ${lime(sats(x.won))}`) : [dim('No wins in this period yet — be the first.')]),
+      ...(w.top.length ? [dim(`${pad('', 26)} ${pad('wins', 10)} ${pad('net profit', 16)} gross won`), ...w.top.slice(0, 8).map((x, i) => `${pad(`${i + 1}. ${x.name}`, 26)} ${pad(`${x.wins} ${x.wins === 1 ? 'win' : 'wins'}`, 10)} ${lime(pad(sats(x.net ?? x.won), 16))} ${dim(sats(x.won))}`)] : [dim('No wins in this period yet — be the first.')]),
       '', bold('Latest wins'),
       ...(w.latest.length ? w.latest.slice(0, 6).map((x) => `${pad(x.name, 16)} ${pad(GAME[x.game], 22)} ${lime(pad(sats(x.amount), 16))} ${dim(`${ago(x.at)} ago`)} ${x.tx ? dim(x.tx.slice(0, 10) + '…') : ''}`) : [dim('Nothing yet.')]),
-      '', `${dim('game:')} [a]ll [1] RPS [2] Up/Down [3] Prompt Fight   ${dim('period:')} [t]oday [7] days [e]ver   ${dim('[Enter] back')}`,
+      '', sol, '', `${dim('game:')} [a]ll [1] RPS [2] Up/Down [3] Prompt Fight [4] Coin [5] Typing [6] Friend race`, `${dim('period:')} [t]oday [7] days [e]ver   ${dim('[Enter] back')}`,
     ], gold);
     const k = (await ask('  > ')).trim().toLowerCase();
     if (!k) return;
-    game = { a: 'all', 1: 'rps', 2: 'updown', 3: 'pf' }[k] ?? game; period = { t: 'today', 7: 'week', e: 'all' }[k] ?? period;
+    game = { a: 'all', 1: 'rps', 2: 'updown', 3: 'pf', 4: 'coin', 5: 'type', 6: 'race' }[k] ?? game; period = { t: 'today', 7: 'week', e: 'all' }[k] ?? period;
   }
 }
 
@@ -471,11 +506,12 @@ async function profile(name) {
 
 // Decode the on-chain record and recompute the result locally (same checks as the website's Verify page).
 function decodeRecord(raw) {
-  const m = raw.match(/6a(?:4c[0-9a-f]{2}|[0-9a-f]{2})((?:53444c31|53554431|53504631)[0-9a-f]+)/); if (!m) return null;
+  const m = raw.match(/6a(?:4c[0-9a-f]{2}|[0-9a-f]{2})((?:53444c31|53554431|53504631|53514731)[0-9a-f]+)/); if (!m) return null;
   const b = Buffer.from(m[1], 'hex'); const kind = b.toString('ascii', 0, 4); const id = b.subarray(4, 20).toString('hex'); const MV = ['rock', 'paper', 'scissors'];
   if (kind === 'SDL1') return { kind, id, result: b[20], stake: b.readUInt32LE(21), moveA: MV[b[25]] ?? null, moveB: MV[b[26]], commit: b.subarray(27, 59).toString('hex') };
   if (kind === 'SUD1') return { kind, id, side: ['flat', 'up', 'down'][b[20]], result: ['flat', 'up', 'down'][b[21]], stake: b.readUInt32LE(22), open: b.readUInt32LE(30) / 1e4, close: b.readUInt32LE(34) / 1e4 };
   if (kind === 'SPF1') return { kind, id, winner: b[20] === 1 ? 'a' : 'b', target: b[21], maxStep: b[22], stake: b.readUInt32LE(23), turnsHash: b.subarray(27, 59).toString('hex') };
+  if (kind === 'SQG1') return { kind, id, game: { 1: 'coin', 2: 'type', 3: 'race' }[b[20]], outcome: ['refund', 'win', 'lose'][b[21]], stake: b.readUInt32LE(22), a: b.readUInt32LE(26), b: b.readUInt32LE(30), commit: b.subarray(34, 66).toString('hex') };
   return null;
 }
 async function verify() {
@@ -485,7 +521,7 @@ async function verify() {
   if (!rec) return box('Verify', [red('This transaction has no PassBCH game record.')], red);
   const sha = (x) => createHash('sha256').update(x).digest('hex'); const out = [];
   const chk = (ok, t) => out.push(`${ok === null ? gold('ⓘ') : ok ? lime('✓') : red('✗')} ${t}`);
-  chk(!!m && rec.id === m.id, 'record id matches the game'); chk(!!m && rec.stake === m.stake, `stake ${sats(rec.stake)} matches`);
+  if (m) { chk(rec.id === m.id, 'record id matches the game'); chk(rec.stake === m.stake, `stake ${sats(rec.stake)} matches`); }
   if (m && rec.kind === 'SDL1') {
     chk(rec.commit === m.commit, 'commitment on chain = the one locked before the opponent played');
     if (m.aSalt && rec.moveA) chk(sha(`${rec.moveA}:${m.aSalt}`) === rec.commit, `sha256("${rec.moveA}:salt") = commitment`); else if (rec.moveA) chk(null, 'salt check not available for this older duel');
@@ -498,16 +534,30 @@ async function verify() {
     let total = 0, ok = true; t.forEach((x, i) => { if (x.add < 1 || x.add > rec.maxStep || (i && x.side === t[i - 1].side)) ok = false; total += x.add; });
     chk(ok, `every move 1–${rec.maxStep}, players alternated`); chk(total === rec.target && t.at(-1)?.side === rec.winner, `recomputed: total reaches ${rec.target} on the winner's move`);
   }
-  const allOk = out.every((x) => !strip(x).startsWith('✗'));
-  box(allOk ? 'VERIFIED ✓' : 'MISMATCH', [`${{ SDL1: 'Rock·Paper·Scissors', SUD1: 'Up or Down', SPF1: 'Prompt Fight' }[rec.kind]} · ${r.network} · ${dim(r.explorer + r.txid)}`, '', ...out], allOk ? lime : red);
+  if (m && rec.kind === 'SQG1' && rec.game === 'race') {
+    chk(sha(`race:${m.phrase}`) === rec.commit, 'sha256 of the phrase = commitment on chain (both raced the same text)');
+    const w = rec.outcome === 'win' ? 'a' : rec.outcome === 'lose' ? 'b' : 'draw'; chk(w === m.winner, `winner on chain: ${w === 'a' ? m.aName : w === 'b' ? m.bName : 'nobody (draw)'}`);
+    if (w !== 'draw') chk((w === 'a' ? rec.a : rec.b) > 0, `winner's server-measured time ${((w === 'a' ? rec.a : rec.b) / 1000).toFixed(2)}s`);
+  } else if (m && rec.kind === 'SQG1') {
+    chk(sha(`cf:${m.seed}`) === rec.commit, 'sha256 of the revealed house seed = commitment on chain (locked before you played)');
+    if (rec.game === 'coin') { const flip = parseInt(sha(`cf:${m.seed}:${m.clientSeed}:${rec.id}`).slice(0, 2), 16) % 2; chk(flip === rec.b, `recomputed from both seeds: ${flip === 0 ? 'heads' : 'tails'}`); chk((rec.a === rec.b) === (rec.outcome === 'win'), `you picked ${rec.a === 0 ? 'heads' : 'tails'}, it landed ${rec.b === 0 ? 'heads' : 'tails'}: ${rec.outcome}`); }
+    else { const ph = m.phrase ?? ''; const wpm = 45 + (parseInt(sha(`bot:${m.seed}:${rec.id}`).slice(0, 4), 16) % 36); const bot = Math.round((ph.length / 5 / wpm) * 60000); chk(bot === rec.b, `House Bot time recomputed from the seed: ${(bot / 1000).toFixed(2)}s (${wpm} wpm)`); chk(rec.outcome === 'lose' || rec.a < rec.b === (rec.outcome === 'win'), `you ${(rec.a / 1000).toFixed(2)}s vs bot ${(rec.b / 1000).toFixed(2)}s: ${rec.outcome}`); }
+  }
+  const gone = !m; if (gone) out.push(`${gold('ⓘ')} valid on-chain record; the game row is no longer in the database`);
+  const allOk = gone || out.every((x) => !strip(x).startsWith('✗'));
+  box(gone ? 'VALID RECORD' : allOk ? 'VERIFIED ✓' : 'MISMATCH', [`${rec.kind === 'SQG1' ? { coin: 'Coin Flip', type: 'Typing Race', race: 'Friend Typing Race' }[rec.game] : { SDL1: 'Rock·Paper·Scissors', SUD1: 'Up or Down', SPF1: 'Prompt Fight' }[rec.kind]} · ${r.network} · ${dim(r.explorer + r.txid)}`, '', ...out], allOk ? lime : red);
 }
 
-function rulesScreen(r) {
+async function rulesScreen(r) {
+  const sv = await api('solvency').catch(() => null);
   box('Rules, fairness & fees', [
     bold('Rock · Paper · Scissors'), dim('Your move is sent as sha256(move:salt) and revealed after the opponent plays. No reveal in 2 min = you lose. Winner takes the pot; draw = stakes back.'),
     bold('Up or Down'), dim(`Entry = Coinbase BCH-USD last trade when you confirm; exit = last trade exactly 60 s later. Higher = UP, lower = DOWN, same = stake back. Pays ${(r.updownPayoutPct ?? 190) / 100}×.`),
     bold('Prompt Fight'), dim('Your prompt guides an AI agent in Race to N (N 15–24, steps 1–k). Code enforces every move; each agent sees only its own prompt.'),
-    bold('Proof'), dim('Every result is an OP_RETURN record on Bitcoin Cash (SDL1 / SUD1 / SPF1). Use [v] to recompute any of them.'),
+    bold('Coin Flip'), dim('The house locks sha256(seed) before you pick; your browser/terminal adds its own seed; flip = parity of sha256(seed:yourSeed:id). The seed is revealed after. Pays 1.9×.'),
+    bold('Typing Race'), dim('Type the phrase faster than the House Bot (45–80 wpm, locked by a committed seed) or race a friend on the same phrase: first valid finish wins. The server times you; capitals do not matter; superhuman speed counts as a loss. Pays 1.9× vs the bot.'),
+    bold('Proof'), dim('Every result is an OP_RETURN record on Bitcoin Cash (SDL1 / SUD1 / SPF1 / SQG1). Use [v] to recompute any of them.'),
+    ...(sv ? [bold('House solvency'), dim(`house wallet ${sv.houseSats == null ? 'n/a' : sats(sv.houseSats)} vs player cash ${sats(sv.playerCashSats)} ${sv.covered === true ? '(covered)' : sv.covered === false ? '(NOT fully covered)' : ''} · bonus credit is play-only and not counted`)] : []),
     bold('Fees & bonus'), dim(`Withdrawal fee ${r.withdrawFeePct}% (min ${sats(r.networkFee)}). Free bonus must be played 2× before withdrawing; won bonus in friend duels stays bonus.`),
     bold('Responsible play'), dim('18+. Test BCH on chipnet during the hackathon. Real-money games are regulated in many countries — check your local law.'),
   ], cyan);
@@ -533,7 +583,7 @@ async function vault(rules) {
         '', bold('Money'), ...(h.money.slice(0, 8).map((x) => `${pad(x.kind, 11)} ${x.amount >= 0 ? lime(pad('+' + sats(x.amount), 16)) : red(pad(sats(x.amount), 16))} ${dim(x.note ?? '')}`)), ...(h.games.length + h.money.length ? [] : [dim('Nothing yet.')])], cyan);
     }
     if (a === 'a') {
-      const t = (await ask(`  Add with ${bold('[1]')} BCH  ${bold('[2]')} other crypto  ${bold('[3]')} bank · card · UPI: `)).trim();
+      const t = NETWORK === 'mainnet' ? '1' : (await ask(`  Add with ${bold('[1]')} BCH  ${bold('[2]')} other crypto  ${bold('[3]')} bank · card · UPI: `)).trim();
       if (t === '1') { const d = await api('deposit'); box('Add BCH', [`send BCH to ${bold(d.address)}`, d.added ? lime(`credited ${sats(d.added)}`) : dim('open [a] again after sending to credit it'), dim('or use WizardConnect on the website')], cyan); }
       if (t === '2') {
         const coin = (await ask(`  Coin ${dim('usdt-ethereum usdt-tron usdc-ethereum btc eth sol ltc doge')}: `)).trim() || 'usdt-ethereum';
@@ -546,7 +596,8 @@ async function vault(rules) {
       }
     }
     if (a === 'w') {
-      const t = (await ask(`  Withdraw to ${bold('[1]')} BCH  ${bold('[2]')} other crypto  ${bold('[3]')} bank · UPI: `)).trim();
+      if (player.cash < rules.minWithdraw) { console.log(gold(`  You can't withdraw yet: the minimum is ${sats(rules.minWithdraw)} and you have ${sats(player.cash)} of withdrawable cash. Bonus credit is play-only: add funds or win cash first.`)); continue; }
+      const t = NETWORK === 'mainnet' ? '1' : (await ask(`  Withdraw to ${bold('[1]')} BCH  ${bold('[2]')} other crypto  ${bold('[3]')} bank · UPI: `)).trim();
       if (t === '1') {
         const address = (await ask(`  Your BCH address ${dim(NETWORK === 'mainnet' ? '(bitcoincash:…)' : '(bchtest:…)')}: `)).trim();
         const bch = Number((await ask(`  Amount in BCH (min ${rules.minWithdraw / 1e8}, fee ${rules.withdrawFeePct}%): `)).trim());
@@ -602,7 +653,7 @@ async function main() {
       else if (c === 'l') await winners();
       else if (c === 'p') await profile();
       else if (c === 'v') await verify();
-      else if (c === 'r') rulesScreen(rules);
+      else if (c === 'r') await rulesScreen(rules);
       else if (c === 'o') { cfg = {}; save(cfg); console.log(dim('  logged out')); if (!(await welcome())) return; }
       else if (c === 'q') return;
     } catch (e) { endFrame(); console.log(red(`  ✗ ${e.message}`)); }

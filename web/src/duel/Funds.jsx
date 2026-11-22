@@ -132,7 +132,7 @@ export function Vault({ player, go }) {
   );
 }
 
-const GAME = { rps: 'Rock · Paper · Scissors', updown: 'Up or Down', pf: 'Prompt Fight' };
+const GAME = { rps: 'Rock · Paper · Scissors', updown: 'Up or Down', pf: 'Prompt Fight', coin: 'Coin Flip', type: 'Typing Race', race: 'Friend Typing Race' };
 /** Your deposits, withdrawals, bonuses and games, each with its proof link. */
 export function Activity({ explorer }) {
   const [a, setA] = useState(null); const [tab, setTab] = useState('games');

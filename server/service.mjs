@@ -786,6 +786,15 @@ export async function player(name) {
     select 'pf', m.id, m.settled_at, m.stake, case when m.winner_id = $1 then 'win' else 'lose' end, case when m.winner_id = $1 then m.stake * 2 else 0 end, m.record_txid,
            case when m.a_player = $1 then pb.name else pa.name end
       from pf_matches m join players pa on pa.id=m.a_player left join players pb on pb.id=m.b_player where (m.a_player = $1 or m.b_player = $1) and m.status = 'done'
+    union all
+    select q.kind, q.id, q.settled_at, q.stake, case when q.outcome = 'refund' then 'draw' else q.outcome end, coalesce(q.payout, 0), q.record_txid, null::text
+      from qgames q where q.player_id = $1 and q.settled_at is not null and q.outcome is not null
+    union all
+    select 'race', r.id, r.settled_at, r.stake,
+           case when r.winner = 'draw' then 'draw' when (r.winner = 'a' and r.a_player = $1) or (r.winner = 'b' and r.b_player = $1) then 'win' else 'lose' end,
+           case when r.winner = 'draw' then r.stake when (r.winner = 'a' and r.a_player = $1) or (r.winner = 'b' and r.b_player = $1) then r.stake * 2 else 0 end, r.record_txid,
+           case when r.a_player = $1 then pb.name else pa.name end
+      from races r join players pa on pa.id=r.a_player left join players pb on pb.id=r.b_player where (r.a_player = $1 or r.b_player = $1) and r.status = 'done'
     order by at desc limit 100`, [p.id]);
   const stats = { games: history.length, wins: history.filter((h) => h.outcome === 'win').length, losses: history.filter((h) => h.outcome === 'lose').length,
     staked: history.reduce((s, h) => s + h.stake, 0), paid: history.reduce((s, h) => s + Number(h.paid), 0) };
