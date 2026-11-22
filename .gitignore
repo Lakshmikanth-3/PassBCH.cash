@@ -21,3 +21,6 @@ runs/
 
 # personal Claude Code settings (panel install writes absolute paths)
 .claude/settings.local.json
+xo/node_modules/
+xo/.secrets.json
+xo/data/
