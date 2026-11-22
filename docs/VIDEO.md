@@ -1,3 +1,19 @@
+# Demo video
+
+**Final video:** `docs/demo/passbch-demo.mp4` (2:47, male voiceover, no music). Structure:
+
+| Time | Scene |
+|---|---|
+| 0:00 | VS Code with Claude Code "Cogitating… Vibing…", the developer idle: "Waiting for Claude… again." Then the solution: `npx passbch`, a friend joins, welcome bonus |
+| ~0:24 | How Bitcoin Cash earns: every game is a transaction (miners earn fees); the platform earns 5% on withdrawals and a small Up or Down edge |
+| ~0:35 | The game in a terminal next to Claude in VS Code |
+| ~0:43 | One real terminal session: `npx passbch`, Rock · Paper · Scissors, Up or Down with the live chart, Prompt Fight, Coin Flip, Typing Race |
+| ~1:50 | Split screen: a friend types `npx passbch race <code>` on another computer and you race head to head |
+| ~2:10 | Leaderboard and Verify in the terminal, then a real withdrawal |
+| ~2:30 | The web version on Vercel for non-developers, end card |
+
+---
+
 # 60 to 90 second demo video: shot list
 
 Record the screen with the browser and a terminal side by side (OBS or the Windows Game Bar). Use two terminals for the friend duel. Narration in plain, short sentences. Aim for about 75 seconds.
