@@ -28,6 +28,13 @@ export function RaceView({ id, me, explorer, network, onClose, onChange, refCode
   const oppName = s ? (mine === 'a' ? s.bName : s.aName) : null;
   const racing = s?.status === 'racing', live = racing && s.startMs != null && now >= s.startMs;
 
+  // 3D: name the opponent and set the banner for each stage of the race
+  useEffect(() => {
+    if (!s) return;
+    show({ kind: 'typingopp', p: 0, name: oppName ?? 'Your friend' });
+    if (s.status === 'open') show({ kind: 'typingcount', text: mine === 'a' ? 'Waiting for your friend to join…' : `${s.aName} challenges you` });
+  }, [s?.status, oppName]);
+
   // 3D: countdown banner, start, opponent runner
   useEffect(() => {
     if (!s || !racing || !mine) return;
