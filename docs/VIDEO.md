@@ -17,3 +17,7 @@ Tips:
 - Have a funded guest account ready so the stake never fails.
 - If recording on mainnet, use the smallest stake (500 sats).
 - Show the Up or Down chart for two seconds if there is time (real Coinbase prices, 1m to 5Y ranges).
+
+
+## Shortcut: replayable terminal demo
+`docs/demo/terminal-demo.html` plays a real recording of the terminal client. Open it in a browser, press Play and screen-record that window for shots 3 to 7. `npm run demo:record` makes a fresh recording.

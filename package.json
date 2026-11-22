@@ -10,7 +10,8 @@
     "api": "node server/dev-server.mjs",
     "test": "vitest run --config web/vite.config.js",
     "e2e": "node scripts/e2e.mjs",
-    "ai-runner": "node ai/runner.mjs"
+    "ai-runner": "node ai/runner.mjs",
+    "demo:record": "node scripts/record-demo.mjs"
   },
   "dependencies": {
     "@bitauth/libauth": "3.0.0",
