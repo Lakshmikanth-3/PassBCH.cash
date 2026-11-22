@@ -56,7 +56,7 @@ function TopBar({ me, go, logout, loading }) {
   return (
     <header className="topbar">
       <div className="wrap row between">
-        <button className="brand" onClick={() => go('')} aria-label="PassBCH.cash home"><span className="brand-mark">◆</span> PassBCH<span className="dim">.cash</span></button>
+        <button className="brand" onClick={() => go('')} aria-label="PassBCH.cash home"><img className="brand-logo" src="/logo-192.png" width="30" height="30" alt="" /> PassBCH<span className="dim">.cash</span></button>
         {me ? (
           <nav className="row gap">
             <button className="chipbtn" onClick={() => go('games')}><Grid size={16} /> Games</button>
@@ -87,6 +87,7 @@ function Landing({ go, me, cfg, refresh }) {
   return (
     <main className="landing">
       <section className="wrap hero">
+        <img className="hero-logo" src="/logo-192.png" width="84" height="84" alt="PassBCH.cash logo" />
         <p className="kicker">Bitcoin Cash game show</p>
         <h1>Play while your <span className="hl">AI thinks</span>.</h1>
         <p className="tag">Claude is cogitating? Jump into a one-minute round: rock-paper-scissors at a live TV table, call BCH up or down, or write a prompt and watch your AI agent fight another one. {cfg?.network === 'mainnet' ? 'Real BCH' : <span className="testpill">Test BCH on chipnet during the hackathon</span>}, every result on chain.</p>

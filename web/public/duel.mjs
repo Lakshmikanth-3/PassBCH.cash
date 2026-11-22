@@ -17,7 +17,7 @@ const width = (s) => [...strip(s)].reduce((n, ch) => n + (/[\u{1F300}-\u{1FAFF}\
 const pad = (s, n) => s + ' '.repeat(Math.max(0, n - width(s)));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const sats = (n) => `${(Number(n ?? 0) / 1e8).toFixed(8).replace(/0+$/, '').replace(/\.$/, '')} BCH`;
-export const VERSION = '2026.11.22-6'; // must match CLIENT_VERSION in api/duel.mjs
+export const VERSION = '2026.11.22-7'; // must match CLIENT_VERSION in api/duel.mjs
 let NETWORK = 'chipnet';
 const CUR = { USD: '$', INR: '₹', JPY: '¥', EUR: '€', GBP: '£', AED: 'AED ', SGD: 'S$', IDR: 'Rp ', PHP: '₱', NGN: '₦', BRL: 'R$' };
 let fxCache = null;
@@ -67,6 +67,24 @@ function box(title, rows, color = cyan) {
   const body = rows.flatMap(wrap).map((r) => color('║ ') + pad(r, w) + color(' ║'));
   console.log([top, ...(t ? [t, sep] : []), ...body, bot].join('\n'));
 }
+// The project logo (green Bitcoin Cash style coin with a white B), drawn with half blocks: two pixels per character.
+// Each pair of letters = (top, bottom) pixel: . empty, g green, w white.
+const LOGO_PX = ["...........g.ggggggggggggg.g.g..........", ".......ggggggggggggggggggggggggg.g......", "...gggggggggggggggwwgggwgggggggggggg.g..", "..ggggggggggggwgwwwgwgwgwwgwgggggggggg..", "gggggggggggggggwwwgwgggggwwwgggggggggggg", "ggggggggggggggwwwwwgwgwgwwgwgggggggggggg", "g.gggggggggggwwwgwgwgwgwwwwwggggggggggg.", "..g.ggggggggggwwggwwwgggggggggggggggg...", "......g.ggggggggggggggggggggggggg.......", "..........g.g.g.ggggggggg.g.g..........."];
+const LOGO_CODE = { g: 34, w: 15 };
+function logoRows() {
+  return LOGO_PX.map((row) => {
+    let out = '';
+    for (let i = 0; i < row.length; i += 2) {
+      const t = row[i], u = row[i + 1];
+      if (t === '.' && u === '.') out += ' ';
+      else if (t === u) out += `[38;5;${LOGO_CODE[t]}m█[0m`;
+      else if (u === '.') out += `[38;5;${LOGO_CODE[t]}m▀[0m`;
+      else if (t === '.') out += `[38;5;${LOGO_CODE[u]}m▄[0m`;
+      else out += `[38;5;${LOGO_CODE[t]}m[48;5;${LOGO_CODE[u]}m▀[0m`;
+    }
+    return out;
+  });
+}
 function logo() {
   const art = [
     '██████   █████  ███████ ███████ ██████   ██████ ██   ██',
@@ -76,8 +94,13 @@ function logo() {
     '██      ██   ██ ███████ ███████ ██████   ██████ ██   ██',
   ];
   const cols = [cyan, cyan, mag, mag, gold];
-  if (W() >= 60) art.forEach((l, i) => console.log('  ' + cols[i](l) + (i === 4 ? dim('  .cash') : '')));
-  else console.log('  ' + bold(cyan('◆ PassBCH')) + dim('.cash'));
+  const text = art.map((l, i) => cols[i](l) + (i === 4 ? dim('  .cash') : ''));
+  if (!TTY) { console.log('  PassBCH.cash'); }
+  else if (W() >= 88) { // logo on the left, name on the right
+    const pic = logoRows();
+    pic.forEach((l, i) => { const k = i - 2; console.log('  ' + l + '  ' + (k >= 0 && k < 5 ? text[k] : '')); });
+  } else if (W() >= 60) { logoRows().forEach((l) => console.log('  ' + l)); text.forEach((l) => console.log('  ' + l)); }
+  else console.log('  ' + `[38;5;34m●[0m ` + bold(cyan('PassBCH')) + dim('.cash'));
   console.log(dim('  play while your AI thinks · Bitcoin Cash · every result on chain\n'));
 }
 /** Redraw a block of lines in place (animation). */

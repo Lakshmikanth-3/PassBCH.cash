@@ -1,3 +1,5 @@
+<p align="center"><img src="web/public/logo-192.png" width="110" alt="PassBCH.cash logo"></p>
+
 # PassBCH.cash
 
 **Play a one-minute Bitcoin Cash game in your terminal while Claude Code is thinking. Every result is proven on-chain and anyone can verify it.** Every result is written to the BCH chain where anyone can recompute it. Five games: **Rock · Paper · Scissors** at a 3D TV-show table, **Up or Down** on the next minute of the BCH price, **Prompt Fight**, where your prompt trains an AI agent that fights another one live, **Coin Flip** (house seed committed first, plus your own seed) and **Typing Race** (type a phrase faster than the House Bot, or challenge a friend to a live race from the browser or a terminal; also in the terminal). The game server is trusted to hold balances (custodial, see the limits), but it cannot quietly change a result: the moves, prices and hashes are on chain and your browser re-checks them.

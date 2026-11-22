@@ -454,3 +454,6 @@ main + .foot, .foot { margin-top: auto; } #root > main { width: 100%; }
 .progressbar.opp > div { background: var(--magenta); }
 
 .codebtn code { white-space: normal; word-break: break-all; overflow-x: visible; }
+
+.brand { display: inline-flex; align-items: center; gap: 9px; } .brand-logo { border-radius: 50%; display: block; }
+.hero-logo { display: block; margin: 0 auto 14px; border-radius: 50%; box-shadow: 0 4px 0 var(--border); }
