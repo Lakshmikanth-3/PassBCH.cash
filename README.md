@@ -343,6 +343,16 @@ Free credit: 0.00025 BCH per new player (up to 3 per network, 100 in total).
 | Recording can't deadlock | Atomic row claims with 30 s retry | Replaced an earlier advisory lock that could stay held |
 | Balances are honest | **Trusted operator** | Not enforced by the chain |
 
+## How Bitcoin Cash and the platform earn
+
+| Who | How |
+|---|---|
+| **The Bitcoin Cash network** | Every finished game is its own on-chain transaction (an `OP_RETURN` record of about 300 sats in fees), plus real deposits and withdrawals. That is everyday, small-value BCH use: miners collect the fees. |
+| **The platform** | A 5% fee on every withdrawal, and a small house edge on Up or Down (a right call pays 1.9×). Rock · Paper · Scissors, Prompt Fight and friend races have no house edge. |
+| **Players** | The pot. Friend games are player vs player; the platform only takes its fee when you withdraw. |
+
+Future revenue: sponsored AI-model tournaments and integrations with developer tools (status-line panels for AI coding agents).
+
 ## Money rules and abuse controls
 
 | Rule | Value |
