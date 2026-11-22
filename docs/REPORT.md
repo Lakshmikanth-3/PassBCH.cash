@@ -19,7 +19,8 @@
 | Rules and FAQ | https://passbch.vercel.app/rules |
 | Pitch deck | https://docs.google.com/presentation/d/1ihRRCqbTXc56jZPF8c5AjsR113gBCRdJ/edit?usp=sharing |
 | House wallet (mainnet) | `bitcoincash:qqf029whcssjtkpfkyfk5s2z4t9vawvkfcn56u84un` |
-| First mainnet game | `c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970` |
+| First mainnet game | `c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970` (confirmed in block 978,468) |
+| Demo video | `docs/demo/passbch-demo-mainnet.mp4` (3:52, includes the live mainnet game and its confirmation) |
 | EMBER2026 vote address | `bitcoincash:zrcvv9gjvgeeh6gesa2t3q0z40n3uzxwhua3m6rsyf` |
 | Code started | 17 Nov 2026 (all code written during BLAZE) |
 | Tests | 62 automated (all pass) + live end-to-end script (13 checks) + live browser audit (27 / 27 checks) |
@@ -239,7 +240,9 @@ packages/cli/               npm package `passbch`
 panel/                      Claude Code panel (+ tests)
 xo/                         XO bounty: escrow template, chipnet runner, invitations, feedback
 scripts/e2e.mjs             Live end-to-end script
-docs/                       This report, mainnet checklist, deck text, Telegram post, images, demo video
+docs/                       This report, DoraHacks text, mainnet checklist, deck (text + PowerPoint), Telegram post, images, demo video
+SECURITY.md                 Security policy
+.github/dependabot.yml      Weekly dependency updates
 vercel.json                 Build, headers, user-agent rewrites
 ```
 Secrets (`.ENV`, `keys/`) are git-ignored and Vercel-ignored, and have never been committed.
@@ -277,6 +280,16 @@ Executed on chipnet with two XO accounts and invitations: open [`231206c8…b882
 | Balances honest | **Trusted operator** (custodial) + live solvency line | Not enforced by the chain (the XO template shows the trustless path) |
 | Account access | Login code | Losing the code loses the account |
 
+### 9.1 Security review (22 Nov, before submission)
+| Finding | Fix |
+|---|---|
+| Unused AI-exam betting routes (`ai`, `aibet`, `airunner`) from an earlier harness were still reachable on mainnet | Removed with the `ai/` folder; live API now answers "unknown action" |
+| Route lookup accepted `Object.prototype` keys (e.g. `?a=constructor`) | Only the API's own routes are dispatched |
+| Request bodies had no size limit | Capped at 64 KB (413) |
+| Sign-up showed the chipnet bonus amount on mainnet | Amounts and caps now come from the server config |
+| Secrets | Repository and full git history scanned for keys, WIFs, database URLs and Groq tokens: none. `keys/` and env files are ignored by git and Vercel |
+| Dependencies | `npm audit` (production): 0 vulnerabilities; Dependabot enabled; `SECURITY.md` with private reporting |
+
 Regulation: real-money games are regulated in many countries (including India). 18+.
 
 ---
@@ -301,7 +314,7 @@ Regulation: real-money games are regulated in many countries (including India). 
 | What | Transaction |
 |---|---|
 | House wallet funded, 0.01520254 BCH | [`8215f5fb…f3a3eabb`](https://blockchair.com/bitcoin-cash/transaction/8215f5fb8adeea2a3fcb66ef4912c1ae413339411617b16845772ed2f3a3eabb) |
-| **First real mainnet game**: Judge572, Coin Flip, 500 sats, heads → tails (lose), `SQG1` record | [`c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970`](https://blockchair.com/bitcoin-cash/transaction/c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970) · [Verify ✓](https://passbch.vercel.app/verify/c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970) |
+| **First real mainnet game**: Judge572, Coin Flip, 500 sats, heads → tails (lose), `SQG1` record, confirmed in block 978,468, fee 272 sats | [`c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970`](https://blockchair.com/bitcoin-cash/transaction/c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970) · [Verify ✓](https://passbch.vercel.app/verify/c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970) |
 
 ### 10.2 Chipnet transactions (testing)
 | What | Result | Transaction |
@@ -333,7 +346,7 @@ Regulation: real-money games are regulated in many countries (including India). 
 | 19–20 Nov | Prompt Fight, 3D studios, winners, profiles, Verify page |
 | 20–21 Nov | QA fixes, Coin Flip, Typing Race and friend races, live browser test 27/27 |
 | 21–22 Nov | `npx passbch` on npm, terminal invites, light studio theme, demo video, XO template on chipnet, Widget Factory deck |
-| 22 Nov | **Switched to Bitcoin Cash mainnet**; first real mainnet game recorded and verified; mainnet demo video |
+| 22 Nov | **Switched to Bitcoin Cash mainnet**; first real mainnet game recorded, verified and confirmed (block 978,468); security review and fixes deployed; mainnet demo video; XO feedback |
 
 ---
 
@@ -361,6 +374,7 @@ Regulation: real-money games are regulated in many countries (including India). 
 - [x] EMBER2026 address in the banner
 - [x] Demo video with the mainnet proof
 - [x] XO bounty built ([xo/](../xo))
-- [ ] XO feedback written personally ([xo/FEEDBACK.md](../xo/FEEDBACK.md))
+- [x] XO technical feedback ([xo/FEEDBACK.md](../xo/FEEDBACK.md))
+- [x] Security review fixes deployed
 - [ ] Telegram roll call / post
 - [ ] DoraHacks submission before **22 Nov 2026, 14:00 UTC**
