@@ -401,6 +401,10 @@ Re-run for this update on 21 Nov 2026: `npm test` → **62 passed**.
 - **Race to N is a solved game:** the first mover can have a forced win, so the first move is a commit-reveal coin flip (the seed hash is published before the fight, the seed after).
 - **House solvency** is shown live on /winners and /rules: house wallet balance (from chain) against what players could withdraw.
 
+## Demo video
+
+`docs/demo/passbch-demo.mp4` (about 2:47, voiceover): the problem (developers idle while Claude Code thinks), how Bitcoin Cash earns, then one real terminal session on chipnet: `npx passbch`, all five games, a friend joining a race from another terminal with one line, the leaderboard and Verify, and a real withdrawal. It ends with the web version for non-developers. The video file is uploaded with the submission rather than stored in git.
+
 ## Terminal demo recording
 
 `docs/demo/terminal-demo.html` replays a real run of the terminal client (guest start, Coin Flip, Typing Race vs the bot, Winners, Verify) in a terminal-style page: open the file, press Play, and screen-record it for a video. `docs/demo/terminal-demo.cast` is the same recording in asciicast format. `docs/demo/terminal-demo.mp4` is the same session rendered as a 38-second video (1280x760). Re-record with `npm run demo:record`, then `node scripts/render-demo-video.cjs` to make a new video (it uses a throwaway home folder and spends a little chipnet BCH).
