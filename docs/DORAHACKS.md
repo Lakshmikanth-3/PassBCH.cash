@@ -1,4 +1,4 @@
-![PassBCH.cash live on Bitcoin Cash mainnet](https://raw.githubusercontent.com/Lakshmikanth-3/PassBCH.cash/main/docs/images/home-mainnet.png)
+![PassBCH.cash: play while your AI thinks, live on Bitcoin Cash mainnet](https://raw.githubusercontent.com/Lakshmikanth-3/PassBCH.cash/main/docs/images/banner.png)
 
 # PassBCH.cash: play while your AI thinks
 
@@ -14,6 +14,12 @@
 | Demo video | https://youtu.be/Or1W7viUzTI |
 
 ---
+
+## Demo video (2:50, every game on mainnet)
+
+https://youtu.be/Or1W7viUzTI
+
+![PassBCH in the VS Code terminal on mainnet, next to Claude Code](https://raw.githubusercontent.com/Lakshmikanth-3/PassBCH.cash/main/docs/images/vscode-mainnet.png)
 
 ## Why this matters
 
@@ -37,53 +43,11 @@ Play in the browser or, most importantly, **in the same terminal as Claude Code*
 
 ## How it works
 
-```
- Developer runs Claude Code ──► "Cogitating…"  (30 s – 3 min of waiting)
-            │
-            ▼
-   npx passbch   (or the website)
-            │
-            ▼
-  Guest account in one key (free starting credit)  ──►  pick a game, stake a few cents of BCH
-            │
-            ▼
-  Fairness before the result:
-    · your move is hidden as sha256(move:salt)     · the house seed hash is committed first
-    · prices come from public exchange trades      · AI moves are checked by code
-            │
-            ▼
-  Result settled  ──►  written to Bitcoin Cash as its own transaction (OP_RETURN record)
-            │
-            ▼
-  Verify (browser or terminal): download the raw transaction, decode it, recompute the result  ──►  Verified ✓
-            │
-            ▼
-  Withdraw BCH to your own wallet (WizardConnect / Paytaca or any address)
-```
+![How PassBCH.cash works: from Cogitating to Verified on Bitcoin Cash mainnet](https://raw.githubusercontent.com/Lakshmikanth-3/PassBCH.cash/main/docs/images/workflow.png)
 
 ## Architecture
 
-```
-┌────────────────────┐  ┌──────────────────────┐  ┌──────────────────────┐  ┌────────────────────┐
-│ Browser            │  │ Terminal client      │  │ npx passbch          │  │ Claude Code panel  │
-│ React + three.js   │  │ (duel.mjs)           │  │ (npm launcher)       │  │ status line + hooks│
-└─────────┬──────────┘  └──────────┬───────────┘  └──────────┬───────────┘  └─────────┬──────────┘
-          └──────────────────────┬─┴──────────────────────────┴────────────────────────┘
-                                 ▼
-                   ┌──────────────────────────────┐
-                   │  /api/duel  (Vercel, Node)   │
-                   │  engine · service · price    │
-                   │  promptfight (Groq LLM)      │
-                   └───────┬───────────────┬──────┘
-                           │               │
-              ┌────────────▼───┐    ┌──────▼──────────────────────────────┐
-              │ Neon Postgres  │    │ chain.mjs: house wallet             │
-              │ balances,      │    │ CashScript TransactionBuilder       │
-              │ games, players │    │ + Electrum ──► Bitcoin Cash MAINNET │
-              └────────────────┘    │ OP_RETURN records · withdrawals     │
-                                    └─────────────────────────────────────┘
-   Prices: Coinbase / Kraken public trades     Wallets: WizardConnect (Paytaca)
-```
+![Architecture: four clients, one API, Postgres ledger, results on Bitcoin Cash mainnet](https://raw.githubusercontent.com/Lakshmikanth-3/PassBCH.cash/main/docs/images/architecture.png)
 
 **On-chain records** (one BCH transaction per game): `SDL1` duels · `SUD1` Up/Down · `SPF1` Prompt Fight · `SQG1` Coin Flip and Typing Race, each 38 to 66 bytes.
 
