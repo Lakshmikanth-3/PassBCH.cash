@@ -17,7 +17,7 @@ const width = (s) => [...strip(s)].reduce((n, ch) => n + (/[\u{1F300}-\u{1FAFF}\
 const pad = (s, n) => s + ' '.repeat(Math.max(0, n - width(s)));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const sats = (n) => `${(Number(n ?? 0) / 1e8).toFixed(8).replace(/0+$/, '').replace(/\.$/, '')} BCH`;
-export const VERSION = '2026.11.22-7'; // must match CLIENT_VERSION in api/duel.mjs
+export const VERSION = '2026.11.22-8'; // must match CLIENT_VERSION in api/duel.mjs
 let NETWORK = 'chipnet';
 const CUR = { USD: '$', INR: '₹', JPY: '¥', EUR: '€', GBP: '£', AED: 'AED ', SGD: 'S$', IDR: 'Rp ', PHP: '₱', NGN: '₦', BRL: 'R$' };
 let fxCache = null;
@@ -166,6 +166,17 @@ async function home() {
   return (await ask('  > ')).trim().toLowerCase();
 }
 
+/** One short line for a friend: `npx passbch <cmd> <id>`; the long commands stay as a fallback for machines without Node. */
+function invite(kind, cmd, id) {
+  console.log(`
+  Send your friend this one line:
+
+${bold(lime(`npx passbch ${cmd} ${id}`))}
+
+  ${dim(`no Node.js? Windows: irm ${BASE}/${kind}/${id} | iex  ·  Mac/Linux: curl -sL ${BASE}/${kind}/${id} | sh  ·  browser: ${BASE}/${kind}/${id}`)}
+`);
+}
+
 async function pickStake(rules) {
   const s = (await ask(`  Stake ${dim(rules.stakes.map((x, i) => `[${i + 1}] ${sats(x)}`).join('  '))} ${dim(`or type an amount in BCH (min ${sats(rules.minStake)}, max ${sats(rules.maxStake)})`)}: `)).trim();
   if (/^[1-9]$/.test(s) && rules.stakes[Number(s) - 1]) return rules.stakes[Number(s) - 1];
@@ -215,16 +226,8 @@ async function rps(rules) {
   const move = await pickMove(); const stake = await pickStake(rules);
   const salt = randomBytes(16).toString('hex'); const commit = createHash('sha256').update(`${move}:${salt}`).digest('hex');
   const { id } = await api('create', { body: { stake, commit, vsBot: c === '1' } });
-  if (c === '2') box('Challenge created', [`Send this link: ${bold(cyan(`${BASE}/duel/${id}`))}`, dim('Friend in a terminal? Copy one of the lines below (they sit outside the box).')], cyan);
-  if (c === '2') console.log(`
-  Windows PowerShell:
-
-irm ${BASE}/duel/${id} | iex
-
-  Mac / Linux:
-
-curl -sL ${BASE}/duel/${id} | sh
-`);
+  if (c === '2') box('Challenge created', [`Send this link: ${bold(cyan(`${BASE}/duel/${id}`))}`, dim('Friend in a terminal? Copy the line below (it sits outside the box).')], cyan);
+  if (c === '2') invite('duel', 'join', id);
   let spin = 0;
   // Ctrl+C while waiting cancels the challenge and refunds the stake (it also expires by itself after 10 minutes)
   const onInt = async () => { try { await api('cancel', { body: { id } }); console.log(`\n  ${lime('challenge cancelled, stake refunded')}`); } catch { /* already started */ } process.exit(0); };
@@ -400,7 +403,7 @@ async function raceFlow(rules, joinId) {
     const stake = await pickStake(rules);
     if (stake > player.bonus + player.cash) return console.log(red('  Not enough balance — add funds in the vault [w].'));
     id = (await api('prcreate', { body: { stake } })).id;
-    console.log(`\n  Send this to your friend (terminal commands on their own lines, or the browser link):\n\n  Windows PowerShell:\n\nirm ${BASE}/race/${id} | iex\n\n  Mac / Linux:\n\ncurl -sL ${BASE}/race/${id} | sh\n\n  Browser: ${BASE}/race/${id}\n`);
+    invite('race', 'race', id);
   } else {
     const o = await api('prstate', { q: `&id=${id}` });
     if (o.status !== 'open') return console.log(red(`  That race is ${o.status}.`));
@@ -474,16 +477,8 @@ async function promptFight(rules) {
   const prompt = await writePrompt(); const stake = await pickStake(rules);
   if (c === '1') console.log(dim('  the agents are fighting…'));
   const { id } = await api('pfcreate', { body: { stake, prompt, vsBot: c === '1' } });
-  if (c === '2') box('Fight created', [`Send this link: ${bold(cyan(`${BASE}/fight/${id}`))}`, dim('Friend in a terminal? Copy one of the lines below (they sit outside the box).')], cyan);
-  if (c === '2') console.log(`
-  Windows PowerShell:
-
-irm ${BASE}/fight/${id} | iex
-
-  Mac / Linux:
-
-curl -sL ${BASE}/fight/${id} | sh
-`);
+  if (c === '2') box('Fight created', [`Send this link: ${bold(cyan(`${BASE}/fight/${id}`))}`, dim('Friend in a terminal? Copy the line below (it sits outside the box).')], cyan);
+  if (c === '2') invite('fight', 'fight', id);
   let spin = 0;
   for (;;) {
     const m = await api('pf', { q: `&id=${id}` });

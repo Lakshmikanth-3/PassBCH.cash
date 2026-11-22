@@ -9,7 +9,7 @@
 | | |
 |---|---|
 | Live app | https://passbch.vercel.app (same app: https://passbch-cash.vercel.app) |
-| Play from any terminal | Windows: `irm https://passbch.vercel.app \| iex` · Mac/Linux: `curl -sL passbch.vercel.app \| sh` |
+| Play from any terminal | `npx passbch` (any OS with Node.js) · or Windows: `irm https://passbch.vercel.app \| iex` · Mac/Linux: `curl -sL passbch.vercel.app \| sh` |
 | Verify any result | https://passbch.vercel.app/verify (paste a transaction id) |
 | Worldwide winners | https://passbch.vercel.app/winners |
 | Network | **BCH chipnet (testnet) only.** Mainnet is switched on only after the project is finished and tested end to end ([docs/MAINNET.md](docs/MAINNET.md)) |

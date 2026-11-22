@@ -1,0 +1,13 @@
+{
+  "name": "passbch",
+  "version": "1.0.0",
+  "description": "Play a one-minute Bitcoin Cash game in your terminal while your AI agent is thinking. Every result is proven on-chain.",
+  "type": "module",
+  "bin": { "passbch": "passbch.mjs" },
+  "files": ["passbch.mjs", "README.md"],
+  "engines": { "node": ">=18" },
+  "keywords": ["bitcoin-cash", "bch", "terminal", "game", "claude-code", "cli"],
+  "homepage": "https://passbch.vercel.app",
+  "repository": { "type": "git", "url": "git+https://github.com/Lakshmikanth-3/PassBCH.cash.git" },
+  "license": "MIT"
+}
