@@ -1,5 +1,34 @@
 # Posts
 
+## Final Telegram post (22 Nov 2026)
+
+```
+Hi BLAZE! I'm Lakshmikanth, and I'm real :) building PassBCH.cash for the Mainnet Track.
+
+Play a one-minute Bitcoin Cash game in your terminal while your AI coding agent thinks. Five games (Rock Paper Scissors, Up or Down, Prompt Fight, Coin Flip, Typing Race), live on BCH mainnet, every result written on chain and re-checked in your browser.
+
+Try it: npx passbch  ·  https://passbch.vercel.app
+Demo (2:50): https://youtu.be/Or1W7viUzTI
+Code: https://github.com/Lakshmikanth-3/PassBCH.cash
+XO bounty: https://github.com/Lakshmikanth-3/PassBCH.cash/tree/main/xo
+
+Vote with EMBER2026: bitcoincash:zrcvv9gjvgeeh6gesa2t3q0z40n3uzxwhua3m6rsyf
+```
+
+## Final X post
+
+```
+Built PassBCH.cash for #BCHBLAZE2026: play a 1-minute Bitcoin Cash game in your terminal while your AI agent thinks.
+
+5 games, live on BCH mainnet, every result verifiable on chain.
+
+npx passbch
+https://passbch.vercel.app
+Demo: https://youtu.be/Or1W7viUzTI
+```
+
+## Earlier drafts
+
 ## BCH BLAZE Telegram
 
 **PassBCH.cash: play a one-minute Bitcoin Cash game while Claude Code is thinking**

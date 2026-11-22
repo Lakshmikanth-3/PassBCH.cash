@@ -65,6 +65,10 @@ PassBCH.cash runs on **Bitcoin Cash mainnet** at https://passbch.vercel.app. Rea
 |---|---|
 | House wallet funded (0.01520254 BCH) | [`8215f5fb…f3a3eabb`](https://blockchair.com/bitcoin-cash/transaction/8215f5fb8adeea2a3fcb66ef4912c1ae413339411617b16845772ed2f3a3eabb) |
 | **First real mainnet game:** new player Judge572, Coin Flip, 500 sats from the free bonus, picked heads, landed tails. The `SQG1` record (house seed commitment, both seeds, result) is in the `OP_RETURN` output | [`c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970`](https://blockchair.com/bitcoin-cash/transaction/c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970) · [Verify ✓](https://passbch.vercel.app/verify/c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970) |
+| Rock · Paper · Scissors in the terminal (paper vs paper, draw, stakes returned), `SDL1` | [`acf4720b…8fa69b93`](https://blockchair.com/bitcoin-cash/transaction/acf4720b749f592e22856ba6db2fb79499c1106dc347e2393487bfc48fa69b93) |
+| Up or Down in the terminal (UP $198.63 → $199.04, win 1.9×), `SUD1` | [`48667e3f…5c149f05c7`](https://blockchair.com/bitcoin-cash/transaction/48667e3fb3057c8ed2c847a30eb3cbe29251ca697f61ef8356143c5c149f05c7) |
+| Coin Flip in the terminal (heads, win), `SQG1` | [`0e469567…5e21eb826a`](https://blockchair.com/bitcoin-cash/transaction/0e469567121cdc4c21a662c8226cacb2aa53ac6835429058135f7e5e21eb826a) |
+| Real player deposit: 10,000 sats to a player's deposit address, credited as cash | [`95375a9d…a08ffe45`](https://blockchair.com/bitcoin-cash/transaction/95375a9d1b6e410002c62843d6953a5a2f4e15ebc2e7f1df84735d29a08ffe45) |
 
 ![Verify page on mainnet: the Coin Flip record decoded from the chain and recomputed in the browser, Verified](docs/images/verify-mainnet.png)
 
@@ -341,7 +345,7 @@ Free credit: 0.00025 BCH per new player (up to 3 per network, 100 in total).
 | AI provider | Groq free tier allows roughly 1–2 fights a minute site-wide; under load some moves become automatic (marked `*`). |
 | Login code | The code is the account key; losing it loses the account. No wallet-signature login yet. |
 | Other crypto / fiat | Quotes are live; swaps (SideShift) and bank/card/UPI (licensed partner) switch on only with mainnet. |
-| Network | Chipnet only. Test BCH has no value; local-currency figures say "at mainnet value". |
+| Network | Bitcoin Cash mainnet (real BCH). Everything was tested on chipnet first. |
 | Regulation | Real-money games are regulated in many countries (including India). Get legal advice before mainnet. 18+. |
 
 ## Threat Model and Security Boundaries
@@ -406,7 +410,7 @@ Re-run for this update on 21 Nov 2026: `npm test` → **62 passed**.
 | One-minute Up/Down | server/engine.mjs, price.mjs | engine.test.mjs + manual live rounds | Timing, payouts, tie refunds, record round trip | The exchange's own trade data |
 | Prompt Fight fairness | server/promptfight.mjs | promptfight.test.mjs | Rule enforcement; prompt isolation; always finishes | Model quality under Groq rate limits |
 | Verify | web/src/duel/Proof.jsx | proof.test.js + live check | Decoder matches the server's bytes; real records verify | Records written before salts were stored |
-| WizardConnect deposit | web/src/duel/wizard.js | wizard.test.js | Correct unsigned tx and input paths | Every wallet's WizardConnect behaviour (Paytaca phone test pending) |
+| WizardConnect deposit | web/src/duel/wizard.js | wizard.test.js | Correct unsigned tx and input paths | Every wallet's WizardConnect behaviour (mainnet deposit tested: `95375a9d…`; Paytaca phone test still to do) |
 | Withdrawals | server/chain.mjs, api/duel.mjs | e2e (live) | Real chipnet payout with fee | Mainnet |
 | Pages | web/src | live browser audit | No app errors across every page and phone width | Every browser and device |
 
@@ -484,6 +488,30 @@ docs/                       Report, mainnet checklist, deck text, Telegram post,
 ## Libraries
 
 React 18.3 · three.js 0.170 · Vite 5.4 · CashScript 0.11.5 (transaction builder, Electrum provider) · @bitauth/libauth 3.0 · WizardConnect (@wizardconnect/react 0.2.6, dapp 0.2.7, core 0.2.10) · pg 8.13 · qrcode 1.5 · Vitest 2.1 + Testing Library · Groq API (`openai/gpt-oss-20b`) · Coinbase, Kraken and SideShift public APIs.
+
+## What's next: the PassBCH Claude Code plugin
+
+Today PassBCH already ships a **Claude Code status-line panel** ([`panel/`](panel)): hooks notice when Claude starts and stops thinking, and the status bar shows *"Claude thinking 0:42 · play now →"*, your live bet and your result. The next step is to turn this into a **one-click Claude Code plugin**, so the game finds you instead of you finding the game.
+
+### How it will work
+
+1. **Install once:** `/plugin install passbch`. No settings files, no copy-paste.
+2. **The moment your agent starts thinking**, a hook fires and the plugin offers a game sized to the wait: a 15-second Typing Race for a short task, a 60-second Up or Down for a long refactor.
+3. **`/passbch`** opens the game in a side terminal (or the browser) with one keystroke; **`/passbch:result`** shows your last game, balance and Verify link without leaving Claude Code.
+4. **When Claude finishes**, the status line tells you both results at once: *"Claude done ✓ · you won 0.0000095 BCH"*, so you never miss your agent's answer.
+5. **Every round stays provably fair**: the same commit-reveal games, one Bitcoin Cash transaction per result, verifiable in one click.
+
+### Where it goes after that
+
+- **Every AI coding tool:** the same plugin model for VS Code, Cursor and other agents. Wherever an AI agent thinks, a one-minute BCH game is one key away.
+- **Team and friend play:** challenge a teammate who is waiting on their own agent (`npx passbch race <code>` already works terminal to terminal).
+- **Trustless stakes:** move duels from the custodial ledger into the **XO / CashScript escrow** we already built on chipnet, so stakes sit in an on-chain pot and the script pays the winner.
+- **Tournaments and leaderboards** paid in BCH, with CashTokens prizes and badges.
+- **Wallet-signature login** in place of login codes, and WizardConnect for one-tap deposits on mobile.
+
+### Why this matters for Bitcoin Cash
+
+ millions of developers now wait on AI agents many times a day. A plugin puts a real BCH wallet and real, tiny, instant BCH transactions into that daily routine, which is everyday use of Bitcoin Cash by people who have never touched it before.
 
 ## Status
 

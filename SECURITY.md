@@ -9,7 +9,7 @@ Open a **private security advisory** on GitHub (Security → Report a vulnerabil
 - The API (`api/duel.mjs`) and game service (`server/`)
 - Commit-reveal, settlement and on-chain records (`server/engine.mjs`, `server/chain.mjs`)
 - The browser Verify page and the terminal client (`web/public/duel.mjs`, `packages/cli`)
-- The XO escrow template (`xo/`, chipnet only)
+- The XO escrow template (`xo/`, tested on chipnet)
 
 ## How secrets are handled
 - No secret is stored in this repository. `.env`, `keys/` and wallet files are git-ignored and Vercel-ignored, and git history was scanned for keys, database URLs and Groq tokens before release.

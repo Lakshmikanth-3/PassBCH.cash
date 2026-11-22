@@ -1,7 +1,7 @@
 # Switching PassBCH.cash to mainnet (final submission only)
 
 Chipnet stays the default until you decide. The switch is configuration only; no code changes.
-**Nothing here has been run.** No mainnet funds were spent and nothing was deployed to mainnet by the assistant.
+**Done on 22 Nov 2026.** The live site runs on mainnet with these settings; first mainnet game `c1e08e25…3e14970` (block 978,468). This page stays as the checklist and the rollback guide.
 
 ## What changes with `BCH_NETWORK=mainnet`
 
