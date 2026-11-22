@@ -4,6 +4,8 @@
 
 **Play a one-minute Bitcoin Cash game in your terminal while Claude Code is thinking. Every result is proven on-chain and anyone can verify it.** Every result is written to the BCH chain where anyone can recompute it. Five games: **Rock · Paper · Scissors** at a 3D TV-show table, **Up or Down** on the next minute of the BCH price, **Prompt Fight**, where your prompt trains an AI agent that fights another one live, **Coin Flip** (house seed committed first, plus your own seed) and **Typing Race** (type a phrase faster than the House Bot, or challenge a friend to a live race from the browser or a terminal; also in the terminal). The game server is trusted to hold balances (custodial, see the limits), but it cannot quietly change a result: the moves, prices and hashes are on chain and your browser re-checks them.
 
+![PassBCH.cash live on Bitcoin Cash mainnet: home page with the BLAZE banner (deck, GitHub, EMBER2026)](docs/images/home-mainnet.png)
+
 ![PassBCH.cash: a 3D game-show table with you, an opponent and a host](docs/images/cover.png)
 
 | | |
@@ -12,9 +14,11 @@
 | Play from any terminal | **`npx passbch`** (any OS with Node.js; friends join with `npx passbch race <code>`) · or Windows: `irm https://passbch.vercel.app \| iex` · Mac/Linux: `curl -sL passbch.vercel.app \| sh` |
 | Verify any result | https://passbch.vercel.app/verify (paste a transaction id) |
 | Worldwide winners | https://passbch.vercel.app/winners |
-| Network | **BCH chipnet (testnet) only.** Mainnet is switched on only after the project is finished and tested end to end ([docs/MAINNET.md](docs/MAINNET.md)) |
-| House wallet (writes every result) | [`bchtest:qql3cd7mlgqepacnudgh9qg6xc9na6a40qgmzdahgk`](https://chipnet.imaginary.cash/address/bchtest:qql3cd7mlgqepacnudgh9qg6xc9na6a40qgmzdahgk) |
-| Track | BCH BLAZE 2026, Mainnet Track (on chipnet until submission) |
+| Network | **Bitcoin Cash mainnet (live since 22 Nov 2026).** Built and tested on chipnet first; switch checklist: [docs/MAINNET.md](docs/MAINNET.md) |
+| House wallet (writes every result) | Mainnet: [`bitcoincash:qqf029whcssjtkpfkyfk5s2z4t9vawvkfcn56u84un`](https://blockchair.com/bitcoin-cash/address/qqf029whcssjtkpfkyfk5s2z4t9vawvkfcn56u84un) · chipnet (testing): `bchtest:qql3cd7mlgqepacnudgh9qg6xc9na6a40qgmzdahgk` |
+| First mainnet game | [`c1e08e25…3e14970`](https://blockchair.com/bitcoin-cash/transaction/c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970) · [verify it](https://passbch.vercel.app/verify/c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970) |
+| Pitch deck | [Widget Factory deck (Google Slides)](https://docs.google.com/presentation/d/1ihRRCqbTXc56jZPF8c5AjsR113gBCRdJ/edit?usp=sharing) |
+| Track | BCH BLAZE 2026, Mainnet Track |
 | Who it is for | Developers waiting on AI agents, BCH newcomers (free starting credit, one-minute rounds), streamers and friends who want quick provable games |
 | Tests | 62 automated (25 game rules · 11 Prompt Fight · 6 Coin Flip / Typing Race · 6 WizardConnect deposit · 5 on-chain record decoding · 6 Claude Code panel · 3 banner) · live chipnet end-to-end script (13 checks) · live browser audit of every page: all passing |
 
@@ -50,12 +54,16 @@ To see the friend flow, choose Typing Race → challenge a friend, and run the p
 | **Build with XO / Migrate to XO** (General Protocols) | **Built.** [`xo/`](xo): the PassBCH Rock · Paper · Scissors game migrated into a trustless XO template (both stakes in an on-chain pot, commit-reveal checked and the winner paid by the script, timeout to the challenger). Executed on chipnet with invitations ([open](https://chipnet.imaginary.cash/tx/231206c80404e290355b94156f62f0787eaa4fafa3c731b79412a06b0b882465), [reveal follow-up](https://chipnet.imaginary.cash/tx/395fc025204be573e8efe4694134bee85a8a632680806515f914eb3535f7c3e1)); inspected as SUCCESS in the XO debug tool. Personal feedback: [xo/FEEDBACK.md](xo/FEEDBACK.md). |
 | Stablecoin Bridge, Decentralized Identity, SolidCash, FoldingCash claims | Not entered (different products). |
 
-## Mainnet transactions (filled in at submission)
+## Mainnet transactions
+
+PassBCH.cash runs on **Bitcoin Cash mainnet** at https://passbch.vercel.app. Real transactions:
 
 | What | Transaction |
 |---|---|
-| First real mainnet game record | _txid goes here_ |
-| Real mainnet withdrawal | _txid goes here_ |
+| House wallet funded (0.01520254 BCH) | [`8215f5fb…f3a3eabb`](https://blockchair.com/bitcoin-cash/transaction/8215f5fb8adeea2a3fcb66ef4912c1ae413339411617b16845772ed2f3a3eabb) |
+| **First real mainnet game:** new player Judge572, Coin Flip, 500 sats from the free bonus, picked heads, landed tails. The `SQG1` record (house seed commitment, both seeds, result) is in the `OP_RETURN` output | [`c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970`](https://blockchair.com/bitcoin-cash/transaction/c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970) · [Verify ✓](https://passbch.vercel.app/verify/c1e08e256ce37a8ec7a0b3f26b5fa02f81e8b90506053e9ea815845ff3e14970) |
+
+![Verify page on mainnet: the Coin Flip record decoded from the chain and recomputed in the browser, Verified](docs/images/verify-mainnet.png)
 
 ## Evaluator Notes
 
@@ -261,7 +269,7 @@ Recording never blocks a game. Each settled row is **claimed atomically** before
 | RPS salt | Your browser until reveal, then Postgres | Needed to re-check the commitment |
 | Login code | Your browser / terminal config | Account key (see limits) |
 
-## Evidence: real transactions on BCH chipnet
+## Evidence: real transactions on BCH chipnet (testing before mainnet)
 
 Every row is a real transaction. Click to open it in the chipnet explorer, or paste the id into [Verify](https://passbch.vercel.app/verify).
 
@@ -412,13 +420,13 @@ Re-run for this update on 21 Nov 2026: `npm test` → **62 passed**.
 
 ## Demo video
 
-`docs/demo/passbch-demo.mp4` (3:12, voiceover, no music):
+`docs/demo/passbch-demo-mainnet.mp4` (about 4 minutes, voice-over, no music; the link is also on the DoraHacks page):
 
-- **0:00** the problem: a VS Code window where Claude Code is "Cogitating… Vibing…" for minutes while the developer idles; then `npx passbch` in the same terminal.
+- **0:00** the problem: Claude Code is "Cogitating…" for minutes while the developer idles; then `npx passbch` in the same terminal.
 - **0:24** how Bitcoin Cash earns: one game = one on-chain transaction, network fees to miners, a 5% platform fee on withdrawals.
-- **0:35** one real terminal session on chipnet: all five games, a friend joining from a second terminal with `npx passbch race <code>`, the leaderboard, Verify, and a real withdrawal.
-- **2:35** a real browser session on https://passbch.vercel.app (one Coin Flip, then the Verify page), for players who do not use a terminal.
-- **2:58** how judges can verify it in under 2 minutes.
+- **0:35** a real terminal session (recorded on chipnet): all five games, a friend joining from a second terminal with `npx passbch race <code>`, the leaderboard, Verify and a real withdrawal.
+- **2:18** **live on mainnet:** a new player on https://passbch.vercel.app plays one real Coin Flip; the result is written to Bitcoin Cash mainnet and the Verify page recomputes it (Verified ✓ · mainnet); then the confirmed mainnet transaction.
+- **end** how judges can verify it in under 2 minutes.
 
 ## Troubleshooting
 
@@ -454,21 +462,23 @@ BASE=http://localhost:8787 npm run e2e
 ## Repository structure
 
 ```
-api/duel.mjs             All HTTP routes (one Vercel function)
-server/engine.mjs        Game rules, commitments, settlement, fees, record layouts
-server/promptfight.mjs   Prompt Fight rules, Groq calls, SPF1 record
-server/service.mjs       Postgres game service: duels, bets, fights, winners, profiles, activity
-server/db.mjs            Schema (Neon Postgres)
-server/chain.mjs         House wallet: OP_RETURN records, withdrawals, deposit addresses
-server/price.mjs         Price at a second, candles, FX, SideShift quotes
-server/test/             Game-rule and Prompt Fight tests
-web/src/                 React app: pages, 3D stages (three/), games, vault, verify, winners
-web/public/duel.mjs      Terminal client (+ play.ps1 / play.sh launchers)
-web/test/                Browser-side tests (decoder, WizardConnect, banner)
-panel/                   Claude Code status line + hooks
-scripts/e2e.mjs          Live end-to-end check
-ai/                      Earlier PassRate AI-exam harness (not used by the site)
-docs/                    Mainnet checklist, images
+api/duel.mjs                All HTTP routes (one Vercel function) + terminal invite launcher
+server/engine.mjs           Game rules, commitments, settlement, fees, record layouts (SDL1, SUD1, SQG1)
+server/promptfight.mjs      Prompt Fight rules, Groq calls, SPF1 record
+server/service.mjs          Postgres game service: duels, bets, fights, coin flips, races, winners, profiles
+server/db.mjs               Schema (Neon Postgres)
+server/chain.mjs            House wallet: OP_RETURN records, withdrawals, deposit addresses (chipnet or mainnet)
+server/price.mjs            Price at a second, candles, FX, SideShift quotes
+server/test/                Game-rule, Prompt Fight, Coin Flip and Typing Race tests
+web/src/                    React app: pages, 3D stages (three/), games, vault, verify, winners, banner
+web/public/duel.mjs         Terminal client (+ play.ps1 / play.sh launchers)
+web/test/                   Browser-side tests (record decoder, WizardConnect, banner)
+packages/cli/               npm package `passbch` (npx passbch): downloads and runs the latest terminal client
+panel/                      Claude Code status line + hooks
+xo/                         XO bounty: trustless Rock Paper Scissors escrow template, chipnet runner, invitations, feedback
+scripts/e2e.mjs             Live end-to-end check
+docs/                       Report, mainnet checklist, deck text, Telegram post, images, demo video
+ai/                         Earlier PassRate AI-exam harness (not used by the site)
 ```
 
 ## Libraries
@@ -477,10 +487,10 @@ React 18.3 · three.js 0.170 · Vite 5.4 · CashScript 0.11.5 (transaction build
 
 ## Status
 
-- Live at https://passbch.vercel.app on **chipnet**. All three games, the vault, WizardConnect and QR deposits, withdrawals, winners, profiles, Verify, Rules and the terminal client work on the hosted copy.
-- 62 automated tests and the live end-to-end check pass.
-- **Not built yet:** mainnet, swaps with other crypto and fiat on/off-ramps (quotes only), wallet-signature login, published House Bot seeds, new games (coin flip, dice, lucky draw, tournaments), notifications.
-- **Pending with the team:** WizardConnect test on a phone (Paytaca).
+- **Live on Bitcoin Cash mainnet** at https://passbch.vercel.app since 22 Nov 2026 (first real game above). Five games, the vault, WizardConnect and QR deposits, withdrawals, winners, profiles, Verify, Rules, the terminal client and `npx passbch` all work on the hosted copy.
+- Every feature was first tested on chipnet: 62 automated tests, the live end-to-end check (13/13) and a live browser audit pass.
+- XO bounty built: [`xo/`](xo).
+- **Not built yet:** swaps with other crypto and fiat on/off-ramps (quotes only), wallet-signature login, tournaments, notifications.
 
 ## AI assistance and licence
 
