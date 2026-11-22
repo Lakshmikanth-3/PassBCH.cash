@@ -133,6 +133,9 @@ Placeholder for tournaments, lucky draws and team battles (coming soon).
 - Menu: `[1]` RPS · `[2]` Up or Down · `[3]` Prompt Fight · `[4]` upcoming · `[w]` vault · `[l]` winners · `[p]` profile · `[v]` verify · `[r]` rules · `[o]` log out · `[q]` quit.
 - ASCII "3D" shows: hands at the table, a candle chart, agents in the ring.
 
+### 4.2.1 `npx passbch` (npm package)
+`npx passbch` starts the game in any terminal with Node.js 18+; `npm i -g passbch` then `passbch` also works. The package (`packages/cli`) only downloads the latest client from the live site and runs it, so it never goes stale. Friends join with one short line: `npx passbch race <code>` (also `join` for duels and `fight` for Prompt Fight). Published as `passbch@1.0.0`; npm showed it as a staged release pending approval at the time of writing.
+
 ### 4.3 Terminal invites (new, 22 Nov)
 Scenario: you are building in VS Code, Claude is thinking, and your friend is also coding in a terminal. They should not have to open a browser.
 
