@@ -478,7 +478,6 @@ panel/                      Claude Code status line + hooks
 xo/                         XO bounty: trustless Rock Paper Scissors escrow template, chipnet runner, invitations, feedback
 scripts/e2e.mjs             Live end-to-end check
 docs/                       Report, mainnet checklist, deck text, Telegram post, images, demo video
-ai/                         Earlier PassRate AI-exam harness (not used by the site)
 ```
 
 ## Libraries
