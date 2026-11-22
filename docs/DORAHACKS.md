@@ -2,7 +2,7 @@
 
 # PassBCH.cash: play while your AI thinks
 
-**A Bitcoin Cash game show for the minute your AI coding agent is thinking. Live on mainnet. Every result is on chain, and anyone can recompute it.**
+**A Bitcoin Cash game show for the minute your AI coding agent is thinking. Live on mainnet. Every result is on chain, and anyone can recompute it. Coming next: a Claude Code plugin that opens a game the moment your agent starts thinking.**
 
 | | |
 |---|---|
@@ -104,7 +104,7 @@ It was executed on chipnet with two XO accounts and invitations: open `231206c8â
 ## What's next
 
 1. **Trustless duels on mainnet** with the XO / CashScript escrow, so players don't have to trust us with balances.
-2. **Editor plugins** for Claude Code, VS Code and Cursor: a game appears when the agent starts thinking.
+2. **Claude Code plugin** (then VS Code and Cursor): install once, and a game appears the moment the agent starts thinking, with the live round and your result in the status line. Today's status-line panel (`panel/`) is the first step.
 3. **Tournaments and leaderboards** paid in BCH, with CashTokens prizes.
 4. **Wallet-signature login** in place of login codes.
 
