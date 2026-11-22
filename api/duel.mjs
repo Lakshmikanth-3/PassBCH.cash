@@ -13,7 +13,8 @@ const json = (res, status, body) => { res.statusCode = status; res.setHeader('co
 const tokenOf = (req) => (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '') || null;
 async function body(req) {
   if (req.body && typeof req.body === 'object') return req.body;
-  let s = ''; for await (const ch of req) s += ch; try { return JSON.parse(s || '{}'); } catch { return {}; }
+  let s = ''; for await (const ch of req) { s += ch; if (s.length > 65536) throw new S.UserError('request too large', 413); } // cap request bodies (64 KB)
+  try { return JSON.parse(s || '{}'); } catch { return {}; }
 }
 
 /**
@@ -97,16 +98,6 @@ const routes = {
   },
   async bet(req, b) { return S.placeBet(tokenOf(req), b); },
   async bets(req) { await within(S.settleBets(), 8000); await recordSoon(); return { mine: tokenOf(req) ? await S.myBets(tokenOf(req)) : [], feed: await S.betFeed() }; },
-  async ai(req) { const st = await S.aiState(tokenOf(req)); await recordSoon(); return st; },
-  async aibet(req, b) { return S.aiBet(tokenOf(req), b); },
-  // Runner-only routes (the AI sandbox runs on the operator's machine), protected by a shared secret header.
-  async airunner(req, b) {
-    if (!process.env.AI_RUNNER_KEY || req.headers['x-runner-key'] !== process.env.AI_RUNNER_KEY) throw new S.UserError('forbidden', 403);
-    if (b.op === 'open') return S.aiOpenRound({ tasks: b.tasks, tip: await timed(chain.tip(), 10000, 'tip') });
-    if (b.op === 'next') return { job: await S.aiNextJob() };
-    if (b.op === 'result') return S.aiResult(b);
-    throw new S.UserError('bad op');
-  },
   async pfcreate(req, b) { const r = await S.pfCreate(tokenOf(req), b); return r; },
   async pfjoin(req, b) { const r = await S.pfJoin(tokenOf(req), b); await recordSoon(); return r; },
   async pf(req, b, q) { const r = await S.pfGet(q.get('id'), tokenOf(req)); if (r.status === 'done' && !r.recordTxid) await recordSoon(); return r; },
@@ -178,7 +169,8 @@ curl -fsSL -H "Cache-Control: no-cache" "${url}?t=$(date +%s)" -o "$f" && node "
 export default async function handler(req, res) {
   const q = new URL(req.url, 'http://x').searchParams;
   if (q.get('a') === 'launch') return launch(res, q);
-  const fn = routes[q.get('a')];
+  const a = q.get('a');
+  const fn = Object.hasOwn(routes, a) ? routes[a] : null; // only our own routes, never Object.prototype keys
   if (!fn) return json(res, 404, { error: 'unknown action' });
   try {
     json(res, 200, await fn(req, req.method === 'POST' ? await body(req) : {}, q));
