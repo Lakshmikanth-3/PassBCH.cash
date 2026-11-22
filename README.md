@@ -420,6 +420,12 @@ Re-run for this update on 21 Nov 2026: `npm test` → **62 passed**.
 - **2:35** a real browser session on https://passbch.vercel.app (one Coin Flip, then the Verify page), for players who do not use a terminal.
 - **2:58** how judges can verify it in under 2 minutes.
 
+## Troubleshooting
+
+- **The website does not open:** some mobile hotspots and ISPs fail to resolve or route `*.vercel.app` intermittently. Switch the DNS to 1.1.1.1 or 8.8.8.8, or try another network; the site itself is up.
+- **`npx passbch` says "could not determine executable":** the npm release is still being processed; use `irm https://passbch.vercel.app | iex` (Windows) or `curl -sL passbch.vercel.app | sh` meanwhile.
+- **"No free bonus this time":** the free credit is limited to 3 accounts per network address; add a little BCH from the vault instead.
+
 ## Run locally
 
 Requires Node 22+.
