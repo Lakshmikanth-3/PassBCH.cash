@@ -6,8 +6,6 @@
 
 ![PassBCH.cash live on Bitcoin Cash mainnet: home page with the BLAZE banner (deck, GitHub, EMBER2026)](docs/images/home-mainnet.png)
 
-![PassBCH.cash: a 3D game-show table with you, an opponent and a host](docs/images/cover.png)
-
 | | |
 |---|---|
 | Live app | https://passbch.vercel.app (same app: https://passbch-cash.vercel.app) |
@@ -283,7 +281,6 @@ Every row is a real transaction. Click to open it in the chipnet explorer, or pa
 | Withdrawal: 5,000 sats → 4,600 sent after the fee (end-to-end script) | test player | Confirmed | [c5a7bb4b…fb5fb0ee](https://chipnet.imaginary.cash/tx/c5a7bb4bee94602b575a288ee73ddc71a004e18df3186ebfdd27b7ecfb5fb0ee) |
 | House wallet funded | operator | 200,000 sats | [a9475687…6bd92211](https://chipnet.imaginary.cash/tx/a947568787d4b78350d2e6e096b311c3ad4ef91ebe2d74fef415c7306bd92211) |
 
-![Verify page: Prompt Fight verified with 5 checks recomputed in the browser](docs/images/verify.png)
 
 ## Judge's Quick Evaluation Guide
 
