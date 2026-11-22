@@ -10,6 +10,7 @@ import { Winners, WinnersStrip } from './duel/Winners.jsx';
 import { Verify, Profile, Rules } from './duel/Proof.jsx';
 import { Trophy, Coin, Keyboard } from './icons.jsx';
 import { CoinFlip, TypingRace } from './duel/QuickGames.jsx';
+import { RaceView } from './duel/Race.jsx';
 import { useFx, fiat } from './duel/money.js';
 import { UpDown, UpDownFeed } from './duel/UpDown.jsx';
 import { NewFight, FightView, FightLobby } from './duel/PromptFight.jsx';
@@ -26,6 +27,8 @@ const readRoute = () => {
   const path = location.pathname.replace(/\/+$/, '') || '/';
   const m = path.match(/^\/duel\/([0-9a-f]{32})$/);
   if (m) return { route: 'rps', duel: m[1] };
+  const rc = path.match(/^\/race\/([0-9a-f]{32})$/);
+  if (rc) return { route: 'race', duel: rc[1] };
   const f = path.match(/^\/fight\/([0-9a-f]{32})$/);
   if (f) return { route: 'pf', fight: f[1] };
   const v = path.match(/^\/verify\/([0-9a-f]{64})$/);
@@ -37,7 +40,7 @@ const readRoute = () => {
   const route = Object.keys(PATHS).find((k) => PATHS[k] === path);
   return { route: route ?? (path === '/' ? '' : 'notfound') };
 };
-const TITLES = { '': 'PassBCH.cash — play while your AI thinks', login: 'Log in · PassBCH.cash', games: 'Games · PassBCH.cash', rps: 'Rock Paper Scissors · PassBCH.cash', coin: 'Coin Flip · PassBCH.cash', typing: 'Typing Race · PassBCH.cash', predict: 'Up or Down · PassBCH.cash', pf: 'Prompt Fight · PassBCH.cash', wallet: 'Vault · PassBCH.cash', add: 'Add funds · PassBCH.cash', withdraw: 'Withdraw · PassBCH.cash', winners: 'Worldwide winners · PassBCH.cash', verify: 'Verify a result · PassBCH.cash', rules: 'Rules & fairness · PassBCH.cash', profile: 'Player · PassBCH.cash', notfound: 'Page not found · PassBCH.cash' };
+const TITLES = { '': 'PassBCH.cash — play while your AI thinks', login: 'Log in · PassBCH.cash', games: 'Games · PassBCH.cash', rps: 'Rock Paper Scissors · PassBCH.cash', coin: 'Coin Flip · PassBCH.cash', race: 'Typing Race · PassBCH.cash', typing: 'Typing Race · PassBCH.cash', predict: 'Up or Down · PassBCH.cash', pf: 'Prompt Fight · PassBCH.cash', wallet: 'Vault · PassBCH.cash', add: 'Add funds · PassBCH.cash', withdraw: 'Withdraw · PassBCH.cash', winners: 'Worldwide winners · PassBCH.cash', verify: 'Verify a result · PassBCH.cash', rules: 'Rules & fairness · PassBCH.cash', profile: 'Player · PassBCH.cash', notfound: 'Page not found · PassBCH.cash' };
 
 export const GAMES = [
   { id: 'rps', Icon: Rock, title: 'Rock · Paper · Scissors', line: 'Sit at the table with the host. Beat a friend or the House Bot. Winner takes the pot.', tag: 'PvP · 2 min', color: 'gold' },
@@ -171,7 +174,7 @@ export default function App() {
 
   const go = (r, d) => {
     const keep = new URLSearchParams(location.search).get('ref');
-    const url = (d ? (r === 'pf' ? `/fight/${d}` : r === 'verify' ? `/verify/${d}` : r === 'profile' ? `/u/${encodeURIComponent(d)}` : `/duel/${d}`) : PATHS[r] ?? '/') + (keep && (r === 'login' || r === '') ? `?ref=${keep}` : '');
+    const url = (d ? (r === 'pf' ? `/fight/${d}` : r === 'race' ? `/race/${d}` : r === 'verify' ? `/verify/${d}` : r === 'profile' ? `/u/${encodeURIComponent(d)}` : `/duel/${d}`) : PATHS[r] ?? '/') + (keep && (r === 'login' || r === '') ? `?ref=${keep}` : '');
     try { history.pushState(null, '', url); } catch { /* sandboxed */ }
     setNav(r === 'pf' ? { route: r, fight: d } : r === 'verify' ? { route: r, tx: d } : r === 'profile' ? { route: r, who: d } : { route: r, duel: d }); window.scrollTo?.({ top: 0 });
   };
@@ -214,6 +217,12 @@ export default function App() {
           <UpDownFeed explorer={cfg.explorer} />
         </main>
       )}
+      {screen === 'race' && cfg && duel && (
+        <main className="wrap game">
+          <button className="back" onClick={() => go('typing')}>← Typing Race</button>
+          <RaceView id={duel} me={me} explorer={cfg.explorer} network={cfg.network} refCode={ref} onSignedUp={refresh} onClose={() => go('typing')} onChange={refresh} />
+        </main>
+      )}
       {screen === 'coin' && cfg && (
         <main className="wrap game">
           <button className="back" onClick={() => go('games')}>← All games</button>
@@ -224,7 +233,7 @@ export default function App() {
       {screen === 'typing' && cfg && (
         <main className="wrap game">
           <button className="back" onClick={() => go('games')}>← All games</button>
-          {me ? <TypingRace rules={cfg.rules} player={me} explorer={cfg.explorer} network={cfg.network} onChange={refresh} />
+          {me ? <TypingRace rules={cfg.rules} player={me} explorer={cfg.explorer} network={cfg.network} onChange={refresh} onChallenge={(rid) => go('race', rid)} />
             : <div className="gamelayout"><div className="card"><h2>Typing Race</h2><p className="muted">Type a phrase faster than the House Bot. Pick a name to play.</p></div><Signup refCode={ref} onDone={refresh} /></div>}
         </main>
       )}

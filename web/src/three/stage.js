@@ -579,6 +579,9 @@ function typingScene() {
       st.dir = dir;
       if (d.kind === 'typingstart') { st.racing = true; st.run = null; st.p = 0; st.bp = 0; banner.userData.set('Type it! The bot is typing too', { border: '#00e5ff' }); dir.sequence([['YOU', 1.6], ['TRACK', Infinity]]); }
       if (d.kind === 'typingprogress') st.p = Math.max(st.p, Number(d.p) || 0);
+      if (d.kind === 'typingopp') { st.bp = Math.max(st.bp, Number(d.p) || 0); if (d.name && d.name !== st.oppName) { st.oppName = d.name; bot.userData.tag.userData.set(d.name, { border: '#ff3df0' }); } st.racing = true; }
+      if (d.kind === 'typingcount') banner.userData.set(d.text, { border: '#ffc23d' });
+      if (d.kind === 'typingreset') { st.p = 0; st.bp = 0; st.run = null; }
       if (d.kind === 'typingresult') {
         const k = 5 / Math.max(1, d.playerMs, d.botMs);
         st.run = { t: 0, pDur: Math.max(0.3, d.playerMs * k), bDur: Math.max(0.3, d.botMs * k), p0: st.p, win: d.outcome === 'win', outcome: d.outcome, done: false };

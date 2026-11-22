@@ -1,7 +1,7 @@
 // House wallet on BCH: writes duel records (OP_RETURN) and pays withdrawals. Chipnet until final submission.
 import { secp256k1, hexToBin, binToHex, hash160, sha256, encodeCashAddress, CashAddressType, utf8ToBin } from '@bitauth/libauth';
 import { ElectrumNetworkProvider, TransactionBuilder, SignatureTemplate } from 'cashscript';
-import { recordBytes, betRecordBytes, aiRecordBytes, qRecordBytes } from './engine.mjs';
+import { recordBytes, betRecordBytes, aiRecordBytes, qRecordBytes, racePhraseHash } from './engine.mjs';
 import { pfRecordBytes } from './promptfight.mjs';
 
 export const NETWORK = (process.env.BCH_NETWORK ?? process.env.DUEL_NETWORK) === 'mainnet' ? 'mainnet' : 'chipnet';
@@ -73,4 +73,7 @@ export async function tip(p = provider()) {
 }
 export const recordQ = (q, beforeSend) => houseSend({ beforeSend, opReturn: qRecordBytes({ id: q.id, kind: q.kind, outcome: q.outcome, stake: q.stake,
   a: q.kind === 'coin' ? q.pick : q.player_ms, b: q.kind === 'coin' ? q.result : q.bot_ms, commit: q.commit }) });
+/** Friend race record (SQG1, kind 3): a = player A's ms, b = player B's ms (0 = did not finish), commit = sha256("race:"+phrase). */
+export const recordRace = (r, beforeSend) => houseSend({ beforeSend, opReturn: qRecordBytes({ id: r.id, kind: 'race', outcome: r.winner === 'a' ? 'win' : r.winner === 'b' ? 'lose' : 'refund', stake: r.stake,
+  a: r.a_ms ?? 0, b: r.b_ms ?? 0, commit: racePhraseHash(r.phrase) }) });
 export const recordPf = (m, beforeSend) => houseSend({ beforeSend, opReturn: pfRecordBytes({ id: m.id, winner: m.winner, target: m.target, maxStep: m.max_step, stake: m.stake, turns: m.turns }) });

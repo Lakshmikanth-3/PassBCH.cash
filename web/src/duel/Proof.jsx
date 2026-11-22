@@ -7,7 +7,7 @@ const toHex = (b) => [...b].map((x) => x.toString(16).padStart(2, '0')).join('')
 const u32 = (b, o) => b[o] | (b[o + 1] << 8) | (b[o + 2] << 16) | (b[o + 3] * 16777216);
 const sha256hex = async (s) => toHex(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))));
 const MOVES = ['rock', 'paper', 'scissors'];
-const GAME = { rps: 'Rock · Paper · Scissors', updown: 'Up or Down', pf: 'Prompt Fight', coin: 'Coin Flip', type: 'Typing Race' };
+const GAME = { rps: 'Rock · Paper · Scissors', updown: 'Up or Down', pf: 'Prompt Fight', coin: 'Coin Flip', type: 'Typing Race', race: 'Friend Typing Race' };
 
 /** Decode our OP_RETURN record straight from the raw transaction bytes (no server interpretation). */
 export function decodeRecord(raw) {
@@ -17,7 +17,7 @@ export function decodeRecord(raw) {
   if (kind === 'SDL1') return { kind, id, result: b[20], stake: u32(b, 21), moveA: MOVES[b[25]] ?? null, moveB: MOVES[b[26]], commit: toHex(b.slice(27, 59)) };
   if (kind === 'SUD1') return { kind, id, side: ['flat', 'up', 'down'][b[20]], result: ['flat', 'up', 'down'][b[21]], stake: u32(b, 22), roundStart: u32(b, 26), open: u32(b, 30) / 1e4, close: u32(b, 34) / 1e4 };
   if (kind === 'SPF1') return { kind, id, winner: b[20] === 1 ? 'a' : 'b', target: b[21], maxStep: b[22], stake: u32(b, 23), turnsHash: toHex(b.slice(27, 59)) };
-  if (kind === 'SQG1') return { kind, id, game: b[20] === 1 ? 'coin' : 'type', outcome: ['refund', 'win', 'lose'][b[21]], stake: u32(b, 22), a: u32(b, 26), b: u32(b, 30), commit: toHex(b.slice(34, 66)) };
+  if (kind === 'SQG1') return { kind, id, game: { 1: 'coin', 2: 'type', 3: 'race' }[b[20]], outcome: ['refund', 'win', 'lose'][b[21]], stake: u32(b, 22), a: u32(b, 26), b: u32(b, 30), commit: toHex(b.slice(34, 66)) };
   return null;
 }
 const outcome = (a, b) => (a === b ? 0 : (MOVES.indexOf(a) - MOVES.indexOf(b) + 3) % 3 === 1 ? 1 : 2);
@@ -48,6 +48,13 @@ async function checks(rec, m) {
     let total = 0, ok = true; t.forEach((x, i) => { if (x.add < 1 || x.add > rec.maxStep || (i && x.side === t[i - 1].side)) ok = false; total += x.add; });
     add(ok, `Every move was 1–${rec.maxStep} and players alternated`);
     add(total === rec.target && t.at(-1)?.side === rec.winner, `Recomputed: total reaches exactly ${rec.target} on the winner's move`);
+  }
+  if (rec.kind === 'SQG1' && rec.game === 'race') {
+    add((await sha256hex(`race:${m.phrase}`)) === rec.commit, 'sha256 of the phrase equals the commitment on chain: both players raced the same text');
+    const w = rec.outcome === 'win' ? 'a' : rec.outcome === 'lose' ? 'b' : 'draw';
+    add(w === m.winner, `Winner on chain: ${w === 'a' ? m.aName : w === 'b' ? m.bName : 'nobody (draw)'}`);
+    if (w !== 'draw') add((w === 'a' ? rec.a : rec.b) > 0, `The winner's server-measured time: ${((w === 'a' ? rec.a : rec.b) / 1000).toFixed(2)}s (the other side did not finish first)`);
+    return out;
   }
   if (rec.kind === 'SQG1') {
     add((await sha256hex(`cf:${m.seed}`)) === rec.commit, 'sha256 of the revealed house seed equals the commitment on chain: the house locked it before you played');

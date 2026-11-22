@@ -35,6 +35,28 @@
   },
   "rewrites": [
     {
+      "source": "/race/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*PowerShell.*"
+        }
+      ],
+      "destination": "/api/duel?a=launch&sh=ps&cmd=race&id=:id"
+    },
+    {
+      "source": "/race/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(curl|Wget).*"
+        }
+      ],
+      "destination": "/api/duel?a=launch&sh=sh&cmd=race&id=:id"
+    },
+    {
       "source": "/duel/:id",
       "has": [
         {

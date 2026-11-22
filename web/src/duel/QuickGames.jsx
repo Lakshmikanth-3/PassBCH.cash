@@ -70,7 +70,7 @@ export function CoinFlip({ rules, player, explorer, network, onChange }) {
 }
 
 /** Typing Race: type the phrase before the House Bot. The server times you; paste is blocked and impossible speeds lose. */
-export function TypingRace({ rules, player, explorer, network, onChange }) {
+export function TypingRace({ rules, player, explorer, network, onChange, onChallenge }) {
   const [stake, setStake] = useState(rules.stakes[0]); const [race, setRace] = useState(null); const [text, setText] = useState('');
   const [res, setRes] = useState(null); const [busy, setBusy] = useState(false); const [err, setErr] = useState(null); const [ms, setMs] = useState(0);
   const [txid, setTxid] = useState(null); const t0 = useRef(0); const done = useRef(false);
@@ -85,6 +85,11 @@ export function TypingRace({ rules, player, explorer, network, onChange }) {
   const start = async () => {
     setBusy(true); setErr(null); setRes(null); setText(''); done.current = false;
     try { const r = await api('trstart', { body: { stake } }); t0.current = Date.now(); setMs(0); setRace(r); show({ kind: 'typingstart' }); onChange?.(); }
+    catch (e) { setErr(e.message); } finally { setBusy(false); }
+  };
+  const challenge = async () => {
+    setBusy(true); setErr(null);
+    try { const r = await api('prcreate', { body: { stake } }); onChange?.(); onChallenge?.(r.id); }
     catch (e) { setErr(e.message); } finally { setBusy(false); }
   };
   const finish = async (value) => {
@@ -135,6 +140,7 @@ export function TypingRace({ rules, player, explorer, network, onChange }) {
           <StakePicker rules={rules} stake={stake} setStake={setStake} total={total} />
           <LowBalance player={player} rules={rules} />
           <button className="primary big" style={{ width: '100%' }} disabled={busy || stake > total || (race && !res)} onClick={start}>{busy ? 'Starting…' : race && !res ? 'Race in progress' : race ? `Race again for ${sats(stake)}` : `Start the race for ${sats(stake)}`}</button>
+          <button className="secondary big" style={{ width: '100%', marginTop: 10 }} disabled={busy || stake > total || (race && !res)} onClick={challenge}>Challenge a friend (same phrase, first to finish wins)</button>
           {err && <p className="warnbox" role="alert" style={{ color: 'var(--red)' }}>{err}</p>}
           <p className="muted small">Also playable in the terminal: <code>irm https://passbch.vercel.app | iex</code>, then the Typing Race entry.</p>
         </div>

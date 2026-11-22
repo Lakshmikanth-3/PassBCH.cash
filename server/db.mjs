@@ -64,6 +64,13 @@ create table if not exists qgames (
   client_seed text, pick int, result int, phrase text, started_ms bigint, player_ms int, bot_ms int,
   outcome text, payout int, created_at timestamptz not null default now(), settled_at timestamptz, record_txid text, record_try_at timestamptz
 );
+create table if not exists races (
+  id text primary key, stake int not null, phrase text not null,
+  a_player int not null references players(id), a_from_bonus int not null, a_from_cash int not null,
+  b_player int references players(id), b_from_bonus int, b_from_cash int,
+  created_s bigint not null, start_ms bigint, a_p real not null default 0, b_p real not null default 0, a_ms int, b_ms int,
+  status text not null default 'open', winner text, settle_reason text, settled_at timestamptz, record_txid text, record_try_at timestamptz
+);
 alter table pf_matches add column if not exists first_seed text;
 alter table pf_matches add column if not exists first_commit text;
 insert into players (token_hash, name, ref_code, cash, is_house) values ('house', 'House Bot', 'HOUSE', 100000000, true) on conflict do nothing;

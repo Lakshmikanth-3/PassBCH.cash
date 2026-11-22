@@ -208,7 +208,11 @@ export function settleQuick(outcome, stake, split) {
 export function qRecordBytes({ id, kind, outcome, stake, a, b, commit }) {
   const buf = Buffer.alloc(66);
   buf.write('SQG1', 0, 'ascii'); Buffer.from(id, 'hex').copy(buf, 4);
-  buf[20] = kind === 'coin' ? 1 : 2; buf[21] = { win: 1, lose: 2, refund: 0 }[outcome];
+  buf[20] = { coin: 1, type: 2, race: 3 }[kind]; buf[21] = { win: 1, lose: 2, refund: 0 }[outcome];
   buf.writeUInt32LE(stake, 22); buf.writeUInt32LE(a, 26); buf.writeUInt32LE(b, 30); Buffer.from(commit, 'hex').copy(buf, 34);
   return buf;
 }
+
+/** Friend Typing Race: both type the same phrase from a shared start time; the first valid finish wins (no house edge). */
+export const RACE = { countdownMs: 4000, maxRaceS: 180, openTimeoutS: 600 };
+export const racePhraseHash = (phrase) => sha256(`race:${phrase}`);

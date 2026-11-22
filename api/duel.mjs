@@ -7,7 +7,7 @@ import { spot, recentCloses, chartSeries, rates, swapQuote } from '../server/pri
 import { nextRound, UPDOWN } from '../server/engine.mjs';
 
 // Bump when web/public/duel.mjs changes: old terminal clients update themselves.
-export const CLIENT_VERSION = '2026.11.22-4';
+export const CLIENT_VERSION = '2026.11.22-5';
 
 const json = (res, status, body) => { res.statusCode = status; res.setHeader('content-type', 'application/json'); res.setHeader('cache-control', 'no-store'); res.end(JSON.stringify(body)); };
 const tokenOf = (req) => (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '') || null;
@@ -34,6 +34,7 @@ async function recordPending() {
     ['ai_rounds', (r) => chain.recordAi(r, (t) => S.setAiRecord(r.id, t))],
     ['bets', (b) => chain.recordBet(b, (t) => S.setBetRecord(b.id, t))],
     ['qgames', (q) => chain.recordQ(q, (t) => S.setQRecord(q.id, t))],
+    ['races', (r) => chain.recordRace(r, (t) => S.setRaceRecord(r.id, t))],
   ];
   for (const [table, send] of jobs) {
     for (const row of await S.claimUnrecorded(table, 3)) {
@@ -60,6 +61,14 @@ const routes = {
   async cfplay(req, b) { const r = await S.cfPlay(tokenOf(req), b); await recordSoon(); return r; },
   async trstart(req, b) { return S.trStart(tokenOf(req), b); },
   async trfinish(req, b) { const r = await S.trFinish(tokenOf(req), b); await recordSoon(); return r; },
+  async prcreate(req, b) { return S.raceCreate(tokenOf(req), b); },
+  async prjoin(req, b) { return S.raceJoin(tokenOf(req), b); },
+  async prcancel(req, b) { return S.raceCancel(tokenOf(req), b); },
+  async prstate(req, b, q) { const r = await S.raceGet(q.get('id'), tokenOf(req, true)); if (r.status === 'done' && !r.recordTxid) await recordSoon(); return r; },
+  async prprogress(req, b) { return S.raceProgress(tokenOf(req), b); },
+  async prfinish(req, b) { const r = await S.raceFinish(tokenOf(req), b); await recordSoon(); return r; },
+  async propen() { await S.raceSweep(); return S.raceOpen(); },
+  async qlatest(req, b, q) { return S.qLatest(q.get('kind')); },
   async qgame(req, b, q) { await recordSoon(); return S.qGet(q.get('id')); },
   async qmine(req, b, q) { return S.myQ(tokenOf(req), q.get('kind') === 'type' ? 'type' : 'coin'); },
   async cancel(req, b) { return S.cancelDuel(tokenOf(req), b.id); },
@@ -146,7 +155,7 @@ const routes = {
 
 /** Terminal invite: `irm <site>/duel/<id> | iex` or `curl -sL <site>/duel/<id> | sh` opens the same match in the friend's terminal. */
 function launch(res, q) {
-  const cmd = q.get('cmd') === 'fight' ? 'fight' : 'join';
+  const cmd = ['fight', 'race'].includes(q.get('cmd')) ? q.get('cmd') : 'join';
   const id = String(q.get('id') ?? '').replace(/[^0-9a-zA-Z_-]/g, '').slice(0, 64);
   const url = 'https://passbch-cash.vercel.app/duel.mjs';
   const body = q.get('sh') === 'ps'

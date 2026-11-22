@@ -17,7 +17,7 @@ const width = (s) => [...strip(s)].reduce((n, ch) => n + (/[\u{1F300}-\u{1FAFF}\
 const pad = (s, n) => s + ' '.repeat(Math.max(0, n - width(s)));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const sats = (n) => `${(Number(n ?? 0) / 1e8).toFixed(8).replace(/0+$/, '').replace(/\.$/, '')} BCH`;
-export const VERSION = '2026.11.22-4'; // must match CLIENT_VERSION in api/duel.mjs
+export const VERSION = '2026.11.22-5'; // must match CLIENT_VERSION in api/duel.mjs
 let NETWORK = 'chipnet';
 const CUR = { USD: '$', INR: '₹', JPY: '¥', EUR: '€', GBP: '£', AED: 'AED ', SGD: 'S$', IDR: 'Rp ', PHP: '₱', NGN: '₦', BRL: 'R$' };
 let fxCache = null;
@@ -343,8 +343,51 @@ async function coinFlip(rules) {
   await proofLine(r.id);
 }
 
+async function raceFlow(rules, joinId) {
+  const { player } = await api('me');
+  let id = joinId;
+  if (!id) {
+    box('Typing Race: challenge a friend', ['Same phrase for both of you, shared start time, first to finish wins the pot.', rulesLine()], cyan);
+    const stake = await pickStake(rules);
+    if (stake > player.bonus + player.cash) return console.log(red('  Not enough balance — add funds in the vault [w].'));
+    id = (await api('prcreate', { body: { stake } })).id;
+    console.log(`\n  Send this to your friend (terminal commands on their own lines, or the browser link):\n\n  Windows PowerShell:\n\nirm ${BASE}/race/${id} | iex\n\n  Mac / Linux:\n\ncurl -sL ${BASE}/race/${id} | sh\n\n  Browser: ${BASE}/race/${id}\n`);
+  } else {
+    const o = await api('prstate', { q: `&id=${id}` });
+    if (o.status !== 'open') return console.log(red(`  That race is ${o.status}.`));
+    box(`${o.aName} challenges you to a typing race for ${sats(o.stake)} each`, ['Same phrase, shared start, first to finish wins.'], mag);
+    await api('prjoin', { body: { id } });
+  }
+  let spin = 0, st;
+  for (;;) {
+    st = await api('prstate', { q: `&id=${id}` });
+    if (st.status === 'racing' || st.status === 'done' || st.status === 'cancelled') break;
+    frame([`  ${dim('waiting for your friend to join (the challenge expires after 10 minutes)')} ${'⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'[spin++ % 10]}`]); await sleep(1000);
+  }
+  endFrame();
+  if (st.status === 'racing') {
+    const wait = () => st.startMs - (Date.now() + (st.now - st.fetchedAt));
+    st.fetchedAt = Date.now();
+    for (let left = Math.ceil(wait() / 1000); left > 0; left = Math.ceil(wait() / 1000)) { console.log(`  ${bold(String(left))}…`); await sleep(Math.min(1000, Math.max(50, wait()))); }
+    for (let k = 0; k < 20 && !st.phrase; k++) { st = await api('prstate', { q: `&id=${id}` }); if (!st.phrase) await sleep(150); }
+    console.log(`\n  ${bold(lime(st.phrase ?? ''))}\n`);
+    const text = (await ask('  type it > ')).replace(/\r?\n$/, '');
+    st = await api('prfinish', { body: { id, text } });
+  }
+  for (let k = 0; k < 12 && st.status === 'racing'; k++) { await sleep(500); st = await api('prstate', { q: `&id=${id}` }); }
+  if (st.status === 'cancelled') return console.log(dim(`  race cancelled: ${st.reason}`));
+  const me = st.role, won = st.winner === me;
+  const ms = st.winner === 'a' ? st.aMs : st.bMs;
+  console.log(st.winner === 'draw' ? gold('  Nobody finished: stakes back') : won ? lime(bold(`  You win ${sats(2 * st.stake)}!`)) : red(`  ${st.winner === 'a' ? st.aName : st.bName} wins. You lose ${sats(st.stake)}`));
+  if (ms) console.log(dim(`  winner's time ${(ms / 1000).toFixed(2)}s, measured by the server`));
+  for (let k = 0; k < 15; k++) { const g = await api('prstate', { q: `&id=${id}` }); if (g.recordTxid) { console.log(`  ${lime('Verified on Bitcoin Cash ✓')} ${dim(g.recordTxid)}\n  ${dim(`check it: ${BASE}/verify/${g.recordTxid}`)}`); return; } if (k === 0) console.log(dim('  writing the proof to Bitcoin Cash…')); await sleep(2000); }
+}
+
 async function typingRace(rules) {
   const { player } = await api('me');
+  const mode = (await ask(`  ${bold('[1]')} vs the House Bot   ${bold('[2]')} challenge a friend   ${bold('[3]')} join a friend's race > `)).trim();
+  if (mode === '2') return raceFlow(rules);
+  if (mode === '3') { const id = (await ask('  Race link or id: ')).trim().split(/race[=/]/).pop(); return raceFlow(rules, id); }
   box('Typing Race', ['Type the phrase exactly and press Enter before the House Bot finishes (45 to 80 wpm, locked by a hash).', dim('The server times you from the moment the phrase appears. Pays 1.9×.'), rulesLine()], cyan);
   const stake = await pickStake(rules);
   if (stake > player.bonus + player.cash) return console.log(red('  Not enough balance — add funds in the vault [w].'));
@@ -543,6 +586,7 @@ async function main() {
   Vote with EMBER2026: ${cfgSrv.emberAddress ?? ''}`));
   const [cmd, arg] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
   if (cmd === 'join' && arg) { try { await join(arg); } catch (e) { console.log(red(`  ✗ ${e.message}`)); } }
+  if (cmd === 'race' && arg) { try { await raceFlow(cfgSrv.rules, arg); } catch (e) { console.log(red(`  ✗ ${e.message}`)); } }
   if (cmd === 'fight' && arg) { try { await pfJoin(arg); } catch (e) { console.log(red(`  ✗ ${e.message}`)); } }
   for (;;) {
     let c;

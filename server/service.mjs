@@ -340,6 +340,121 @@ export async function trFinish(token, { id, text }) {
       note: wrong ? 'the text did not match the phrase' : tooFast ? 'too fast to be typed by a person' : playerMs > E.QG.maxTypeS * 1000 ? 'out of time' : null };
   });
 }
+// ---------- Friend Typing Race ----------
+/** Settle a race: winner 'a' | 'b' | 'draw'. Winner takes the pot in the buckets it was staked in (same rule as duels). */
+async function raceSettle(k, r, winner, reason, aMs, bMs) {
+  const result = winner === 'a' ? 1 : winner === 'b' ? 2 : 0;
+  for (const cr of E.settle(result, r.stake, { fromBonus: r.a_from_bonus, fromCash: r.a_from_cash }, { fromBonus: r.b_from_bonus, fromCash: r.b_from_cash })) {
+    await k.query('update players set bonus = bonus + $1, cash = cash + $2 where id = $3', [cr.bonus, cr.cash, cr.side === 'a' ? r.a_player : r.b_player]);
+  }
+  if (winner !== 'draw') {
+    await k.query('update players set wins = wins + 1, won_sats = won_sats + $1 where id = $2', [r.stake, winner === 'a' ? r.a_player : r.b_player]);
+    await k.query('update players set losses = losses + 1 where id = $1', [winner === 'a' ? r.b_player : r.a_player]);
+  } else await k.query('update players set draws = draws + 1 where id = any($1)', [[r.a_player, r.b_player]]);
+  await k.query("update races set status='done', winner=$1, settle_reason=$2, a_ms=$3, b_ms=$4, settled_at=now() where id=$5", [winner, reason, aMs, bMs, r.id]);
+}
+/** Lazy housekeeping: an unjoined race refunds after 10 min; a started race nobody finishes in 3 min is a draw. */
+export async function raceSweep() {
+  const c = await db(); const t = nowS(), nowMs = Date.now();
+  const { rows } = await c.query(`select id from races where status in ('open','racing') and ((status='open' and created_s < $1) or (status='racing' and start_ms < $2)) limit 10`, [t - E.RACE.openTimeoutS, nowMs - E.RACE.maxRaceS * 1000]);
+  for (const { id } of rows) {
+    await tx(async (k) => {
+      const { rows: [r] } = await k.query('select * from races where id=$1 for update', [id]);
+      if (!r || r.status === 'done' || r.status === 'cancelled') return;
+      if (r.status === 'open') {
+        await k.query('update players set bonus = bonus + $1, cash = cash + $2 where id = $3', [r.a_from_bonus, r.a_from_cash, r.a_player]);
+        await k.query("update races set status='cancelled', settle_reason='expired, refunded', settled_at=now() where id=$1", [id]);
+      } else await raceSettle(k, r, 'draw', 'nobody finished in time', null, null);
+    });
+  }
+}
+export async function raceCreate(token, { stake }) {
+  stake = Number(stake);
+  return tx(async (k) => {
+    const p = await playerByToken(k, token, true);
+    let split; try { split = E.takeStake({ bonus: Number(p.bonus), cash: Number(p.cash) }, stake); } catch (e) { throw new UserError(e.message); }
+    await k.query('update players set bonus = bonus - $1, cash = cash - $2, wagered = wagered + $1 + $2 where id = $3', [split.fromBonus, split.fromCash, p.id]);
+    const id = randomBytes(16).toString('hex');
+    await k.query('insert into races (id, stake, phrase, a_player, a_from_bonus, a_from_cash, created_s) values ($1,$2,$3,$4,$5,$6,$7)', [id, stake, E.typingPhrase(id), p.id, split.fromBonus, split.fromCash, nowS()]);
+    return { id };
+  });
+}
+export async function raceJoin(token, { id }) {
+  return tx(async (k) => {
+    const p = await playerByToken(k, token, true);
+    const { rows: [r] } = await k.query('select * from races where id=$1 for update', [id]);
+    if (!r) throw new UserError('no such race', 404);
+    if (r.status !== 'open') throw new UserError('this race already started or ended');
+    if (r.a_player === p.id) throw new UserError("you can't race yourself: send the link to a friend");
+    let split; try { split = E.takeStake({ bonus: Number(p.bonus), cash: Number(p.cash) }, r.stake); } catch (e) { throw new UserError(e.message); }
+    await k.query('update players set bonus = bonus - $1, cash = cash - $2, wagered = wagered + $1 + $2 where id = $3', [split.fromBonus, split.fromCash, p.id]);
+    await k.query("update races set b_player=$1, b_from_bonus=$2, b_from_cash=$3, status='racing', start_ms=$4 where id=$5", [p.id, split.fromBonus, split.fromCash, Date.now() + E.RACE.countdownMs, id]);
+    return { id, startMs: Date.now() + E.RACE.countdownMs };
+  });
+}
+export async function raceCancel(token, { id }) {
+  return tx(async (k) => {
+    const p = await playerByToken(k, token, true);
+    const { rows: [r] } = await k.query('select * from races where id=$1 for update', [id]);
+    if (!r || r.a_player !== p.id) throw new UserError('no such race', 404);
+    if (r.status !== 'open') throw new UserError('this race already started or ended');
+    await k.query('update players set bonus = bonus + $1, cash = cash + $2 where id = $3', [r.a_from_bonus, r.a_from_cash, r.a_player]);
+    await k.query("update races set status='cancelled', settle_reason='cancelled, refunded', settled_at=now() where id=$1", [id]);
+    return { ok: true };
+  });
+}
+/** Public state. The phrase is shown only once the shared start time has passed, so nobody can read ahead. */
+export async function raceGet(id, token) {
+  await raceSweep();
+  const c = await db();
+  const { rows: [r] } = await c.query('select r.*, pa.name a_name, pb.name b_name from races r join players pa on pa.id=r.a_player left join players pb on pb.id=r.b_player where r.id=$1', [id]);
+  if (!r) throw new UserError('no such race', 404);
+  let me = null; if (token) { try { me = (await playerByToken(c, token)).id; } catch { /* anonymous */ } }
+  const now = Date.now(), started = r.start_ms != null && now >= Number(r.start_ms);
+  return { id: r.id, status: r.status, stake: r.stake, aName: r.a_name, bName: r.b_name, role: me === r.a_player ? 'a' : me === r.b_player ? 'b' : null,
+    startMs: r.start_ms != null ? Number(r.start_ms) : null, now, phrase: started || r.status === 'done' ? r.phrase : null, len: r.phrase.length,
+    aP: r.a_p, bP: r.b_p, aMs: r.a_ms, bMs: r.b_ms, winner: r.winner, reason: r.settle_reason, recordTxid: r.record_txid, maxS: E.RACE.maxRaceS };
+}
+export async function raceProgress(token, { id, p }) {
+  const c = await db(); const me = await playerByToken(c, token);
+  const v = Math.max(0, Math.min(1, Number(p) || 0));
+  await c.query("update races set a_p = case when a_player=$1 then greatest(a_p,$2) else a_p end, b_p = case when b_player=$1 then greatest(b_p,$2) else b_p end where id=$3 and status='racing'", [me.id, v, id]);
+  return { ok: true };
+}
+/** First valid finish wins. The server measures each time from the shared start; too-fast or wrong text loses on the spot. */
+export async function raceFinish(token, { id, text }) {
+  const now = Date.now();
+  const res = await tx(async (k) => {
+    const p = await playerByToken(k, token, true);
+    const { rows: [r] } = await k.query('select * from races where id=$1 for update', [id]);
+    if (!r || (r.a_player !== p.id && r.b_player !== p.id)) throw new UserError('no such race', 404);
+    if (r.status === 'racing') {
+      if (now < Number(r.start_ms)) throw new UserError('the race has not started yet');
+      const side = r.a_player === p.id ? 'a' : 'b', other = side === 'a' ? 'b' : 'a';
+      const ms = now - Number(r.start_ms);
+      const valid = String(text ?? '').toLowerCase() === r.phrase && ms >= r.phrase.length * E.QG.minMsPerChar && ms <= E.RACE.maxRaceS * 1000;
+      if (valid) await raceSettle(k, r, side, 'first to finish', side === 'a' ? ms : 0, side === 'b' ? ms : 0);
+      else await raceSettle(k, r, other, 'opponent typed it wrong or impossibly fast', other === 'a' ? 0 : 0, 0);
+    }
+    return true;
+  });
+  await raceSweep();
+  return res && raceGet(id, token);
+}
+export async function setRaceRecord(id, txid) { await (await db()).query('update races set record_txid=$1 where id=$2', [txid, id]); }
+export async function raceOpen() {
+  return (await (await db()).query("select r.id, r.stake, r.created_s, p.name from races r join players p on p.id=r.a_player where r.status='open' order by r.created_s desc limit 10")).rows;
+}
+
+/** Latest finished real game of a kind (for the landing page to replay). */
+export async function qLatest(kind) {
+  const c = await db();
+  if (kind === 'coin' || kind === 'type') {
+    const { rows: [q] } = await c.query("select kind, result, pick, outcome, player_ms, bot_ms from qgames where kind=$1 and settled_at is not null and outcome is not null order by settled_at desc limit 1", [kind]);
+    return q ? { kind: q.kind, result: q.result, pick: q.pick, outcome: q.outcome, playerMs: q.player_ms, botMs: q.bot_ms } : null;
+  }
+  return null;
+}
 export async function qGet(id) {
   const { rows: [q] } = await (await db()).query('select q.*, p.name from qgames q join players p on p.id=q.player_id where q.id=$1', [id]);
   if (!q) throw new UserError('no such game', 404);
@@ -483,6 +598,7 @@ const RECORDABLE = {
   bets: "settled_at is not null",
   ai_rounds: "status = 'done'",
   qgames: "settled_at is not null",
+  races: "status = 'done'",
 };
 export async function claimUnrecorded(table, limit = 3) {
   const where = RECORDABLE[table];
@@ -579,6 +695,7 @@ export async function setPfRecord(id, txid) { await (await db()).query('update p
 
 // ---------- Worldwide winners (all games) ----------
 const GAME_SQL = {
+  race: `select 'race' game, w.name, r.stake * 2 amount, r.record_txid tx, r.settled_at at from races r join players w on w.id = case r.winner when 'a' then r.a_player else r.b_player end where r.status = 'done' and r.winner in ('a','b')`,
   coin: `select 'coin' game, p.name, q.payout amount, q.record_txid tx, q.settled_at at from qgames q join players p on p.id = q.player_id where q.kind = 'coin' and q.outcome = 'win'`,
   type: `select 'type' game, p.name, q.payout amount, q.record_txid tx, q.settled_at at from qgames q join players p on p.id = q.player_id where q.kind = 'type' and q.outcome = 'win'`,
   rps: `select 'rps' game, w.name, d.stake * 2 amount, d.record_txid tx, d.settled_at at from duels d join players w on w.id = d.winner where d.winner is not null and not w.is_house`,
@@ -587,6 +704,8 @@ const GAME_SQL = {
 };
 // Net result per player per finished game: what you won minus what you staked (ties and refunds are 0).
 const NET_SQL = {
+  race: `select a_player pid, case winner when 'a' then stake when 'b' then -stake else 0 end net, settled_at at from races where status = 'done'
+         union all select b_player, case winner when 'b' then stake when 'a' then -stake else 0 end, settled_at from races where status = 'done'`,
   coin: `select player_id pid, case outcome when 'win' then payout - stake when 'lose' then -stake else 0 end net, settled_at at from qgames where kind = 'coin' and outcome is not null`,
   type: `select player_id pid, case outcome when 'win' then payout - stake when 'lose' then -stake else 0 end net, settled_at at from qgames where kind = 'type' and outcome is not null`,
   rps: `select a_player pid, case result when 1 then stake when 2 then -stake else 0 end net, settled_at at from duels where settled_at is not null and b_player is not null
@@ -642,6 +761,8 @@ export async function matchById(kind, id) {
     return m && { game: 'pf', id: m.id, aName: m.a_name, bName: m.b_name, stake: m.stake, target: m.target, maxStep: m.max_step, first: m.first, turns: m.turns, winner: m.winner, aPrompt: m.a_prompt, bPrompt: m.b_prompt, recordTxid: m.record_txid };
   }
   if (kind === 'SQG1') {
+    const { rows: [rc] } = await c.query('select r.*, pa.name a_name, pb.name b_name from races r join players pa on pa.id=r.a_player left join players pb on pb.id=r.b_player where r.id=$1 and r.status=\'done\'', [id]);
+    if (rc) return { game: 'race', id: rc.id, aName: rc.a_name, bName: rc.b_name, stake: rc.stake, phrase: rc.phrase, aMs: rc.a_ms ?? 0, bMs: rc.b_ms ?? 0, winner: rc.winner, recordTxid: rc.record_txid };
     const { rows: [q] } = await c.query('select q.*, p.name from qgames q join players p on p.id=q.player_id where q.id=$1 and q.settled_at is not null', [id]);
     return q && { game: q.kind, id: q.id, name: q.name, stake: q.stake, seed: q.seed, clientSeed: q.client_seed, pick: q.pick, result: q.result, phrase: q.phrase, playerMs: q.player_ms, botMs: q.bot_ms, outcome: q.outcome, commit: q.commit, recordTxid: q.record_txid };
   }
