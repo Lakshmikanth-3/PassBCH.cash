@@ -56,7 +56,7 @@ function TopBar({ me, go, logout, loading }) {
   return (
     <header className="topbar">
       <div className="wrap row between">
-        <button className="brand" onClick={() => go('')} aria-label="PassBCH.cash home"><img className="brand-logo" src="/logo-192.png" width="30" height="30" alt="" /> PassBCH<span className="dim">.cash</span></button>
+        <button className="brand" onClick={() => go('')} aria-label="PassBCH.cash home"><img className="brand-logo" src="/logo-192.png" width="30" height="30" alt="" /><span>PassBCH<span className="dim">.cash</span></span></button>
         {me ? (
           <nav className="row gap">
             <button className="chipbtn" onClick={() => go('games')}><Grid size={16} /> Games</button>

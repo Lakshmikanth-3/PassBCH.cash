@@ -11,7 +11,7 @@ const CFG = path.join(os.homedir(), '.passbch.json');
 const TTY = (!!process.stdout.isTTY || process.env.PASSBCH_FORCE_TTY === '1') && !process.env.NO_COLOR; // FORCE_TTY lets a recorder capture the colours and animation
 const esc = (n) => (s) => (TTY ? `\x1b[${n}m${s}\x1b[0m` : String(s));
 const bold = esc(1), dim = esc(2), cyan = esc('38;5;51'), mag = esc('38;5;207'), lime = esc('38;5;154'), red = esc('38;5;204'), gold = esc('38;5;220'), white = esc('97');
-const W = () => Math.max(48, Math.min(process.stdout.columns || 80, 92));
+const W = () => Math.max(48, Math.min(process.stdout.columns || Number(process.env.COLUMNS) || 80, 92));
 const strip = (s) => String(s).replace(/\x1b\[[0-9;]*m/g, '');
 const width = (s) => [...strip(s)].reduce((n, ch) => n + (/[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/u.test(ch) ? 2 : ch === '\uFE0F' ? 0 : 1), 0);
 const pad = (s, n) => s + ' '.repeat(Math.max(0, n - width(s)));
