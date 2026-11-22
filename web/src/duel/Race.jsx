@@ -33,7 +33,7 @@ export function RaceView({ id, me, explorer, network, onClose, onChange, refCode
     if (!s) return;
     show({ kind: 'typingopp', p: 0, name: oppName ?? 'Your friend' });
     if (s.status === 'open') show({ kind: 'typingcount', text: mine === 'a' ? 'Waiting for your friend to join…' : `${s.aName} challenges you` });
-  }, [s?.status, oppName]);
+  }, [s?.status, oppName, tick < 60 ? Math.floor(tick / 10) : -1]); // re-sent for the first seconds: the 3D scene may still be loading
 
   // 3D: countdown banner, start, opponent runner
   useEffect(() => {
